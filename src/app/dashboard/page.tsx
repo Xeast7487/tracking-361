@@ -27,15 +27,20 @@ export default async function DashboardPage() {
       .order('started_at', { ascending: false }),
   ])
 
-  const fullName = profileRes.data?.full_name ?? 'Employé'
+  const fullName = profileRes.data?.full_name
+    ?? (user.user_metadata?.full_name as string | undefined)
+    ?? 'Employé'
   const activeEntry = activeRes.data ?? null
   const clients  = clientsRes.data  ?? []
   const projects = projectsRes.data ?? []
   const todayEntries = (todayRes.data ?? []) as any[]
 
   const now = new Date()
-  const greeting = now.getHours() < 12 ? 'Bonjour' : now.getHours() < 18 ? 'Bonsoir' : 'Bonsoir'
-  const dateStr = now.toLocaleDateString('fr-CA', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const localHour = parseInt(
+    new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', hour: 'numeric', hourCycle: 'h23' }).format(now)
+  )
+  const greeting = localHour < 12 ? 'Bonjour' : 'Bonsoir'
+  const dateStr = now.toLocaleDateString('fr-CA', { timeZone: 'America/Toronto', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <div className="space-y-8">
