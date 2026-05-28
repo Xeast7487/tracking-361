@@ -2,13 +2,26 @@
 
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 
 // ── Auth ──────────────────────────────────────────────────
 
 export async function loginAction(formData: FormData) {
-  const supabase = await createSupabaseServerClient()
+  const rememberMe = formData.get('remember_me') === 'on'
+  const cookieStore = await cookies()
+
+  // Persist preference so middleware respects it on token refreshes
+  cookieStore.set('sb-remember-me', rememberMe ? 'true' : 'false', {
+    path: '/',
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: process.env.NODE_ENV === 'production',
+    ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
+  })
+
+  const supabase = await createSupabaseServerClient(rememberMe)
   const { error } = await supabase.auth.signInWithPassword({
     email: formData.get('email') as string,
     password: formData.get('password') as string,

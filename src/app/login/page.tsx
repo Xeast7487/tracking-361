@@ -58,15 +58,28 @@ export default function LoginPage() {
               </p>
             )}
 
+            <label className="flex items-center gap-3 cursor-pointer group select-none">
+              <div className="relative">
+                <input type="checkbox" name="remember_me" className="sr-only peer" />
+                <div className="w-4 h-4 rounded border border-slate-600 bg-slate-900
+                                peer-checked:bg-blue-600 peer-checked:border-blue-600
+                                transition-all duration-200 group-hover:border-slate-400" />
+                <svg className="absolute inset-0 w-4 h-4 text-white scale-0 peer-checked:scale-100
+                                transition-transform duration-150 pointer-events-none"
+                  viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <polyline points="3 8 6.5 11.5 13 5" />
+                </svg>
+              </div>
+              <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
+                Se souvenir de moi
+              </span>
+            </label>
+
             <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5">
               {isPending ? 'Connexion...' : 'Se connecter'}
             </button>
           </form>
         </div>
-
-        <p className="text-center text-slate-600 text-xs mt-6">
-          Les comptes sont créés par l'administrateur.
-        </p>
       </div>
     </div>
   )
