@@ -1,0 +1,188 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { redirect } from 'next/navigation'
+import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+
+// ── Auth ──────────────────────────────────────────────────
+
+export async function loginAction(formData: FormData) {
+  const supabase = createSupabaseServerClient()
+  const { error } = await supabase.auth.signInWithPassword({
+    email: formData.get('email') as string,
+    password: formData.get('password') as string,
+  })
+  if (error) return { error: 'Courriel ou mot de passe incorrect.' }
+  redirect('/dashboard')
+}
+
+export async function logoutAction() {
+  const supabase = createSupabaseServerClient()
+  await supabase.auth.signOut()
+  redirect('/login')
+}
+
+// ── Clients ───────────────────────────────────────────────
+
+export async function createClientAction(name: string) {
+  const supabase = createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('clients')
+    .insert({ name: name.trim() })
+    .select()
+    .single()
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  return { data }
+}
+
+// ── Projets ───────────────────────────────────────────────
+
+export async function createProjectAction(clientId: string, name: string) {
+  const supabase = createSupabaseServerClient()
+  const { data, error } = await supabase
+    .from('projects')
+    .insert({ client_id: clientId, name: name.trim() })
+    .select()
+    .single()
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  return { data }
+}
+
+// ── Entrées de temps ──────────────────────────────────────
+
+export async function clockInAction(
+  clientId: string,
+  projectId: string,
+  notes: string,
+  isBillable: boolean
+) {
+  const supabase = createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  // Vérifie qu'il n'y a pas déjà une session ouverte
+  const { data: existing } = await supabase
+    .from('time_entries')
+    .select('id')
+    .eq('user_id', user.id)
+    .is('ended_at', null)
+    .maybeSingle()
+  if (existing) return { error: 'Une session est déjà en cours.' }
+
+  const { error } = await supabase.from('time_entries').insert({
+    user_id: user.id,
+    client_id: clientId,
+    project_id: projectId,
+    notes: notes || null,
+    is_billable: isBillable,
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function clockOutAction(entryId: string) {
+  const supabase = createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { error } = await supabase.from('time_entries')
+    .update({ ended_at: new Date().toISOString() })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+// ── Admin : helper ────────────────────────────────────────
+
+function getAdminClient() {
+  return createSupabaseClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  )
+}
+
+async function requireAdmin() {
+  const supabase = createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  return data?.role === 'admin' ? user : null
+}
+
+// ── Admin : gestion des employés ──────────────────────────
+
+export async function createUserAction(formData: FormData) {
+  const admin = getAdminClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const email     = formData.get('email') as string
+  const password  = formData.get('password') as string
+  const fullName  = formData.get('full_name') as string
+  const role      = (formData.get('role') as string) || 'employee'
+  const rateStr   = formData.get('hourly_rate') as string
+
+  const { data: authData, error: authErr } = await admin.auth.admin.createUser({
+    email, password,
+    email_confirm: true,
+    user_metadata: { full_name: fullName },
+  })
+  if (authErr) return { error: authErr.message }
+
+  await admin.from('profiles').update({
+    full_name: fullName,
+    role,
+    hourly_rate: rateStr ? parseFloat(rateStr) : null,
+  }).eq('id', authData.user.id)
+
+  revalidatePath('/admin/users')
+  return { success: true }
+}
+
+export async function updateUserAction(userId: string, formData: FormData) {
+  const admin = getAdminClient()
+  const supabase = createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const fullName  = formData.get('full_name') as string
+  const role      = formData.get('role') as string
+  const rateStr   = formData.get('hourly_rate') as string
+  const isActive  = formData.get('is_active') === 'true'
+  const password  = formData.get('password') as string
+
+  if (password) {
+    await admin.auth.admin.updateUserById(userId, { password })
+  }
+
+  const { error } = await supabase.from('profiles').update({
+    full_name: fullName,
+    role,
+    hourly_rate: rateStr ? parseFloat(rateStr) : null,
+    is_active: isActive,
+  }).eq('id', userId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/users')
+  return { success: true }
+}
+
+// ── Admin : suppression d'une entrée ─────────────────────
+
+export async function deleteEntryAction(entryId: string) {
+  const supabase = createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('time_entries').delete().eq('id', entryId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/reports')
+  return { success: true }
+}

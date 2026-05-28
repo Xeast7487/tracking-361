@@ -1,0 +1,56 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { @apply scroll-smooth; }
+  body { @apply bg-slate-900 text-slate-100 antialiased; font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+  * { @apply border-slate-700; }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700
+           text-white font-semibold text-sm rounded-lg transition disabled:opacity-50 disabled:cursor-not-allowed;
+  }
+  .btn-secondary {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-700 hover:bg-slate-600
+           text-slate-100 font-semibold text-sm rounded-lg transition disabled:opacity-50;
+  }
+  .btn-danger {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700
+           text-white font-semibold text-sm rounded-lg transition disabled:opacity-50;
+  }
+  .btn-ghost {
+    @apply inline-flex items-center justify-center gap-2 px-4 py-2 text-slate-400 hover:text-slate-100
+           font-medium text-sm rounded-lg transition hover:bg-slate-800;
+  }
+  .input {
+    @apply w-full bg-slate-900 border border-slate-600 text-slate-100 placeholder-slate-500
+           rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500 transition;
+  }
+  .label {
+    @apply block text-sm font-medium text-slate-300 mb-1.5;
+  }
+  .card {
+    @apply bg-slate-800 border border-slate-700 rounded-2xl p-6;
+  }
+  .badge-billable {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-green-900/40 text-green-400
+           text-xs font-semibold rounded-full border border-green-800/50;
+  }
+  .badge-unbillable {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-slate-700 text-slate-400
+           text-xs font-semibold rounded-full;
+  }
+}
+
+/* Print styles */
+@media print {
+  nav, .no-print { display: none !important; }
+  body { background: white !important; color: black !important; }
+  .card { border: 1px solid #e5e7eb !important; background: white !important; }
+  table { font-size: 11px; }
+  thead { background: #f3f4f6 !important; }
+  th, td { border: 1px solid #e5e7eb !important; padding: 4px 8px !important; color: black !important; }
+}
