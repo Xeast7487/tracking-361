@@ -24,7 +24,7 @@ export default async function ReportsPage({ searchParams }: Props) {
   // Build query
   let query = supabase
     .from('time_entries')
-    .select('id, started_at, ended_at, notes, is_billable, clients(name), projects(name), profiles(full_name)')
+    .select('id, started_at, ended_at, notes, is_billable, client_id, project_id, clients(name), projects(name), profiles(full_name)')
     .gte('started_at', `${from}T00:00:00`)
     .lte('started_at', `${to}T23:59:59`)
     .order('started_at', { ascending: false })
@@ -90,7 +90,7 @@ export default async function ReportsPage({ searchParams }: Props) {
         <p className="text-sm text-gray-600">Période : {from} → {to}</p>
       </div>
 
-      <EntryList entries={(entries ?? []) as any} showEmployee isAdmin />
+      <EntryList entries={(entries ?? []) as any} showEmployee isAdmin allowEdit />
     </div>
   )
 }

@@ -1,10 +1,13 @@
 import { formatDate, formatTime, formatDuration } from '@/lib/utils'
 import DeleteEntryButton from './DeleteEntryButton'
+import EditEntryModal from './EditEntryModal'
 
 export interface TimeEntry {
   id: string
   started_at: string
   ended_at: string | null
+  client_id: string | null
+  project_id: string | null
   notes: string | null
   is_billable: boolean
   clients:  { name: string } | null
@@ -16,9 +19,10 @@ interface Props {
   entries: TimeEntry[]
   showEmployee?: boolean
   isAdmin?: boolean
+  allowEdit?: boolean
 }
 
-export default function EntryList({ entries, showEmployee = false, isAdmin = false }: Props) {
+export default function EntryList({ entries, showEmployee = false, isAdmin = false, allowEdit = false }: Props) {
   if (entries.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500">
@@ -30,7 +34,6 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
     )
   }
 
-  // Total hours
   const totalMs = entries
     .filter(e => e.ended_at)
     .reduce((acc, e) => acc + (new Date(e.ended_at!).getTime() - new Date(e.started_at).getTime()), 0)
@@ -41,6 +44,8 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
     .reduce((acc, e) => acc + (new Date(e.ended_at!).getTime() - new Date(e.started_at).getTime()), 0)
   const billableH = Math.floor(billableMs / 3_600_000)
   const billableM = Math.floor((billableMs % 3_600_000) / 60_000)
+
+  const showActions = allowEdit || isAdmin
 
   return (
     <div>
@@ -57,7 +62,7 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
               <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Projet</th>
               <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Facturable</th>
               <th className="px-4 py-3 font-semibold text-slate-400">Notes</th>
-              {isAdmin && <th className="px-4 py-3" />}
+              {showActions && <th className="px-4 py-3 w-20" />}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-800">
@@ -84,9 +89,22 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                     : <span className="badge-unbillable">Non</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{e.notes ?? ''}</td>
-                {isAdmin && (
+                {showActions && (
                   <td className="px-4 py-3">
-                    <DeleteEntryButton entryId={e.id} />
+                    <div className="flex items-center gap-1">
+                      {allowEdit && (
+                        <EditEntryModal entry={{
+                          id:         e.id,
+                          started_at: e.started_at,
+                          ended_at:   e.ended_at,
+                          client_id:  e.client_id,
+                          project_id: e.project_id,
+                          notes:      e.notes,
+                          is_billable: e.is_billable,
+                        }} />
+                      )}
+                      {isAdmin && <DeleteEntryButton entryId={e.id} />}
+                    </div>
                   </td>
                 )}
               </tr>

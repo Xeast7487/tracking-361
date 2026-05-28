@@ -186,6 +186,46 @@ export async function updateUserAction(userId: string, formData: FormData) {
   return { success: true }
 }
 
+// ── Entrées : modifier ───────────────────────────────────
+
+export async function fetchClientsAndProjectsAction() {
+  const supabase = await createSupabaseServerClient()
+  const [clientsRes, projectsRes] = await Promise.all([
+    supabase.from('clients').select('id, name').order('name'),
+    supabase.from('projects').select('id, client_id, name').order('name'),
+  ])
+  return {
+    clients:  clientsRes.data  ?? [],
+    projects: projectsRes.data ?? [],
+  }
+}
+
+export async function updateEntryAction(
+  entryId: string,
+  data: {
+    started_at:  string
+    ended_at:    string | null
+    client_id:   string | null
+    project_id:  string | null
+    notes:       string | null
+    is_billable: boolean
+  }
+) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { error } = await supabase
+    .from('time_entries')
+    .update(data)
+    .eq('id', entryId)
+
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  revalidatePath('/admin/reports')
+  return {}
+}
+
 // ── Admin : suppression d'une entrée ─────────────────────
 
 export async function deleteEntryAction(entryId: string) {
