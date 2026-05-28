@@ -1,3 +1,5 @@
+'use client'
+
 import { formatDate, formatTime, formatDuration } from '@/lib/utils'
 import DeleteEntryButton from './DeleteEntryButton'
 import EditEntryModal from './EditEntryModal'
@@ -93,15 +95,18 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-1">
                       {allowEdit && (
-                        <EditEntryModal entry={{
-                          id:         e.id,
-                          started_at: e.started_at,
-                          ended_at:   e.ended_at,
-                          client_id:  e.client_id,
-                          project_id: e.project_id,
-                          notes:      e.notes,
-                          is_billable: e.is_billable,
-                        }} />
+                        <EditEntryModal
+                          key={e.id + (e.ended_at ?? '')}
+                          entry={{
+                            id:         e.id,
+                            started_at: e.started_at,
+                            ended_at:   e.ended_at,
+                            client_id:  e.client_id,
+                            project_id: e.project_id,
+                            notes:      e.notes,
+                            is_billable: e.is_billable,
+                          }}
+                        />
                       )}
                       {isAdmin && <DeleteEntryButton entryId={e.id} />}
                     </div>
