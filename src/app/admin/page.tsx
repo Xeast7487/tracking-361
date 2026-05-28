@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { todayISO, weekStartISO, formatDuration } from '@/lib/utils'
 
 export default async function AdminOverviewPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const today = todayISO()
   const weekStart = weekStartISO()
 

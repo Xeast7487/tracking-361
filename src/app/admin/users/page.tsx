@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import UserForm from './UserForm'
 
 export default async function UsersPage() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: users } = await supabase
     .from('profiles')
     .select('id, full_name, email, role, hourly_rate, is_active, created_at')

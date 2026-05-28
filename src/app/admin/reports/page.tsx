@@ -7,7 +7,7 @@ interface Props {
 }
 
 export default async function ReportsPage({ searchParams }: Props) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
 
   const to      = searchParams.to      ?? new Date().toISOString().split('T')[0]
   const from    = searchParams.from    ?? (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().split('T')[0] })()

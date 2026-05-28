@@ -8,7 +8,7 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 // ── Auth ──────────────────────────────────────────────────
 
 export async function loginAction(formData: FormData) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { error } = await supabase.auth.signInWithPassword({
     email: formData.get('email') as string,
     password: formData.get('password') as string,
@@ -18,7 +18,7 @@ export async function loginAction(formData: FormData) {
 }
 
 export async function logoutAction() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   await supabase.auth.signOut()
   redirect('/login')
 }
@@ -26,7 +26,7 @@ export async function logoutAction() {
 // ── Clients ───────────────────────────────────────────────
 
 export async function createClientAction(name: string) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('clients')
     .insert({ name: name.trim() })
@@ -40,7 +40,7 @@ export async function createClientAction(name: string) {
 // ── Projets ───────────────────────────────────────────────
 
 export async function createProjectAction(clientId: string, name: string) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('projects')
     .insert({ client_id: clientId, name: name.trim() })
@@ -59,11 +59,10 @@ export async function clockInAction(
   notes: string,
   isBillable: boolean
 ) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  // Vérifie qu'il n'y a pas déjà une session ouverte
   const { data: existing } = await supabase
     .from('time_entries')
     .select('id')
@@ -85,7 +84,7 @@ export async function clockInAction(
 }
 
 export async function clockOutAction(entryId: string) {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
@@ -109,7 +108,7 @@ function getAdminClient() {
 }
 
 async function requireAdmin() {
-  const supabase = createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
   const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
@@ -123,11 +122,11 @@ export async function createUserAction(formData: FormData) {
   const caller = await requireAdmin()
   if (!caller) return { error: 'Accès refusé.' }
 
-  const email     = formData.get('email') as string
-  const password  = formData.get('password') as string
-  const fullName  = formData.get('full_name') as string
-  const role      = (formData.get('role') as string) || 'employee'
-  const rateStr   = formData.get('hourly_rate') as string
+  const email    = formData.get('email') as string
+  const password = formData.get('password') as string
+  const fullName = formData.get('full_name') as string
+  const role     = (formData.get('role') as string) || 'employee'
+  const rateStr  = formData.get('hourly_rate') as string
 
   const { data: authData, error: authErr } = await admin.auth.admin.createUser({
     email, password,
@@ -147,16 +146,16 @@ export async function createUserAction(formData: FormData) {
 }
 
 export async function updateUserAction(userId: string, formData: FormData) {
-  const admin = getAdminClient()
-  const supabase = createSupabaseServerClient()
-  const caller = await requireAdmin()
+  const admin    = getAdminClient()
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
   if (!caller) return { error: 'Accès refusé.' }
 
-  const fullName  = formData.get('full_name') as string
-  const role      = formData.get('role') as string
-  const rateStr   = formData.get('hourly_rate') as string
-  const isActive  = formData.get('is_active') === 'true'
-  const password  = formData.get('password') as string
+  const fullName = formData.get('full_name') as string
+  const role     = formData.get('role') as string
+  const rateStr  = formData.get('hourly_rate') as string
+  const isActive = formData.get('is_active') === 'true'
+  const password = formData.get('password') as string
 
   if (password) {
     await admin.auth.admin.updateUserById(userId, { password })
@@ -177,8 +176,8 @@ export async function updateUserAction(userId: string, formData: FormData) {
 // ── Admin : suppression d'une entrée ─────────────────────
 
 export async function deleteEntryAction(entryId: string) {
-  const supabase = createSupabaseServerClient()
-  const caller = await requireAdmin()
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
   if (!caller) return { error: 'Accès refusé.' }
 
   const { error } = await supabase.from('time_entries').delete().eq('id', entryId)
