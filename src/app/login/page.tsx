@@ -19,21 +19,21 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-sm">
+      <div className="w-full max-w-sm animate-fade-in-up">
         {/* Logo */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4">
+          <div className="inline-flex items-center justify-center w-14 h-14 bg-blue-600 rounded-2xl mb-4 animate-fade-in-down">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2">
               <circle cx="12" cy="12" r="10"/>
               <polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-white">Tracking 361</h1>
-          <p className="text-slate-400 text-sm mt-1">Suivi des heures de travail</p>
+          <h1 className="text-2xl font-bold text-shimmer animate-reveal">Tracking 361</h1>
+          <p className="text-slate-400 text-sm mt-1 animate-fade-in animation-delay-300">Suivi des heures de travail</p>
         </div>
 
         {/* Form */}
-        <div className="card">
+        <div className="card animate-fade-in-up animation-delay-150">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label" htmlFor="email">Adresse courriel</label>

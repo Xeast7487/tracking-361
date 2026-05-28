@@ -11,7 +11,7 @@ export default async function UsersPage() {
   return (
     <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-white">Gestion des employés</h1>
+        <h1 className="text-2xl font-bold animate-reveal"><span className="text-gradient-animate">Gestion des employés</span></h1>
       </div>
 
       {/* New user form */}

@@ -45,15 +45,15 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="flex items-end justify-between">
+      <div className="flex items-end justify-between animate-fade-in-down">
         <div>
           <p className="text-slate-500 text-sm capitalize">{dateStr}</p>
-          <h1 className="text-2xl font-bold text-white mt-1">{greeting}, {fullName.split(' ')[0]} 👋</h1>
+          <h1 className="text-2xl font-bold mt-1 animate-reveal"><span className="text-gradient-animate">{greeting}</span><span className="text-white">, {fullName.split(' ')[0]} 👋</span></h1>
         </div>
       </div>
 
       {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start animate-fade-in-up animation-delay-100">
         <ClockWidget
           activeEntry={activeEntry as any}
           clients={clients as any}
@@ -61,7 +61,7 @@ export default async function DashboardPage() {
         />
 
         {/* Today's entries */}
-        <div className="space-y-3">
+        <div className="space-y-3 animate-fade-in animation-delay-200">
           <h2 className="font-semibold text-slate-300">Aujourd'hui</h2>
           <EntryList entries={todayEntries as any} />
         </div>

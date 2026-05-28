@@ -37,7 +37,7 @@ export default function Nav({ fullName, role }: Props) {
               <polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
-          <span className="font-bold text-white text-sm">Tracking 361</span>
+          <span className="font-bold text-sm text-shimmer">Tracking 361</span>
         </Link>
 
         {/* Links */}
@@ -46,9 +46,9 @@ export default function Nav({ fullName, role }: Props) {
             <Link
               key={l.href}
               href={l.href}
-              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+              className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
                 pathname === l.href
-                  ? 'bg-slate-800 text-white'
+                  ? 'bg-slate-800 text-gradient font-semibold'
                   : 'text-slate-400 hover:text-white hover:bg-slate-800'
               }`}
             >

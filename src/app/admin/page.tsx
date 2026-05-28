@@ -38,17 +38,21 @@ export default async function AdminOverviewPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-white">Vue d'ensemble</h1>
+      <h1 className="text-2xl font-bold animate-reveal"><span className="text-gradient-animate">Vue d'ensemble</span></h1>
 
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {[
-          { label: 'Sessions actives', value: activeSessions.length.toString(), color: 'text-green-400', icon: '⏱' },
-          { label: 'Heures cette semaine', value: `${weekH}h ${weekM.toString().padStart(2,'0')}m`, color: 'text-white', icon: '📊' },
-          { label: 'Heures facturables', value: `${billableH}h ${billableM.toString().padStart(2,'0')}m`, color: 'text-blue-400', icon: '💰' },
-          { label: 'Employés actifs', value: employeeCount.toString(), color: 'text-slate-200', icon: '👥' },
-        ].map(s => (
-          <div key={s.label} className="card">
+          { label: 'Sessions actives',     value: activeSessions.length.toString(),                          color: 'text-green-400',  icon: '⏱' },
+          { label: 'Heures cette semaine', value: `${weekH}h ${weekM.toString().padStart(2,'0')}m`,          color: 'text-shimmer',    icon: '📊' },
+          { label: 'Heures facturables',   value: `${billableH}h ${billableM.toString().padStart(2,'0')}m`,  color: 'text-gradient',   icon: '💰' },
+          { label: 'Employés actifs',      value: employeeCount.toString(),                                  color: 'text-slate-200',  icon: '👥' },
+        ].map((s, i) => (
+          <div
+            key={s.label}
+            className="card animate-count"
+            style={{ animationDelay: `${i * 90}ms` }}
+          >
             <p className="text-2xl mb-1">{s.icon}</p>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
             <p className="text-xs text-slate-500 mt-1">{s.label}</p>
@@ -57,7 +61,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Active sessions */}
-      <div>
+      <div className="animate-fade-in animation-delay-300">
         <h2 className="font-semibold text-slate-300 mb-3">Sessions en cours {activeSessions.length > 0 && `(${activeSessions.length})`}</h2>
         {activeSessions.length === 0 ? (
           <div className="card text-slate-500 text-sm text-center py-8">Aucune session active en ce moment.</div>
@@ -80,7 +84,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Quick links */}
-      <div className="flex gap-3 flex-wrap">
+      <div className="flex gap-3 flex-wrap animate-fade-in animation-delay-400">
         <Link href="/admin/reports" className="btn-primary">📋 Voir les rapports</Link>
         <Link href="/admin/users"   className="btn-secondary">👥 Gérer les employés</Link>
       </div>

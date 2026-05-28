@@ -108,7 +108,7 @@ export default function ClockWidget({
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           <span className="text-sm font-semibold text-green-400 uppercase tracking-wider">Session en cours</span>
         </div>
-        <div className="font-mono text-5xl font-bold text-white tabular-nums">{elapsed}</div>
+        <div className="font-mono text-5xl font-bold tabular-nums text-shimmer">{elapsed}</div>
         <div className="space-y-1 text-sm text-slate-400">
           <p><span className="text-slate-500">Client : </span><span className="text-slate-200">{initial.clients?.name}</span></p>
           <p><span className="text-slate-500">Projet : </span><span className="text-slate-200">{initial.projects?.name}</span></p>
