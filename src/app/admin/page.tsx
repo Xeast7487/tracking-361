@@ -71,7 +71,7 @@ export default async function AdminOverviewPage() {
                   <p className="text-slate-400 text-xs">{s.clients?.name} — {s.projects?.name}</p>
                 </div>
                 <span className="text-slate-400 text-xs whitespace-nowrap">
-                  depuis {new Date(s.started_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}
+                  depuis {new Date(s.started_at).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Toronto' })}
                 </span>
               </div>
             ))}

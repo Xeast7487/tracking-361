@@ -11,20 +11,22 @@ export function formatDurationDecimal(startedAt: string, endedAt: string): strin
   return (ms / 3_600_000).toFixed(2)
 }
 
+const TZ = 'America/Toronto'
+
 export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })
+  return new Date(iso).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
 export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric' })
+  return new Date(iso).toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric', timeZone: TZ })
 }
 
 export function todayISO(): string {
-  return new Date().toISOString().split('T')[0]
+  return new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date())
 }
 
 export function weekStartISO(): string {
-  const d = new Date()
-  d.setDate(d.getDate() - d.getDay() + 1) // lundi
-  return d.toISOString().split('T')[0]
+  const today = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date()))
+  today.setDate(today.getDate() - today.getDay() + 1) // lundi
+  return today.toISOString().split('T')[0]
 }
