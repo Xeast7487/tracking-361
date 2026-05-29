@@ -37,7 +37,7 @@ export default function Nav({ fullName, role }: Props) {
               <polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
-          <span className="font-bold text-sm text-white">Tracking 361</span>
+          <span className="font-bold text-sm text-white">Agence 361</span>
         </Link>
 
         {/* Links */}

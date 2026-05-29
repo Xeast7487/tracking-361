@@ -86,7 +86,7 @@ export default async function ReportsPage({ searchParams }: Props) {
 
       {/* Print header */}
       <div className="hidden print:block mb-4">
-        <h2 className="text-xl font-bold">Rapport d'heures — Tracking 361</h2>
+        <h2 className="text-xl font-bold">Rapport d'heures — Agence 361</h2>
         <p className="text-sm text-gray-600">Période : {from} → {to}</p>
       </div>
 
