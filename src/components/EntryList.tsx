@@ -87,8 +87,8 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.projects?.name ?? '—'}</td>
                 <td className="px-4 py-3">
                   {e.is_billable
-                    ? <span className="badge-billable">💰 Oui</span>
-                    : <span className="badge-unbillable">Non</span>}
+                    ? <span className="badge-billable">Facturable</span>
+                    : <span className="badge-unbillable">Non facturé</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{e.notes ?? ''}</td>
                 {showActions && (

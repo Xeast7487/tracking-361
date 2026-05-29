@@ -48,7 +48,7 @@ export default async function DashboardPage() {
       <div className="flex items-end justify-between animate-fade-in-down">
         <div>
           <p className="text-slate-500 text-sm capitalize">{dateStr}</p>
-          <h1 className="text-2xl font-bold mt-1 animate-reveal"><span className="text-gradient-animate">{greeting}</span><span className="text-white">, {fullName.split(' ')[0]} 👋</span></h1>
+          <h1 className="text-2xl font-bold mt-1 text-white">{greeting}, {fullName.split(' ')[0]}</h1>
         </div>
       </div>
 

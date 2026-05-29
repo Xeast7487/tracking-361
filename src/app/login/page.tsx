@@ -28,7 +28,7 @@ export default function LoginPage() {
               <polyline points="12 6 12 12 16 14"/>
             </svg>
           </div>
-          <h1 className="text-2xl font-bold text-shimmer animate-reveal">Tracking 361</h1>
+          <h1 className="text-2xl font-bold text-white">Tracking 361</h1>
           <p className="text-slate-400 text-sm mt-1 animate-fade-in animation-delay-300">Suivi des heures de travail</p>
         </div>
 

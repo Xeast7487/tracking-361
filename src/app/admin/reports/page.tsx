@@ -39,7 +39,7 @@ export default async function ReportsPage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-4">
-        <h1 className="text-2xl font-bold animate-reveal"><span className="text-gradient-animate">Rapports d'heures</span></h1>
+        <h1 className="text-2xl font-bold text-white">Rapports d'heures</h1>
         <div className="no-print flex gap-2">
           <ExportButtons entries={(entries ?? []) as any} />
         </div>

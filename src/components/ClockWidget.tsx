@@ -108,21 +108,21 @@ export default function ClockWidget({
           <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
           <span className="text-sm font-semibold text-green-400 uppercase tracking-wider">Session en cours</span>
         </div>
-        <div className="font-mono text-5xl font-bold tabular-nums text-shimmer">{elapsed}</div>
+        <div className="font-mono text-5xl font-bold tabular-nums text-white">{elapsed}</div>
         <div className="space-y-1 text-sm text-slate-400">
           <p><span className="text-slate-500">Client : </span><span className="text-slate-200">{initial.clients?.name}</span></p>
           <p><span className="text-slate-500">Projet : </span><span className="text-slate-200">{initial.projects?.name}</span></p>
           {initial.notes && <p><span className="text-slate-500">Notes : </span>{initial.notes}</p>}
           <p>
             {initial.is_billable
-              ? <span className="badge-billable">💰 Facturable</span>
-              : <span className="badge-unbillable">Non-facturable</span>}
+              ? <span className="badge-billable">Facturable</span>
+              : <span className="badge-unbillable">Non facturable</span>}
           </p>
           <p className="text-slate-600 text-xs">Démarré à {formatTime(initial.started_at)}</p>
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <button onClick={handleClockOut} disabled={isPending} className="btn-danger w-full py-3 text-base">
-          {isPending ? 'Arrêt...' : '⏹  Terminer la session'}
+          {isPending ? 'Arrêt en cours...' : 'Terminer la session'}
         </button>
       </div>
     )
@@ -202,7 +202,7 @@ export default function ClockWidget({
       </button>
 
       <button onClick={handleClockIn} disabled={isPending} className="btn-primary w-full py-3 text-base">
-        {isPending ? 'Démarrage...' : '▶  Démarrer la session'}
+        {isPending ? 'Démarrage...' : 'Démarrer la session'}
       </button>
     </div>
   )
