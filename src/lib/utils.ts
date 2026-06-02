@@ -1,13 +1,13 @@
-export function formatDuration(startedAt: string, endedAt: string | null): string {
+export function formatDuration(startedAt: string, endedAt: string | null, totalPausedMs = 0): string {
   if (!endedAt) return 'En cours'
-  const ms = new Date(endedAt).getTime() - new Date(startedAt).getTime()
+  const ms = Math.max(0, new Date(endedAt).getTime() - new Date(startedAt).getTime() - totalPausedMs)
   const h = Math.floor(ms / 3_600_000)
   const m = Math.floor((ms % 3_600_000) / 60_000)
   return h > 0 ? `${h}h ${m.toString().padStart(2, '0')}m` : `${m}m`
 }
 
-export function formatDurationDecimal(startedAt: string, endedAt: string): string {
-  const ms = new Date(endedAt).getTime() - new Date(startedAt).getTime()
+export function formatDurationDecimal(startedAt: string, endedAt: string, totalPausedMs = 0): string {
+  const ms = Math.max(0, new Date(endedAt).getTime() - new Date(startedAt).getTime() - totalPausedMs)
   return (ms / 3_600_000).toFixed(2)
 }
 

@@ -51,16 +51,22 @@ CREATE TABLE IF NOT EXISTS public.projects (
 
 -- ── Entrées de temps ─────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.time_entries (
-  id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id     UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  client_id   UUID        REFERENCES public.clients(id),
-  project_id  UUID        REFERENCES public.projects(id),
-  started_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  ended_at    TIMESTAMPTZ,
-  notes       TEXT,
-  is_billable BOOLEAN     NOT NULL DEFAULT true,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id               UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id          UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  client_id        UUID        REFERENCES public.clients(id),
+  project_id       UUID        REFERENCES public.projects(id),
+  started_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  ended_at         TIMESTAMPTZ,
+  paused_at        TIMESTAMPTZ,
+  total_paused_ms  BIGINT      NOT NULL DEFAULT 0,
+  notes            TEXT,
+  is_billable      BOOLEAN     NOT NULL DEFAULT true,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- Migration : ajouter les colonnes de pause si la table existe déjà
+ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS paused_at       TIMESTAMPTZ;
+ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS total_paused_ms BIGINT NOT NULL DEFAULT 0;
 
 -- ── Helper : lit le rôle sans déclencher les politiques RLS ─
 CREATE OR REPLACE FUNCTION public.get_my_role()

@@ -101,8 +101,59 @@ export async function clockOutAction(entryId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
+  const { data: entry } = await supabase.from('time_entries')
+    .select('paused_at, total_paused_ms')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+
+  const now = new Date()
+  let totalPausedMs = entry?.total_paused_ms ?? 0
+  if (entry?.paused_at) {
+    totalPausedMs += now.getTime() - new Date(entry.paused_at).getTime()
+  }
+
   const { error } = await supabase.from('time_entries')
-    .update({ ended_at: new Date().toISOString() })
+    .update({ ended_at: now.toISOString(), paused_at: null, total_paused_ms: totalPausedMs })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function pauseEntryAction(entryId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { error } = await supabase.from('time_entries')
+    .update({ paused_at: new Date().toISOString() })
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .is('paused_at', null)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function resumeEntryAction(entryId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: entry } = await supabase.from('time_entries')
+    .select('paused_at, total_paused_ms')
+    .eq('id', entryId)
+    .eq('user_id', user.id)
+    .single()
+  if (!entry?.paused_at) return { error: 'La session n\'est pas en pause.' }
+
+  const additionalMs = Date.now() - new Date(entry.paused_at).getTime()
+  const newTotal = (entry.total_paused_ms ?? 0) + additionalMs
+
+  const { error } = await supabase.from('time_entries')
+    .update({ paused_at: null, total_paused_ms: newTotal })
     .eq('id', entryId)
     .eq('user_id', user.id)
   if (error) return { error: error.message }

@@ -8,6 +8,7 @@ export interface TimeEntry {
   id: string
   started_at: string
   ended_at: string | null
+  total_paused_ms?: number
   client_id: string | null
   project_id: string | null
   notes: string | null
@@ -36,14 +37,12 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
     )
   }
 
-  const totalMs = entries
-    .filter(e => e.ended_at)
-    .reduce((acc, e) => acc + (new Date(e.ended_at!).getTime() - new Date(e.started_at).getTime()), 0)
+  const workMs = (e: TimeEntry) =>
+    Math.max(0, new Date(e.ended_at!).getTime() - new Date(e.started_at).getTime() - (e.total_paused_ms ?? 0))
+  const totalMs = entries.filter(e => e.ended_at).reduce((acc, e) => acc + workMs(e), 0)
   const totalH = Math.floor(totalMs / 3_600_000)
   const totalM = Math.floor((totalMs % 3_600_000) / 60_000)
-  const billableMs = entries
-    .filter(e => e.ended_at && e.is_billable)
-    .reduce((acc, e) => acc + (new Date(e.ended_at!).getTime() - new Date(e.started_at).getTime()), 0)
+  const billableMs = entries.filter(e => e.ended_at && e.is_billable).reduce((acc, e) => acc + workMs(e), 0)
   const billableH = Math.floor(billableMs / 3_600_000)
   const billableM = Math.floor((billableMs % 3_600_000) / 60_000)
 
@@ -81,7 +80,7 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                   {e.ended_at ? formatTime(e.ended_at) : <span className="text-green-400 text-xs animate-pulse">En cours</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-200 whitespace-nowrap font-semibold">
-                  {formatDuration(e.started_at, e.ended_at)}
+                  {formatDuration(e.started_at, e.ended_at, e.total_paused_ms)}
                 </td>
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.clients?.name ?? '—'}</td>
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.projects?.name ?? '—'}</td>

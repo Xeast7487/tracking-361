@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useTransition } from 'react'
-import { clockInAction, clockOutAction, createClientAction, createProjectAction } from '@/app/actions'
+import { clockInAction, clockOutAction, pauseEntryAction, resumeEntryAction, createClientAction, createProjectAction } from '@/app/actions'
 import { formatTime } from '@/lib/utils'
 
 interface Client  { id: string; name: string }
@@ -9,6 +9,8 @@ interface Project { id: string; client_id: string; name: string }
 interface ActiveEntry {
   id: string
   started_at: string
+  paused_at: string | null
+  total_paused_ms: number
   clients:  { name: string } | null
   projects: { name: string } | null
   notes: string | null
@@ -46,14 +48,17 @@ export default function ClockWidget({
 
   const filteredProjects = projects.filter(p => p.client_id === clientId)
 
-  // Live timer
+  // Live timer — subtracts pause time so the counter freezes when paused
   useEffect(() => {
     if (!initial) return
     const tick = () => {
-      const diff = Date.now() - new Date(initial.started_at).getTime()
-      const h = Math.floor(diff / 3_600_000)
-      const m = Math.floor((diff % 3_600_000) / 60_000)
-      const s = Math.floor((diff % 60_000) / 1_000)
+      const totalMs = Date.now() - new Date(initial.started_at).getTime()
+      const pausedMs = (initial.total_paused_ms ?? 0) +
+        (initial.paused_at ? Date.now() - new Date(initial.paused_at).getTime() : 0)
+      const workMs = Math.max(0, totalMs - pausedMs)
+      const h = Math.floor(workMs / 3_600_000)
+      const m = Math.floor((workMs % 3_600_000) / 60_000)
+      const s = Math.floor((workMs % 60_000) / 1_000)
       setElapsed(`${h.toString().padStart(2,'0')}:${m.toString().padStart(2,'0')}:${s.toString().padStart(2,'0')}`)
     }
     tick()
@@ -100,15 +105,34 @@ export default function ClockWidget({
     })
   }
 
+  const handlePause = () => {
+    if (!initial) return
+    startTransition(async () => {
+      const res = await pauseEntryAction(initial.id)
+      if (res?.error) setError(res.error)
+    })
+  }
+
+  const handleResume = () => {
+    if (!initial) return
+    startTransition(async () => {
+      const res = await resumeEntryAction(initial.id)
+      if (res?.error) setError(res.error)
+    })
+  }
+
   // ── Active session view ──────────────────────────────────
   if (initial) {
+    const isPaused = !!initial.paused_at
     return (
       <div className="card space-y-4">
         <div className="flex items-center gap-2">
-          <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-          <span className="text-sm font-semibold text-green-400 uppercase tracking-wider">Session en cours</span>
+          <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-green-400 animate-pulse'}`} />
+          <span className={`text-sm font-semibold uppercase tracking-wider ${isPaused ? 'text-amber-400' : 'text-green-400'}`}>
+            {isPaused ? 'En pause' : 'Session en cours'}
+          </span>
         </div>
-        <div className="font-mono text-5xl font-bold tabular-nums text-white">{elapsed}</div>
+        <div className={`font-mono text-5xl font-bold tabular-nums ${isPaused ? 'text-slate-400' : 'text-white'}`}>{elapsed}</div>
         <div className="space-y-1 text-sm text-slate-400">
           <p><span className="text-slate-500">Client : </span><span className="text-slate-200">{initial.clients?.name}</span></p>
           <p><span className="text-slate-500">Projet : </span><span className="text-slate-200">{initial.projects?.name}</span></p>
@@ -121,9 +145,20 @@ export default function ClockWidget({
           <p className="text-slate-600 text-xs">Démarré à {formatTime(initial.started_at)}</p>
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <button onClick={handleClockOut} disabled={isPending} className="btn-danger w-full py-3 text-base">
-          {isPending ? 'Arrêt en cours...' : 'Terminer la session'}
-        </button>
+        <div className="flex gap-2">
+          {isPaused ? (
+            <button onClick={handleResume} disabled={isPending} className="btn-primary flex-1 py-3 text-base">
+              {isPending ? 'Reprise...' : '▶ Reprendre'}
+            </button>
+          ) : (
+            <button onClick={handlePause} disabled={isPending} className="btn-secondary flex-1 py-3 text-base">
+              {isPending ? 'Pause...' : '⏸ Pause'}
+            </button>
+          )}
+          <button onClick={handleClockOut} disabled={isPending} className="btn-danger flex-1 py-3 text-base">
+            {isPending ? 'Arrêt...' : 'Terminer'}
+          </button>
+        </div>
       </div>
     )
   }

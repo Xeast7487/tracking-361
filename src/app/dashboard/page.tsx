@@ -14,7 +14,7 @@ export default async function DashboardPage() {
   const [profileRes, activeRes, clientsRes, projectsRes, todayRes] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', user.id).single(),
     supabase.from('time_entries')
-      .select('id, started_at, notes, is_billable, clients(name), projects(name)')
+      .select('id, started_at, notes, is_billable, paused_at, total_paused_ms, clients(name), projects(name)')
       .eq('user_id', user.id)
       .is('ended_at', null)
       .maybeSingle(),
