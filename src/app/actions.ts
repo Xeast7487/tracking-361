@@ -277,6 +277,34 @@ export async function updateEntryAction(
   return {}
 }
 
+// ── Admin : suppression d'un client ──────────────────────
+
+export async function deleteClientAction(clientId: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('clients').delete().eq('id', clientId)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  revalidatePath('/admin/clients')
+  return { success: true }
+}
+
+// ── Admin : suppression d'un projet ──────────────────────
+
+export async function deleteProjectAction(projectId: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('projects').delete().eq('id', projectId)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  revalidatePath('/admin/clients')
+  return { success: true }
+}
+
 // ── Admin : suppression d'une entrée ─────────────────────
 
 export async function deleteEntryAction(entryId: string) {

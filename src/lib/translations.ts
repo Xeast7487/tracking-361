@@ -7,6 +7,7 @@ export const translations = {
       overview: "Vue d'ensemble",
       employees: 'Employés',
       reports: 'Rapports',
+      clients: 'Clients',
       dashboard: 'Tableau de bord',
       history: 'Mon historique',
       logout: 'Déconnexion',
@@ -146,6 +147,13 @@ export const translations = {
     deleteEntry: {
       confirm: 'Supprimer cette entrée ?',
     },
+    adminClients: {
+      title: 'Clients & Projets',
+      noClients: 'Aucun client pour le moment.',
+      noProjects: 'Aucun projet.',
+      deleteClientConfirm: 'Supprimer le client « {name} » ? Tous ses projets seront aussi supprimés.',
+      deleteProjectConfirm: 'Supprimer le projet « {name} » ?',
+    },
     userForm: {
       fullName: 'Nom complet',
       email: 'Courriel',
@@ -183,6 +191,7 @@ export const translations = {
       overview: 'Overview',
       employees: 'Employees',
       reports: 'Reports',
+      clients: 'Clients',
       dashboard: 'Dashboard',
       history: 'My History',
       logout: 'Logout',
@@ -321,6 +330,13 @@ export const translations = {
     },
     deleteEntry: {
       confirm: 'Delete this entry?',
+    },
+    adminClients: {
+      title: 'Clients & Projects',
+      noClients: 'No clients yet.',
+      noProjects: 'No projects.',
+      deleteClientConfirm: 'Delete client "{name}"? All its projects will also be deleted.',
+      deleteProjectConfirm: 'Delete project "{name}"?',
     },
     userForm: {
       fullName: 'Full name',

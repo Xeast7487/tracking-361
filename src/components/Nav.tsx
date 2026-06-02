@@ -25,6 +25,7 @@ export default function Nav({ fullName, role }: Props) {
         { href: '/admin',             label: t.overview },
         { href: '/admin/users',       label: t.employees },
         { href: '/admin/reports',     label: t.reports },
+        { href: '/admin/clients',     label: t.clients },
       ]
     : [
         { href: '/dashboard',         label: t.dashboard },
