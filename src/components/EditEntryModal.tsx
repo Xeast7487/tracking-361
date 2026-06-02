@@ -2,6 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { updateEntryAction, fetchClientsAndProjectsAction } from '@/app/actions'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/translations'
 
 interface EntryForEdit {
   id: string
@@ -29,6 +31,8 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
   const [clients, setClients]     = useState<Client[]>([])
   const [projects, setProjects]   = useState<Project[]>([])
   const [loaded, setLoaded]       = useState(false)
+  const { lang } = useLanguage()
+  const t = translations[lang].editEntry
 
   const [startedAt, setStartedAt] = useState(toLocal(entry.started_at))
   const [endedAt,   setEndedAt]   = useState(entry.ended_at ? toLocal(entry.ended_at) : '')
@@ -71,7 +75,7 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
       <button
         onClick={handleOpen}
         className="text-slate-600 hover:text-blue-400 transition text-xs px-2 py-1 rounded hover:bg-blue-900/20"
-        title="Modifier"
+        title={t.editTooltip}
       >
         ✏
       </button>
@@ -84,7 +88,7 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
           />
           <div className="relative z-10 card w-full max-w-lg animate-scale-in space-y-5">
             <div className="flex items-center justify-between">
-              <h2 className="font-bold text-white text-lg">Modifier l'entrée</h2>
+              <h2 className="font-bold text-white text-lg">{t.title}</h2>
               <button
                 onClick={() => setOpen(false)}
                 className="text-slate-400 hover:text-white transition text-2xl leading-none w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-700"
@@ -96,7 +100,7 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="label">Début</label>
+                  <label className="label">{t.start}</label>
                   <input
                     type="datetime-local"
                     value={startedAt}
@@ -106,7 +110,7 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
                   />
                 </div>
                 <div>
-                  <label className="label">Fin</label>
+                  <label className="label">{t.end}</label>
                   <input
                     type="datetime-local"
                     value={endedAt}
@@ -117,38 +121,38 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
               </div>
 
               <div>
-                <label className="label">Client</label>
+                <label className="label">{t.client}</label>
                 <select
                   value={clientId}
                   onChange={e => { setClientId(e.target.value); setProjectId('') }}
                   className="input"
                 >
-                  <option value="">— Aucun —</option>
+                  <option value="">{t.none}</option>
                   {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="label">Projet</label>
+                <label className="label">{t.project}</label>
                 <select
                   value={projectId}
                   onChange={e => setProjectId(e.target.value)}
                   className="input"
                   disabled={!clientId}
                 >
-                  <option value="">— Aucun —</option>
+                  <option value="">{t.none}</option>
                   {filteredProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
               </div>
 
               <div>
-                <label className="label">Notes</label>
+                <label className="label">{t.notes}</label>
                 <textarea
                   value={notes}
                   onChange={e => setNotes(e.target.value)}
                   rows={2}
                   className="input resize-none"
-                  placeholder="Description du travail..."
+                  placeholder={t.notesPlaceholder}
                 />
               </div>
 
@@ -157,7 +161,7 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
                   <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${billable ? 'left-5' : 'left-0.5'}`} />
                 </div>
                 <span className={`text-sm font-medium transition ${billable ? 'text-slate-200' : 'text-slate-500'}`}>
-                  Heures facturables
+                  {t.billableHours}
                 </span>
               </button>
 
@@ -167,10 +171,10 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
 
               <div className="flex gap-3 pt-1">
                 <button type="submit" disabled={isPending} className="btn-primary flex-1">
-                  {isPending ? 'Sauvegarde...' : 'Sauvegarder'}
+                  {isPending ? t.saving : t.save}
                 </button>
                 <button type="button" onClick={() => setOpen(false)} className="btn-secondary">
-                  Annuler
+                  {t.cancel}
                 </button>
               </div>
             </form>

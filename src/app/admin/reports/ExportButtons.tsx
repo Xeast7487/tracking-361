@@ -1,5 +1,8 @@
 'use client'
 
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/translations'
+
 interface Entry {
   started_at: string
   ended_at: string | null
@@ -11,27 +14,29 @@ interface Entry {
 }
 
 export default function ExportButtons({ entries }: { entries: Entry[] }) {
-  function exportCSV() {
-    const headers = ['Employé', 'Date', 'Heure début', 'Heure fin', 'Durée (h)', 'Client', 'Projet', 'Facturable', 'Notes']
+  const { lang } = useLanguage()
+  const t = translations[lang].export
+  const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
 
+  function exportCSV() {
     const rows = entries.map(e => {
       const start = new Date(e.started_at)
       const end   = e.ended_at ? new Date(e.ended_at) : null
       const durH  = end ? ((end.getTime() - start.getTime()) / 3_600_000).toFixed(2) : ''
       return [
         e.profiles?.full_name ?? '',
-        start.toLocaleDateString('fr-CA'),
-        start.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }),
-        end  ? end.toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' }) : 'En cours',
+        start.toLocaleDateString(locale),
+        start.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }),
+        end ? end.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' }) : t.inProgress,
         durH,
         e.clients?.name  ?? '',
         e.projects?.name ?? '',
-        e.is_billable ? 'Oui' : 'Non',
+        e.is_billable ? t.yes : t.no,
         e.notes ?? '',
       ]
     })
 
-    const csv = [headers, ...rows]
+    const csv = [t.csvHeaders, ...rows]
       .map(row => row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))
       .join('\n')
 
@@ -39,7 +44,7 @@ export default function ExportButtons({ entries }: { entries: Entry[] }) {
     const url  = URL.createObjectURL(blob)
     const a    = document.createElement('a')
     a.href     = url
-    a.download = `rapport_${new Date().toLocaleDateString('fr-CA')}.csv`
+    a.download = `${t.filename}_${new Date().toLocaleDateString(locale)}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
@@ -47,10 +52,10 @@ export default function ExportButtons({ entries }: { entries: Entry[] }) {
   return (
     <>
       <button onClick={exportCSV} className="btn-secondary text-sm">
-        ⬇ Exporter CSV
+        {t.exportCSV}
       </button>
       <button onClick={() => window.print()} className="btn-secondary text-sm">
-        🖨 Imprimer
+        {t.print}
       </button>
     </>
   )

@@ -1,5 +1,7 @@
-export function formatDuration(startedAt: string, endedAt: string | null, totalPausedMs = 0): string {
-  if (!endedAt) return 'En cours'
+import type { Lang } from './translations'
+
+export function formatDuration(startedAt: string, endedAt: string | null, totalPausedMs = 0, inProgressLabel = 'En cours'): string {
+  if (!endedAt) return inProgressLabel
   const ms = Math.max(0, new Date(endedAt).getTime() - new Date(startedAt).getTime() - totalPausedMs)
   const h = Math.floor(ms / 3_600_000)
   const m = Math.floor((ms % 3_600_000) / 60_000)
@@ -13,12 +15,14 @@ export function formatDurationDecimal(startedAt: string, endedAt: string, totalP
 
 const TZ = 'America/Toronto'
 
-export function formatTime(iso: string): string {
-  return new Date(iso).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit', timeZone: TZ })
+export function formatTime(iso: string, lang: Lang = 'fr'): string {
+  const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
+  return new Date(iso).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: TZ })
 }
 
-export function formatDate(iso: string): string {
-  return new Date(iso).toLocaleDateString('fr-CA', { year: 'numeric', month: 'short', day: 'numeric', timeZone: TZ })
+export function formatDate(iso: string, lang: Lang = 'fr'): string {
+  const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
+  return new Date(iso).toLocaleDateString(locale, { year: 'numeric', month: 'short', day: 'numeric', timeZone: TZ })
 }
 
 export function todayISO(): string {
@@ -27,6 +31,6 @@ export function todayISO(): string {
 
 export function weekStartISO(): string {
   const today = new Date(new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date()))
-  today.setDate(today.getDate() - today.getDay() + 1) // lundi
+  today.setDate(today.getDate() - today.getDay() + 1) // lundi / monday
   return today.toISOString().split('T')[0]
 }

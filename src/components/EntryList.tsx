@@ -3,6 +3,8 @@
 import { formatDate, formatTime, formatDuration } from '@/lib/utils'
 import DeleteEntryButton from './DeleteEntryButton'
 import EditEntryModal from './EditEntryModal'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/translations'
 
 export interface TimeEntry {
   id: string
@@ -26,13 +28,16 @@ interface Props {
 }
 
 export default function EntryList({ entries, showEmployee = false, isAdmin = false, allowEdit = false }: Props) {
+  const { lang } = useLanguage()
+  const t = translations[lang].entries
+
   if (entries.length === 0) {
     return (
       <div className="text-center py-12 text-slate-500">
         <svg className="mx-auto mb-3 opacity-30" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
         </svg>
-        <p className="text-sm">Aucune entrée pour cette période.</p>
+        <p className="text-sm">{t.noEntries}</p>
       </div>
     )
   }
@@ -54,15 +59,15 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-800/80 text-left">
-              {showEmployee && <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Employé</th>}
-              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Date</th>
-              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Début</th>
-              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Fin</th>
-              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Durée</th>
-              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Client</th>
-              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Projet</th>
-              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">Facturable</th>
-              <th className="px-4 py-3 font-semibold text-slate-400">Notes</th>
+              {showEmployee && <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.employee}</th>}
+              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.date}</th>
+              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.start}</th>
+              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.end}</th>
+              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.duration}</th>
+              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.client}</th>
+              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.project}</th>
+              <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.billable}</th>
+              <th className="px-4 py-3 font-semibold text-slate-400">{t.notes}</th>
               {showActions && <th className="px-4 py-3 w-20" />}
             </tr>
           </thead>
@@ -74,20 +79,20 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                     {e.profiles?.full_name ?? '—'}
                   </td>
                 )}
-                <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{formatDate(e.started_at)}</td>
-                <td className="px-4 py-3 text-slate-300 whitespace-nowrap font-mono">{formatTime(e.started_at)}</td>
+                <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{formatDate(e.started_at, lang)}</td>
+                <td className="px-4 py-3 text-slate-300 whitespace-nowrap font-mono">{formatTime(e.started_at, lang)}</td>
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap font-mono">
-                  {e.ended_at ? formatTime(e.ended_at) : <span className="text-green-400 text-xs animate-pulse">En cours</span>}
+                  {e.ended_at ? formatTime(e.ended_at, lang) : <span className="text-green-400 text-xs animate-pulse">{t.inProgress}</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-200 whitespace-nowrap font-semibold">
-                  {formatDuration(e.started_at, e.ended_at, e.total_paused_ms)}
+                  {formatDuration(e.started_at, e.ended_at, e.total_paused_ms, t.inProgress)}
                 </td>
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.clients?.name ?? '—'}</td>
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.projects?.name ?? '—'}</td>
                 <td className="px-4 py-3">
                   {e.is_billable
-                    ? <span className="badge-billable">Facturable</span>
-                    : <span className="badge-unbillable">Non facturé</span>}
+                    ? <span className="badge-billable">{t.billableYes}</span>
+                    : <span className="badge-unbillable">{t.billableNo}</span>}
                 </td>
                 <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{e.notes ?? ''}</td>
                 {showActions && (
@@ -120,15 +125,15 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
       {/* Summary */}
       <div className="mt-4 flex gap-6 text-sm">
         <div className="flex items-center gap-2">
-          <span className="text-slate-500">Total :</span>
+          <span className="text-slate-500">{t.total} :</span>
           <span className="font-bold text-white">{totalH}h {totalM.toString().padStart(2,'0')}m</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-slate-500">Facturable :</span>
+          <span className="text-slate-500">{t.billableTotal} :</span>
           <span className="font-bold text-green-400">{billableH}h {billableM.toString().padStart(2,'0')}m</span>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-slate-500">Entrées :</span>
+          <span className="text-slate-500">{t.entries} :</span>
           <span className="font-bold text-slate-300">{entries.length}</span>
         </div>
       </div>

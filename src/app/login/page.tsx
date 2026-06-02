@@ -2,10 +2,15 @@
 
 import { useState, useTransition } from 'react'
 import { loginAction } from '@/app/actions'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/translations'
 
 export default function LoginPage() {
   const [error, setError] = useState('')
   const [isPending, startTransition] = useTransition()
+  const { lang, setLang } = useLanguage()
+  const t = translations[lang].login
+  const langLabel = translations[lang].langSwitch
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -29,22 +34,22 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-2xl font-bold text-white">Agence 361</h1>
-          <p className="text-slate-400 text-sm mt-1 animate-fade-in animation-delay-300">Suivi des heures de travail</p>
+          <p className="text-slate-400 text-sm mt-1 animate-fade-in animation-delay-300">{t.subtitle}</p>
         </div>
 
         {/* Form */}
         <div className="card animate-fade-in-up animation-delay-150">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="label" htmlFor="email">Adresse courriel</label>
+              <label className="label" htmlFor="email">{t.email}</label>
               <input
                 id="email" name="email" type="email" required autoFocus
-                placeholder="votre@email.com"
+                placeholder={t.emailPlaceholder}
                 className="input"
               />
             </div>
             <div>
-              <label className="label" htmlFor="password">Mot de passe</label>
+              <label className="label" htmlFor="password">{t.password}</label>
               <input
                 id="password" name="password" type="password" required
                 placeholder="••••••••"
@@ -71,14 +76,24 @@ export default function LoginPage() {
                 </svg>
               </div>
               <span className="text-sm text-slate-400 group-hover:text-slate-300 transition-colors">
-                Se souvenir de moi
+                {t.rememberMe}
               </span>
             </label>
 
             <button type="submit" disabled={isPending} className="btn-primary w-full py-2.5">
-              {isPending ? 'Connexion...' : 'Se connecter'}
+              {isPending ? t.submitting : t.submit}
             </button>
           </form>
+        </div>
+
+        {/* Language toggle */}
+        <div className="text-center mt-4">
+          <button
+            onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
+            className="text-slate-500 hover:text-slate-300 text-xs font-semibold tracking-wide transition-colors"
+          >
+            {langLabel}
+          </button>
         </div>
       </div>
     </div>

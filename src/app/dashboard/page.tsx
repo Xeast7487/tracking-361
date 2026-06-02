@@ -3,13 +3,18 @@ import { redirect } from 'next/navigation'
 import ClockWidget from '@/components/ClockWidget'
 import EntryList from '@/components/EntryList'
 import { todayISO } from '@/lib/utils'
+import { getLang } from '@/lib/getLang'
+import { translations } from '@/lib/translations'
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const lang = await getLang()
+  const t = translations[lang].dashboard
   const today = todayISO()
+  const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
 
   const [profileRes, activeRes, clientsRes, projectsRes, todayRes] = await Promise.all([
     supabase.from('profiles').select('full_name').eq('id', user.id).single(),
@@ -29,7 +34,7 @@ export default async function DashboardPage() {
 
   const fullName = profileRes.data?.full_name
     ?? (user.user_metadata?.full_name as string | undefined)
-    ?? 'Employé'
+    ?? t.defaultName
   const activeEntry = activeRes.data ?? null
   const clients  = clientsRes.data  ?? []
   const projects = projectsRes.data ?? []
@@ -39,8 +44,8 @@ export default async function DashboardPage() {
   const localHour = parseInt(
     new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Toronto', hour: 'numeric', hourCycle: 'h23' }).format(now)
   )
-  const greeting = localHour < 12 ? 'Bonjour' : 'Bonsoir'
-  const dateStr = now.toLocaleDateString('fr-CA', { timeZone: 'America/Toronto', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
+  const greeting = localHour < 12 ? t.greetingMorning : t.greetingEvening
+  const dateStr = now.toLocaleDateString(locale, { timeZone: 'America/Toronto', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
     <div className="space-y-8">
@@ -62,7 +67,7 @@ export default async function DashboardPage() {
 
         {/* Today's entries */}
         <div className="space-y-3 animate-fade-in animation-delay-200">
-          <h2 className="font-semibold text-slate-300">Aujourd'hui</h2>
+          <h2 className="font-semibold text-slate-300">{t.today}</h2>
           <EntryList entries={todayEntries as any} allowEdit />
         </div>
       </div>

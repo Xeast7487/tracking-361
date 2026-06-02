@@ -4,6 +4,8 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logoutAction } from '@/app/actions'
 import { useTransition } from 'react'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/translations'
 
 interface Props {
   fullName: string
@@ -13,17 +15,20 @@ interface Props {
 export default function Nav({ fullName, role }: Props) {
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
+  const { lang, setLang } = useLanguage()
+  const t = translations[lang].nav
+  const langLabel = translations[lang].langSwitch
 
   const navLinks = role === 'admin'
     ? [
-        { href: '/dashboard', label: 'Pointer' },
-        { href: '/admin',     label: 'Vue d\'ensemble' },
-        { href: '/admin/users',   label: 'Employés' },
-        { href: '/admin/reports', label: 'Rapports' },
+        { href: '/dashboard',         label: t.pointer },
+        { href: '/admin',             label: t.overview },
+        { href: '/admin/users',       label: t.employees },
+        { href: '/admin/reports',     label: t.reports },
       ]
     : [
-        { href: '/dashboard',         label: 'Tableau de bord' },
-        { href: '/dashboard/history', label: 'Mon historique' },
+        { href: '/dashboard',         label: t.dashboard },
+        { href: '/dashboard/history', label: t.history },
       ]
 
   return (
@@ -57,7 +62,7 @@ export default function Nav({ fullName, role }: Props) {
           ))}
         </div>
 
-        {/* User + logout */}
+        {/* User + lang toggle + logout */}
         <div className="flex items-center gap-3 flex-shrink-0">
           <div className="hidden sm:flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-blue-600/20 border border-blue-600/40 flex items-center justify-center text-xs font-bold text-blue-400">
@@ -65,15 +70,25 @@ export default function Nav({ fullName, role }: Props) {
             </div>
             <span className="text-sm text-slate-300 max-w-[120px] truncate">{fullName}</span>
             {role === 'admin' && (
-              <span className="text-xs bg-blue-900/50 text-blue-400 border border-blue-800/50 px-1.5 py-0.5 rounded-full">Admin</span>
+              <span className="text-xs bg-blue-900/50 text-blue-400 border border-blue-800/50 px-1.5 py-0.5 rounded-full">{t.admin}</span>
             )}
           </div>
+
+          {/* Language toggle */}
+          <button
+            onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
+            className="btn-ghost text-xs px-2.5 py-1.5 font-semibold tracking-wide"
+            title={lang === 'fr' ? 'Switch to English' : 'Passer en français'}
+          >
+            {langLabel}
+          </button>
+
           <button
             onClick={() => startTransition(() => logoutAction())}
             disabled={isPending}
             className="btn-ghost text-xs px-2.5 py-1.5"
           >
-            {isPending ? '...' : 'Déconnexion'}
+            {isPending ? '...' : t.logout}
           </button>
         </div>
       </div>

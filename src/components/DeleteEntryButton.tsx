@@ -2,14 +2,18 @@
 
 import { useTransition } from 'react'
 import { deleteEntryAction } from '@/app/actions'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/translations'
 
 export default function DeleteEntryButton({ entryId }: { entryId: string }) {
   const [isPending, startTransition] = useTransition()
+  const { lang } = useLanguage()
+  const t = translations[lang].deleteEntry
 
   return (
     <button
       onClick={() => {
-        if (!confirm('Supprimer cette entrée ?')) return
+        if (!confirm(t.confirm)) return
         startTransition(async () => { await deleteEntryAction(entryId) })
       }}
       disabled={isPending}

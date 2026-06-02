@@ -3,6 +3,8 @@
 import { useState, useEffect, useTransition } from 'react'
 import { clockInAction, clockOutAction, pauseEntryAction, resumeEntryAction, createClientAction, createProjectAction } from '@/app/actions'
 import { formatTime } from '@/lib/utils'
+import { useLanguage } from '@/lib/LanguageContext'
+import { translations } from '@/lib/translations'
 
 interface Client  { id: string; name: string }
 interface Project { id: string; client_id: string; name: string }
@@ -29,18 +31,17 @@ export default function ClockWidget({
   const [isPending, startTransition] = useTransition()
   const [elapsed, setElapsed]       = useState('00:00:00')
   const [error, setError]           = useState('')
+  const { lang } = useLanguage()
+  const t = translations[lang].clock
 
-  // Local lists (updated on create)
   const [clients, setClients]   = useState(initialClients)
   const [projects, setProjects] = useState(initialProjects)
 
-  // Form
   const [clientId,   setClientId]   = useState('')
   const [projectId,  setProjectId]  = useState('')
   const [notes,      setNotes]      = useState('')
   const [billable,   setBillable]   = useState(true)
 
-  // Inline create
   const [showNewClient,  setShowNewClient]  = useState(false)
   const [newClientName,  setNewClientName]  = useState('')
   const [showNewProject, setShowNewProject] = useState(false)
@@ -48,7 +49,6 @@ export default function ClockWidget({
 
   const filteredProjects = projects.filter(p => p.client_id === clientId)
 
-  // Live timer — subtracts pause time so the counter freezes when paused
   useEffect(() => {
     if (!initial) return
     const tick = () => {
@@ -88,8 +88,8 @@ export default function ClockWidget({
   }
 
   const handleClockIn = () => {
-    if (!clientId)  { setError('Sélectionne un client.'); return }
-    if (!projectId) { setError('Sélectionne un projet.'); return }
+    if (!clientId)  { setError(t.selectClient); return }
+    if (!projectId) { setError(t.selectProject); return }
     setError('')
     startTransition(async () => {
       const res = await clockInAction(clientId, projectId, notes, billable)
@@ -129,34 +129,34 @@ export default function ClockWidget({
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-green-400 animate-pulse'}`} />
           <span className={`text-sm font-semibold uppercase tracking-wider ${isPaused ? 'text-amber-400' : 'text-green-400'}`}>
-            {isPaused ? 'En pause' : 'Session en cours'}
+            {isPaused ? t.onBreak : t.sessionInProgress}
           </span>
         </div>
         <div className={`font-mono text-5xl font-bold tabular-nums ${isPaused ? 'text-slate-400' : 'text-white'}`}>{elapsed}</div>
         <div className="space-y-1 text-sm text-slate-400">
-          <p><span className="text-slate-500">Client : </span><span className="text-slate-200">{initial.clients?.name}</span></p>
-          <p><span className="text-slate-500">Projet : </span><span className="text-slate-200">{initial.projects?.name}</span></p>
-          {initial.notes && <p><span className="text-slate-500">Notes : </span>{initial.notes}</p>}
+          <p><span className="text-slate-500">{t.clientLabel} : </span><span className="text-slate-200">{initial.clients?.name}</span></p>
+          <p><span className="text-slate-500">{t.projectLabel} : </span><span className="text-slate-200">{initial.projects?.name}</span></p>
+          {initial.notes && <p><span className="text-slate-500">{t.notesLabel} : </span>{initial.notes}</p>}
           <p>
             {initial.is_billable
-              ? <span className="badge-billable">Facturable</span>
-              : <span className="badge-unbillable">Non facturable</span>}
+              ? <span className="badge-billable">{t.billable}</span>
+              : <span className="badge-unbillable">{t.nonBillable}</span>}
           </p>
-          <p className="text-slate-600 text-xs">Démarré à {formatTime(initial.started_at)}</p>
+          <p className="text-slate-600 text-xs">{t.startedAt} {formatTime(initial.started_at, lang)}</p>
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         <div className="flex gap-2">
           {isPaused ? (
             <button onClick={handleResume} disabled={isPending} className="btn-primary flex-1 py-3 text-base">
-              {isPending ? 'Reprise...' : '▶ Reprendre'}
+              {isPending ? t.resuming : t.resume}
             </button>
           ) : (
             <button onClick={handlePause} disabled={isPending} className="btn-secondary flex-1 py-3 text-base">
-              {isPending ? 'Pause...' : '⏸ Pause'}
+              {isPending ? t.pausing : t.pause}
             </button>
           )}
           <button onClick={handleClockOut} disabled={isPending} className="btn-danger flex-1 py-3 text-base">
-            {isPending ? 'Arrêt...' : 'Terminer'}
+            {isPending ? t.stopping : t.stop}
           </button>
         </div>
       </div>
@@ -166,7 +166,7 @@ export default function ClockWidget({
   // ── Start session form ───────────────────────────────────
   return (
     <div className="card space-y-5">
-      <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Nouvelle session</p>
+      <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{t.newSession}</p>
 
       {error && (
         <p className="text-red-400 text-sm bg-red-900/20 border border-red-800/50 rounded-lg px-3 py-2">{error}</p>
@@ -174,54 +174,54 @@ export default function ClockWidget({
 
       {/* Client */}
       <div>
-        <label className="label">Client</label>
+        <label className="label">{t.client}</label>
         {showNewClient ? (
           <div className="flex gap-2">
             <input autoFocus value={newClientName} onChange={e => setNewClientName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addClient()}
-              placeholder="Nom du client" className="input" />
+              placeholder={t.clientName} className="input" />
             <button onClick={addClient} className="btn-primary px-3">✓</button>
             <button onClick={() => { setShowNewClient(false); setNewClientName('') }} className="btn-secondary px-3">✕</button>
           </div>
         ) : (
           <div className="flex gap-2">
             <select value={clientId} onChange={e => { setClientId(e.target.value); setProjectId('') }} className="input">
-              <option value="">Choisir un client...</option>
+              <option value="">{t.chooseClient}</option>
               {clients.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
             </select>
-            <button onClick={() => setShowNewClient(true)} className="btn-secondary px-3 whitespace-nowrap">+ Nouveau</button>
+            <button onClick={() => setShowNewClient(true)} className="btn-secondary px-3 whitespace-nowrap">{t.newBtn}</button>
           </div>
         )}
       </div>
 
       {/* Project */}
       <div>
-        <label className="label">Projet</label>
+        <label className="label">{t.project}</label>
         {showNewProject ? (
           <div className="flex gap-2">
             <input autoFocus value={newProjectName} onChange={e => setNewProjectName(e.target.value)}
               onKeyDown={e => e.key === 'Enter' && addProject()}
-              placeholder="Nom du projet" className="input" />
+              placeholder={t.projectName} className="input" />
             <button onClick={addProject} className="btn-primary px-3">✓</button>
             <button onClick={() => { setShowNewProject(false); setNewProjectName('') }} className="btn-secondary px-3">✕</button>
           </div>
         ) : (
           <div className="flex gap-2">
             <select value={projectId} onChange={e => setProjectId(e.target.value)} disabled={!clientId} className="input disabled:opacity-40">
-              <option value="">{clientId ? 'Choisir un projet...' : 'Sélectionne un client d\'abord'}</option>
+              <option value="">{clientId ? t.chooseProject : t.selectClientFirst}</option>
               {filteredProjects.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
             <button onClick={() => setShowNewProject(true)} disabled={!clientId}
-              className="btn-secondary px-3 whitespace-nowrap disabled:opacity-40">+ Nouveau</button>
+              className="btn-secondary px-3 whitespace-nowrap disabled:opacity-40">{t.newBtn}</button>
           </div>
         )}
       </div>
 
       {/* Notes */}
       <div>
-        <label className="label">Notes <span className="text-slate-600 font-normal">(optionnel)</span></label>
+        <label className="label">{t.notes} <span className="text-slate-600 font-normal">{t.optional}</span></label>
         <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-          placeholder="Description du travail effectué..."
+          placeholder={t.notesPlaceholder}
           className="input resize-none" />
       </div>
 
@@ -232,12 +232,12 @@ export default function ClockWidget({
           <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${billable ? 'left-5' : 'left-0.5'}`} />
         </div>
         <span className={`text-sm font-medium transition ${billable ? 'text-slate-200' : 'text-slate-500'}`}>
-          Heures facturables
+          {t.billableHours}
         </span>
       </button>
 
       <button onClick={handleClockIn} disabled={isPending} className="btn-primary w-full py-3 text-base">
-        {isPending ? 'Démarrage...' : 'Démarrer la session'}
+        {isPending ? t.starting : t.startSession}
       </button>
     </div>
   )
