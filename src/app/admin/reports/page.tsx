@@ -5,7 +5,7 @@ import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 
 interface Props {
-  searchParams: { from?: string; to?: string; user_id?: string; client_id?: string; billable?: string }
+  searchParams: { from?: string; to?: string; user_id?: string; client_id?: string; project_id?: string; billable?: string }
 }
 
 export default async function ReportsPage({ searchParams }: Props) {
@@ -14,15 +14,19 @@ export default async function ReportsPage({ searchParams }: Props) {
   const lang = await getLang()
   const t = translations[lang].adminReports
 
-  const to      = searchParams.to      ?? new Date().toISOString().split('T')[0]
-  const from    = searchParams.from    ?? (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().split('T')[0] })()
-  const userId   = searchParams.user_id   ?? ''
-  const clientId = searchParams.client_id ?? ''
-  const billable = searchParams.billable  ?? ''
+  const to        = searchParams.to        ?? new Date().toISOString().split('T')[0]
+  const from      = searchParams.from      ?? (() => { const d = new Date(); d.setDate(d.getDate() - 30); return d.toISOString().split('T')[0] })()
+  const userId    = searchParams.user_id    ?? ''
+  const clientId  = searchParams.client_id  ?? ''
+  const projectId = searchParams.project_id ?? ''
+  const billable  = searchParams.billable   ?? ''
 
-  const [profilesRes, clientsRes] = await Promise.all([
+  const [profilesRes, clientsRes, projectsRes] = await Promise.all([
     supabase.from('profiles').select('id, full_name').eq('is_active', true).order('full_name'),
     supabase.from('clients').select('id, name').order('name'),
+    clientId
+      ? supabase.from('projects').select('id, name').eq('client_id', clientId).order('name')
+      : supabase.from('projects').select('id, name').order('name'),
   ])
 
   let query = supabase
@@ -32,8 +36,9 @@ export default async function ReportsPage({ searchParams }: Props) {
     .lte('started_at', `${to}T23:59:59`)
     .order('started_at', { ascending: false })
 
-  if (userId)   query = query.eq('user_id', userId)
-  if (clientId) query = query.eq('client_id', clientId)
+  if (userId)    query = query.eq('user_id', userId)
+  if (clientId)  query = query.eq('client_id', clientId)
+  if (projectId) query = query.eq('project_id', projectId)
   if (billable === 'true')  query = query.eq('is_billable', true)
   if (billable === 'false') query = query.eq('is_billable', false)
 
@@ -49,7 +54,7 @@ export default async function ReportsPage({ searchParams }: Props) {
       </div>
 
       {/* Filters */}
-      <form className="card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 items-end no-print">
+      <form className="card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 items-end no-print">
         <div>
           <label className="label">{t.from}</label>
           <input type="date" name="from" defaultValue={from} className="input" />
@@ -73,6 +78,15 @@ export default async function ReportsPage({ searchParams }: Props) {
             <option value="">{t.all}</option>
             {(clientsRes.data ?? []).map(c => (
               <option key={c.id} value={c.id}>{c.name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className="label">{t.project}</label>
+          <select name="project_id" defaultValue={projectId} className="input">
+            <option value="">{t.all}</option>
+            {(projectsRes.data ?? []).map(p => (
+              <option key={p.id} value={p.id}>{p.name}</option>
             ))}
           </select>
         </div>
