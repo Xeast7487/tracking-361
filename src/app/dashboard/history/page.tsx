@@ -30,7 +30,7 @@ export default async function HistoryPage({ searchParams }: Props) {
 
   let query = supabase
     .from('time_entries')
-    .select('id, started_at, ended_at, notes, is_billable, client_id, project_id, clients(name), projects(name)')
+    .select('id, started_at, ended_at, notes, is_billable, total_paused_ms, client_id, project_id, clients(name), projects(name)')
     .eq('user_id', user.id)
     .gte('started_at', `${from}T00:00:00`)
     .lte('started_at', `${to}T23:59:59`)

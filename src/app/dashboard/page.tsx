@@ -26,7 +26,7 @@ export default async function DashboardPage() {
     supabase.from('clients').select('id, name').order('name'),
     supabase.from('projects').select('id, client_id, name').order('name'),
     supabase.from('time_entries')
-      .select('id, started_at, ended_at, notes, is_billable, client_id, project_id, clients(name), projects(name)')
+      .select('id, started_at, ended_at, notes, is_billable, total_paused_ms, client_id, project_id, clients(name), projects(name)')
       .eq('user_id', user.id)
       .gte('started_at', `${today}T00:00:00`)
       .order('started_at', { ascending: false }),
