@@ -96,7 +96,7 @@ export async function clockInAction(
   return { success: true }
 }
 
-export async function clockOutAction(entryId: string) {
+export async function clockOutAction(entryId: string, notes?: string) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
@@ -114,7 +114,7 @@ export async function clockOutAction(entryId: string) {
   }
 
   const { error } = await supabase.from('time_entries')
-    .update({ ended_at: now.toISOString(), paused_at: null, total_paused_ms: totalPausedMs })
+    .update({ ended_at: now.toISOString(), paused_at: null, total_paused_ms: totalPausedMs, ...(notes !== undefined && { notes: notes || null }) })
     .eq('id', entryId)
     .eq('user_id', user.id)
   if (error) return { error: error.message }

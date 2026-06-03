@@ -39,13 +39,15 @@ export default function ClockWidget({
 
   const [clientId,   setClientId]   = useState('')
   const [projectId,  setProjectId]  = useState('')
-  const [notes,      setNotes]      = useState('')
   const [billable,   setBillable]   = useState(true)
 
   const [showNewClient,  setShowNewClient]  = useState(false)
   const [newClientName,  setNewClientName]  = useState('')
   const [showNewProject, setShowNewProject] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
+
+  const [showStopForm, setShowStopForm] = useState(false)
+  const [stopNotes,    setStopNotes]    = useState('')
 
   const filteredProjects = projects.filter(p => p.client_id === clientId)
 
@@ -92,7 +94,7 @@ export default function ClockWidget({
     if (!projectId) { setError(t.selectProject); return }
     setError('')
     startTransition(async () => {
-      const res = await clockInAction(clientId, projectId, notes, billable)
+      const res = await clockInAction(clientId, projectId, '', billable)
       if (res?.error) setError(res.error)
     })
   }
@@ -100,8 +102,9 @@ export default function ClockWidget({
   const handleClockOut = () => {
     if (!initial) return
     startTransition(async () => {
-      const res = await clockOutAction(initial.id)
+      const res = await clockOutAction(initial.id, stopNotes)
       if (res?.error) setError(res.error)
+      else { setShowStopForm(false); setStopNotes('') }
     })
   }
 
@@ -145,20 +148,45 @@ export default function ClockWidget({
           <p className="text-slate-600 text-xs">{t.startedAt} {formatTime(initial.started_at, lang)}</p>
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
-        <div className="flex gap-2">
-          {isPaused ? (
-            <button onClick={handleResume} disabled={isPending} className="btn-primary flex-1 py-3 text-base">
-              {isPending ? t.resuming : t.resume}
+        {showStopForm ? (
+          <div className="space-y-3">
+            <div>
+              <label className="label">{t.addNotes}</label>
+              <textarea
+                autoFocus
+                value={stopNotes}
+                onChange={e => setStopNotes(e.target.value)}
+                rows={3}
+                placeholder={t.stopNotesPlaceholder}
+                className="input resize-none"
+              />
+            </div>
+            <div className="flex gap-2">
+              <button onClick={() => { setShowStopForm(false); setStopNotes('') }} disabled={isPending}
+                className="btn-secondary flex-1 py-3 text-base">
+                {t.cancelStop}
+              </button>
+              <button onClick={handleClockOut} disabled={isPending} className="btn-danger flex-1 py-3 text-base">
+                {isPending ? t.stopping : t.confirmStop}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex gap-2">
+            {isPaused ? (
+              <button onClick={handleResume} disabled={isPending} className="btn-primary flex-1 py-3 text-base">
+                {isPending ? t.resuming : t.resume}
+              </button>
+            ) : (
+              <button onClick={handlePause} disabled={isPending} className="btn-secondary flex-1 py-3 text-base">
+                {isPending ? t.pausing : t.pause}
+              </button>
+            )}
+            <button onClick={() => setShowStopForm(true)} disabled={isPending} className="btn-danger flex-1 py-3 text-base">
+              {t.stop}
             </button>
-          ) : (
-            <button onClick={handlePause} disabled={isPending} className="btn-secondary flex-1 py-3 text-base">
-              {isPending ? t.pausing : t.pause}
-            </button>
-          )}
-          <button onClick={handleClockOut} disabled={isPending} className="btn-danger flex-1 py-3 text-base">
-            {isPending ? t.stopping : t.stop}
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     )
   }
@@ -215,14 +243,6 @@ export default function ClockWidget({
               className="btn-secondary px-3 whitespace-nowrap disabled:opacity-40">{t.newBtn}</button>
           </div>
         )}
-      </div>
-
-      {/* Notes */}
-      <div>
-        <label className="label">{t.notes} <span className="text-slate-600 font-normal">{t.optional}</span></label>
-        <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2}
-          placeholder={t.notesPlaceholder}
-          className="input resize-none" />
       </div>
 
       {/* Billable toggle */}

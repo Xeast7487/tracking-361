@@ -110,6 +110,10 @@ export const translations = {
       stopping: 'Arrêt...',
       selectClient: 'Sélectionne un client.',
       selectProject: 'Sélectionne un projet.',
+      addNotes: 'Ajouter des notes (optionnel)',
+      stopNotesPlaceholder: 'Description du travail effectué...',
+      confirmStop: 'Confirmer et terminer',
+      cancelStop: 'Annuler',
     },
     entries: {
       noEntries: 'Aucune entrée pour cette période.',
@@ -294,6 +298,10 @@ export const translations = {
       stopping: 'Stopping...',
       selectClient: 'Please select a client.',
       selectProject: 'Please select a project.',
+      addNotes: 'Add notes (optional)',
+      stopNotesPlaceholder: 'Description of work done...',
+      confirmStop: 'Confirm and end',
+      cancelStop: 'Cancel',
     },
     entries: {
       noEntries: 'No entries for this period.',
