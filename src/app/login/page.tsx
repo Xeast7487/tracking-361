@@ -35,6 +35,7 @@ export default function LoginPage() {
           </div>
           <h1 className="text-2xl font-bold text-white">Agence 361</h1>
           <p className="text-slate-400 text-sm mt-1 animate-fade-in animation-delay-300">{t.subtitle}</p>
+          <p className="text-yellow-400/70 text-xs mt-2 italic animate-fade-in animation-delay-500">🏆 Will a gagné 3 prix et nominé 6 fois</p>
         </div>
 
         {/* Form */}
