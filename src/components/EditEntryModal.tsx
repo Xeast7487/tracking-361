@@ -86,19 +86,19 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="relative z-10 card w-full max-w-lg animate-scale-in space-y-5">
+          <div className="relative z-10 card w-full max-w-lg animate-scale-in space-y-5 overflow-y-auto max-h-[90dvh]">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-white text-lg">{t.title}</h2>
               <button
                 onClick={() => setOpen(false)}
-                className="text-slate-400 hover:text-white transition text-2xl leading-none w-8 h-8 flex items-center justify-center rounded-lg hover:bg-slate-700"
+                className="text-slate-400 hover:text-white transition text-2xl leading-none w-10 h-10 flex items-center justify-center rounded-lg hover:bg-slate-700"
               >
                 ×
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="label">{t.start}</label>
                   <input

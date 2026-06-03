@@ -55,7 +55,72 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
 
   return (
     <div>
-      <div className="overflow-x-auto rounded-xl border border-slate-700">
+      {/* ── Mobile card list (below sm) ───────────────────── */}
+      <div className="sm:hidden space-y-3">
+        {entries.map(e => (
+          <div key={e.id} className="bg-slate-800 border border-slate-700 rounded-xl p-4 space-y-3 shadow-[0_1px_8px_rgba(0,0,0,0.3)]">
+            {/* Top row: client/project + billable badge */}
+            <div className="flex items-start justify-between gap-2">
+              <div className="min-w-0">
+                {showEmployee && e.profiles?.full_name && (
+                  <p className="text-xs text-slate-500 font-medium mb-0.5">{e.profiles.full_name}</p>
+                )}
+                <p className="font-semibold text-white leading-tight truncate">{e.clients?.name ?? '—'}</p>
+                <p className="text-sm text-slate-400 truncate">{e.projects?.name ?? '—'}</p>
+              </div>
+              <div className="flex-shrink-0">
+                {e.is_billable
+                  ? <span className="badge-billable">{t.billableYes}</span>
+                  : <span className="badge-unbillable">{t.billableNo}</span>}
+              </div>
+            </div>
+
+            {/* Time row */}
+            <div className="flex items-center gap-3 text-sm text-slate-400">
+              <span className="text-slate-500 text-xs">{formatDate(e.started_at, lang)}</span>
+              <span className="font-mono text-xs">
+                {formatTime(e.started_at, lang)}
+                {' → '}
+                {e.ended_at
+                  ? formatTime(e.ended_at, lang)
+                  : <span className="text-green-400 animate-pulse">{t.inProgress}</span>}
+              </span>
+              <span className="ml-auto font-bold text-white font-mono text-sm">
+                {formatDuration(e.started_at, e.ended_at, e.total_paused_ms, t.inProgress)}
+              </span>
+            </div>
+
+            {/* Notes */}
+            {e.notes && (
+              <p className="text-xs text-slate-500 border-t border-slate-700/60 pt-2 leading-snug">{e.notes}</p>
+            )}
+
+            {/* Actions */}
+            {showActions && (
+              <div className="flex items-center gap-2 border-t border-slate-700/60 pt-2">
+                {allowEdit && (
+                  <EditEntryModal
+                    key={e.id + (e.ended_at ?? '')}
+                    entry={{
+                      id:         e.id,
+                      started_at: e.started_at,
+                      ended_at:   e.ended_at,
+                      client_id:  e.client_id,
+                      project_id: e.project_id,
+                      notes:      e.notes,
+                      is_billable: e.is_billable,
+                    }}
+                  />
+                )}
+                {isAdmin && <DeleteEntryButton entryId={e.id} />}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* ── Desktop table (sm and above) ──────────────────── */}
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-700">
         <table className="w-full text-sm">
           <thead>
             <tr className="bg-slate-800/80 text-left">
@@ -123,7 +188,7 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
       </div>
 
       {/* Summary */}
-      <div className="mt-4 flex gap-6 text-sm">
+      <div className="mt-4 flex flex-wrap gap-4 sm:gap-6 text-sm">
         <div className="flex items-center gap-2">
           <span className="text-slate-500">{t.total} :</span>
           <span className="font-bold text-white">{totalH}h {totalM.toString().padStart(2,'0')}m</span>

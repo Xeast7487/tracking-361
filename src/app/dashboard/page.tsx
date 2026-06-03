@@ -48,17 +48,17 @@ export default async function DashboardPage() {
   const dateStr = now.toLocaleDateString(locale, { timeZone: 'America/Toronto', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-8">
       {/* Header */}
       <div className="flex items-end justify-between animate-fade-in-down">
         <div>
-          <p className="text-slate-500 text-sm capitalize">{dateStr}</p>
-          <h1 className="text-2xl font-bold mt-1 text-white">{greeting}, {fullName.split(' ')[0]}</h1>
+          <p className="text-slate-500 text-xs sm:text-sm capitalize">{dateStr}</p>
+          <h1 className="text-xl sm:text-2xl font-bold mt-1 text-white">{greeting}, {fullName.split(' ')[0]}</h1>
         </div>
       </div>
 
       {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-6 items-start animate-fade-in-up animation-delay-100">
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-5 sm:gap-6 items-start animate-fade-in-up animation-delay-100">
         <ClockWidget
           activeEntry={activeEntry as any}
           clients={clients as any}
