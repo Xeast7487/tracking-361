@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import ManualEntryForm from './ManualEntryForm'
 import EntryList from '@/components/EntryList'
 import ExportButtons from './ExportButtons'
 import { getLang } from '@/lib/getLang'
@@ -11,6 +12,9 @@ interface Props {
 export default async function ReportsPage({ searchParams }: Props) {
   const supabase = await createSupabaseServerClient()
 
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
+  const isSuperAdmin = currentUser?.email === 'a.monier@agence361.com'
+
   const lang = await getLang()
   const t = translations[lang].adminReports
 
@@ -22,12 +26,14 @@ export default async function ReportsPage({ searchParams }: Props) {
   const billable  = searchParams.billable   ?? ''
   const webDept   = searchParams.web_dept   ?? ''
 
-  const [profilesRes, clientsRes, projectsRes] = await Promise.all([
-    supabase.from('profiles').select('id, full_name').eq('is_active', true).order('full_name'),
+  const [profilesRes, clientsRes, projectsRes, allProjectsRes, allClientsRes] = await Promise.all([
+    supabase.from('profiles').select('id, full_name, is_web_dept').eq('is_active', true).order('full_name'),
     supabase.from('clients').select('id, name').order('name'),
     clientId
-      ? supabase.from('projects').select('id, name').eq('client_id', clientId).order('name')
-      : supabase.from('projects').select('id, name').order('name'),
+      ? supabase.from('projects').select('id, name, client_id').eq('client_id', clientId).order('name')
+      : supabase.from('projects').select('id, name, client_id').order('name'),
+    supabase.from('projects').select('id, name, client_id').order('name'),
+    supabase.from('clients').select('id, name').order('name'),
   ])
 
   let query = supabase
@@ -64,6 +70,15 @@ export default async function ReportsPage({ searchParams }: Props) {
           <ExportButtons entries={(entries ?? []) as any} />
         </div>
       </div>
+
+      {/* Super Admin — Saisie manuelle */}
+      {isSuperAdmin && (
+        <ManualEntryForm
+          profiles={(profilesRes.data ?? []) as any}
+          clients={(allClientsRes.data ?? []) as any}
+          projects={(allProjectsRes.data ?? []) as any}
+        />
+      )}
 
       {/* Filters */}
       <form className="card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 items-end no-print">

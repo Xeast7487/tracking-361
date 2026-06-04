@@ -313,6 +313,47 @@ export async function deleteProjectAction(projectId: string) {
 
 // ── Admin : suppression d'une entrée ─────────────────────
 
+export async function addManualEntryAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.email !== 'a.monier@agence361.com') return { error: 'Accès refusé.' }
+
+  const targetUserId  = formData.get('target_user_id') as string
+  const clientId      = formData.get('client_id') as string
+  const projectId     = formData.get('project_id') as string
+  const dateStr       = formData.get('date') as string
+  const startTime     = formData.get('start_time') as string
+  const endTime       = formData.get('end_time') as string
+  const notes         = formData.get('notes') as string
+  const isBillable    = formData.get('is_billable') === 'true'
+  const chargeWebDept = formData.get('charge_web_dept') === 'true'
+
+  if (!targetUserId || !clientId || !projectId || !dateStr || !startTime || !endTime) {
+    return { error: 'Tous les champs obligatoires doivent être remplis.' }
+  }
+
+  const startedAt = new Date(`${dateStr}T${startTime}:00`)
+  const endedAt   = new Date(`${dateStr}T${endTime}:00`)
+
+  if (endedAt <= startedAt) return { error: "L'heure de fin doit être après l'heure de début." }
+
+  const { error } = await supabase.from('time_entries').insert({
+    user_id:         targetUserId,
+    client_id:       clientId,
+    project_id:      projectId,
+    started_at:      startedAt.toISOString(),
+    ended_at:        endedAt.toISOString(),
+    notes:           notes || null,
+    is_billable:     isBillable,
+    charge_web_dept: chargeWebDept,
+    total_paused_ms: 0,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/reports')
+  return { success: true }
+}
+
 export async function deleteEntryAction(entryId: string) {
   const supabase = await createSupabaseServerClient()
   const caller   = await requireAdmin()
