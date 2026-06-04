@@ -5,7 +5,7 @@ import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 
 interface Props {
-  searchParams: { from?: string; to?: string; user_id?: string; client_id?: string; project_id?: string; billable?: string }
+  searchParams: { from?: string; to?: string; user_id?: string; client_id?: string; project_id?: string; billable?: string; web_dept?: string }
 }
 
 export default async function ReportsPage({ searchParams }: Props) {
@@ -20,6 +20,7 @@ export default async function ReportsPage({ searchParams }: Props) {
   const clientId  = searchParams.client_id  ?? ''
   const projectId = searchParams.project_id ?? ''
   const billable  = searchParams.billable   ?? ''
+  const webDept   = searchParams.web_dept   ?? ''
 
   const [profilesRes, clientsRes, projectsRes] = await Promise.all([
     supabase.from('profiles').select('id, full_name').eq('is_active', true).order('full_name'),
@@ -31,7 +32,7 @@ export default async function ReportsPage({ searchParams }: Props) {
 
   let query = supabase
     .from('time_entries')
-    .select('id, started_at, ended_at, notes, is_billable, client_id, project_id, clients(name), projects(name), profiles(full_name)')
+    .select('id, started_at, ended_at, notes, is_billable, charge_web_dept, total_paused_ms, client_id, project_id, clients(name), projects(name), profiles(full_name, hourly_rate, is_web_dept)')
     .gte('started_at', `${from}T00:00:00`)
     .lte('started_at', `${to}T23:59:59`)
     .order('started_at', { ascending: false })
@@ -41,8 +42,19 @@ export default async function ReportsPage({ searchParams }: Props) {
   if (projectId) query = query.eq('project_id', projectId)
   if (billable === 'true')  query = query.eq('is_billable', true)
   if (billable === 'false') query = query.eq('is_billable', false)
+  if (webDept === 'true')   query = query.eq('charge_web_dept', true)
 
   const { data: entries } = await query
+
+  // Calcul coût département web
+  const webEntries = (entries ?? []).filter((e: any) => e.charge_web_dept)
+  const webCost = webEntries.reduce((sum: number, e: any) => {
+    if (!e.ended_at) return sum
+    const ms = new Date(e.ended_at).getTime() - new Date(e.started_at).getTime() - (e.total_paused_ms ?? 0)
+    const hours = Math.max(0, ms / 3_600_000)
+    const rate = e.profiles?.hourly_rate ?? 0
+    return sum + hours * rate
+  }, 0)
 
   return (
     <div className="space-y-6">
@@ -98,8 +110,30 @@ export default async function ReportsPage({ searchParams }: Props) {
             <option value="false">{t.nonBillable}</option>
           </select>
         </div>
+        <div>
+          <label className="label">{t.webDept}</label>
+          <select name="web_dept" defaultValue={webDept} className="input">
+            <option value="">{t.all}</option>
+            <option value="true">{t.webDeptOnly}</option>
+          </select>
+        </div>
         <button type="submit" className="btn-primary">{t.filter}</button>
       </form>
+
+      {webDept === 'true' && webEntries.length > 0 && (
+        <div className="card bg-orange-900/20 border border-orange-700/40">
+          <div className="flex items-center justify-between flex-wrap gap-3">
+            <div>
+              <p className="text-xs text-orange-400 uppercase tracking-wider font-semibold mb-1">{t.webDept}</p>
+              <p className="text-white font-semibold">{webEntries.length} entrée{webEntries.length > 1 ? 's' : ''} chargée{webEntries.length > 1 ? 's' : ''} au département web</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-orange-400 uppercase tracking-wider font-semibold mb-1">{t.cost}</p>
+              <p className="text-2xl font-bold text-orange-300">{webCost.toFixed(2)} $</p>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Print header */}
       <div className="hidden print:block mb-4">

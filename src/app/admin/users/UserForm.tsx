@@ -12,6 +12,7 @@ interface User {
   role: string
   hourly_rate: number | null
   is_active: boolean
+  is_web_dept: boolean
 }
 
 interface Props {
@@ -80,6 +81,14 @@ export default function UserForm({ mode, user }: Props) {
         <label className="label">{t.hourlyRate}</label>
         <input name="hourly_rate" type="number" step="0.01" min="0"
           defaultValue={user?.hourly_rate ?? ''} placeholder="25.00" className="input" />
+      </div>
+      <div className="flex items-center gap-3 col-span-full">
+        <input name="is_web_dept" type="checkbox" id="is_web_dept" value="true"
+          defaultChecked={user?.is_web_dept ?? false} className="w-4 h-4 accent-blue-500" />
+        <div>
+          <label htmlFor="is_web_dept" className="text-sm font-medium text-slate-200 cursor-pointer">{t.webDept}</label>
+          <p className="text-xs text-slate-500">{t.webDeptDesc}</p>
+        </div>
       </div>
       {mode === 'edit' && (
         <div>

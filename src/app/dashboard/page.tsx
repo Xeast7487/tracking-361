@@ -17,7 +17,7 @@ export default async function DashboardPage() {
   const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
 
   const [profileRes, activeRes, clientsRes, projectsRes, todayRes] = await Promise.all([
-    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name, is_web_dept').eq('id', user.id).single(),
     supabase.from('time_entries')
       .select('id, started_at, notes, is_billable, paused_at, total_paused_ms, clients(name), projects(name)')
       .eq('user_id', user.id)
@@ -32,7 +32,8 @@ export default async function DashboardPage() {
       .order('started_at', { ascending: false }),
   ])
 
-  const fullName = profileRes.data?.full_name
+  const isWebDept = profileRes.data?.is_web_dept ?? false
+  const fullName  = profileRes.data?.full_name
     ?? (user.user_metadata?.full_name as string | undefined)
     ?? t.defaultName
   const activeEntry = activeRes.data ?? null
@@ -63,6 +64,7 @@ export default async function DashboardPage() {
           activeEntry={activeEntry as any}
           clients={clients as any}
           projects={projects as any}
+          isWebDept={isWebDept}
         />
 
         {/* Today's entries */}

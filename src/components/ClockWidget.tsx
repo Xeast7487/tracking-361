@@ -23,10 +23,12 @@ export default function ClockWidget({
   activeEntry: initial,
   clients: initialClients,
   projects: initialProjects,
+  isWebDept,
 }: {
   activeEntry: ActiveEntry | null
   clients: Client[]
   projects: Project[]
+  isWebDept: boolean
 }) {
   const [isPending, startTransition] = useTransition()
   const [elapsed, setElapsed]       = useState('00:00:00')
@@ -39,7 +41,8 @@ export default function ClockWidget({
 
   const [clientId,   setClientId]   = useState('')
   const [projectId,  setProjectId]  = useState('')
-  const [billable,   setBillable]   = useState(true)
+  const [billable,       setBillable]       = useState(true)
+  const [chargeWebDept,  setChargeWebDept]  = useState(false)
 
   const [showNewClient,  setShowNewClient]  = useState(false)
   const [newClientName,  setNewClientName]  = useState('')
@@ -94,7 +97,7 @@ export default function ClockWidget({
     if (!projectId) { setError(t.selectProject); return }
     setError('')
     startTransition(async () => {
-      const res = await clockInAction(clientId, projectId, '', billable)
+      const res = await clockInAction(clientId, projectId, '', billable, chargeWebDept)
       if (res?.error) setError(res.error)
     })
   }
@@ -255,6 +258,18 @@ export default function ClockWidget({
           {t.billableHours}
         </span>
       </button>
+
+      {isWebDept && (
+        <button type="button" onClick={() => setChargeWebDept(b => !b)}
+          className="flex items-center gap-3 group">
+          <div className={`relative w-10 h-5 rounded-full transition ${chargeWebDept ? 'bg-orange-600' : 'bg-slate-600'}`}>
+            <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${chargeWebDept ? 'left-5' : 'left-0.5'}`} />
+          </div>
+          <span className={`text-sm font-medium transition ${chargeWebDept ? 'text-orange-300' : 'text-slate-500'}`}>
+            {t.chargeWebDept}
+          </span>
+        </button>
+      )}
 
       <button onClick={handleClockIn} disabled={isPending} className="btn-primary w-full py-3 text-base">
         {isPending ? t.starting : t.startSession}

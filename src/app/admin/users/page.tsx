@@ -7,7 +7,7 @@ export default async function UsersPage() {
   const supabase = await createSupabaseServerClient()
   const { data: users } = await supabase
     .from('profiles')
-    .select('id, full_name, email, role, hourly_rate, is_active, created_at')
+    .select('id, full_name, email, role, hourly_rate, is_active, is_web_dept, created_at')
     .order('created_at')
 
   const lang = await getLang()
