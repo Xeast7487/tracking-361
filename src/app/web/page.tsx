@@ -7,7 +7,7 @@ export default async function WebProjectsPage() {
   const supabase = await createSupabaseServerClient()
 
   const [clientsRes, projectsRes] = await Promise.all([
-    supabase.from('clients').select('id, name').order('name'),
+    supabase.from('clients').select('id, name').eq('is_web_client', true).order('name'),
     supabase.from('web_projects').select('*'),
   ])
 

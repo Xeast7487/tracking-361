@@ -3,6 +3,7 @@ import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 import DeleteClientButton from '@/components/DeleteClientButton'
 import DeleteProjectButton from '@/components/DeleteProjectButton'
+import WebClientToggle from '@/components/WebClientToggle'
 
 export default async function AdminClientsPage() {
   const supabase = await createSupabaseServerClient()
@@ -11,7 +12,7 @@ export default async function AdminClientsPage() {
 
   const { data: clients } = await supabase
     .from('clients')
-    .select('id, name, projects(id, name)')
+    .select('id, name, is_web_client, projects(id, name)')
     .order('name')
 
   return (
@@ -26,7 +27,13 @@ export default async function AdminClientsPage() {
             <div key={client.id} className="card space-y-3">
               <div className="flex items-center justify-between">
                 <h2 className="font-semibold text-white">{client.name}</h2>
-                <DeleteClientButton clientId={client.id} clientName={client.name} />
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="text-xs text-slate-500">Web</span>
+                    <WebClientToggle clientId={client.id} isWebClient={!!client.is_web_client} />
+                  </div>
+                  <DeleteClientButton clientId={client.id} clientName={client.name} />
+                </div>
               </div>
 
               {client.projects && client.projects.length > 0 ? (

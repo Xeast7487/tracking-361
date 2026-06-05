@@ -283,6 +283,23 @@ export async function updateEntryAction(
   return {}
 }
 
+// ── Admin : toggle client web ────────────────────────────
+
+export async function toggleWebClientAction(clientId: string, value: boolean) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase
+    .from('clients')
+    .update({ is_web_client: value })
+    .eq('id', clientId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/clients')
+  revalidatePath('/web')
+  return { success: true }
+}
+
 // ── Admin : suppression d'un client ──────────────────────
 
 export async function deleteClientAction(clientId: string) {
