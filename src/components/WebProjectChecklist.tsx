@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { toggleWebProjectStepAction } from '@/app/actions'
 
 type WebProject = {
@@ -161,27 +161,25 @@ export default function WebProjectChecklist({ clients, webProjects }: Props) {
   const [projects, setProjects] = useState<Record<string, WebProject>>(() =>
     Object.fromEntries(webProjects.map(p => [p.client_id, p]))
   )
-  const [, startTransition] = useTransition()
+  const [saving, setSaving] = useState<Set<string>>(new Set())
 
-  function toggle(clientId: string, field: string) {
+  async function toggle(clientId: string, field: string) {
+    const key = `${clientId}:${field}`
+    if (saving.has(key)) return
+
     const current = projects[clientId] ?? emptyProject(clientId)
     const oldValue = current[field as keyof WebProject] as boolean
     const newValue = !oldValue
 
-    setProjects(prev => ({
-      ...prev,
-      [clientId]: { ...current, [field]: newValue },
-    }))
+    setProjects(prev => ({ ...prev, [clientId]: { ...current, [field]: newValue } }))
+    setSaving(prev => new Set([...prev, key]))
 
-    startTransition(async () => {
-      const res = await toggleWebProjectStepAction(clientId, field, newValue)
-      if (res?.error) {
-        setProjects(prev => ({
-          ...prev,
-          [clientId]: { ...current, [field]: oldValue },
-        }))
-      }
-    })
+    const res = await toggleWebProjectStepAction(clientId, field, newValue)
+    if (res?.error) {
+      setProjects(prev => ({ ...prev, [clientId]: { ...current, [field]: oldValue } }))
+    }
+
+    setSaving(prev => { const n = new Set(prev); n.delete(key); return n })
   }
 
   return (
@@ -254,9 +252,10 @@ export default function WebProjectChecklist({ clients, webProjects }: Props) {
                         {phase.steps.map(step => {
                           const checked = proj[step.field as keyof WebProject] as boolean
                           return (
-                            <label
+                            <div
                               key={step.field}
                               className="flex items-center gap-3 px-2 py-1.5 rounded-lg cursor-pointer hover:bg-slate-700/30 transition-colors group"
+                              onClick={() => toggle(client.id, step.field)}
                             >
                               <div className={`w-4 h-4 rounded flex-shrink-0 flex items-center justify-center border transition-colors ${
                                 checked
@@ -272,13 +271,7 @@ export default function WebProjectChecklist({ clients, webProjects }: Props) {
                               <span className={`text-sm transition-colors ${checked ? 'text-slate-400 line-through' : 'text-slate-200'}`}>
                                 {step.label}
                               </span>
-                              <input
-                                type="checkbox"
-                                checked={checked}
-                                onChange={() => toggle(client.id, step.field)}
-                                className="sr-only"
-                              />
-                            </label>
+                            </div>
                           )
                         })}
                       </div>
