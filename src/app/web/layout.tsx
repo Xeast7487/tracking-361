@@ -1,16 +1,11 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import Nav from '@/components/Nav'
-import { getLang } from '@/lib/getLang'
-import { translations } from '@/lib/translations'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function WebLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-
-  const lang = await getLang()
-  const defaultName = translations[lang].dashboard.defaultName
 
   const { data: profile } = await supabase
     .from('profiles')
@@ -18,12 +13,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
     .eq('id', user.id)
     .single()
 
+  if (!profile || (profile.role !== 'admin' && !profile.is_web_dept)) {
+    redirect('/dashboard')
+  }
+
   return (
     <div className="min-h-screen">
       <Nav
-        fullName={profile?.full_name ?? defaultName}
-        role={profile?.role as 'employee' | 'admin'}
-        isWebDept={profile?.is_web_dept ?? false}
+        fullName={profile.full_name ?? ''}
+        role={profile.role as 'employee' | 'admin'}
+        isWebDept={true}
       />
       <main className="max-w-6xl mx-auto px-4 pt-5 pb-28 sm:pt-8 sm:pb-8">
         {children}

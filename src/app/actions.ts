@@ -354,6 +354,39 @@ export async function addManualEntryAction(formData: FormData) {
   return { success: true }
 }
 
+// ── Projets Web ───────────────────────────────────────────
+
+const VALID_WEB_FIELDS = new Set([
+  'p1_rencontre_client', 'p1_brief_ecrit', 'p1_contrat_signe', 'p1_collecte_assets', 'p1_acces_environnement',
+  'p2_recherche_moodboard', 'p2_architecture_site', 'p2_wireframes_1', 'p2_approbation_1', 'p2_wireframes_2', 'p2_approbation_2',
+  'p3_mise_en_place_env', 'p3_structure_gabarits', 'p3_integration_contenu', 'p3_responsive', 'p3_formulaires_fonct', 'p3_seo', 'p3_optimisation_perf',
+  'p4_staging_v1', 'p4_modifications_r1', 'p4_staging_v2', 'p4_modifications_r2', 'p4_approbation_finale',
+  'p5_tests_complets', 'p5_securite_performance', 'p5_mise_en_ligne', 'p5_surveillance', 'p5_formation_client',
+  'p5_remise_livrables', 'p5_indexation_google', 'p5_installation_pixels', 'p5_facturation',
+])
+
+export async function toggleWebProjectStepAction(clientId: string, field: string, value: boolean) {
+  if (!VALID_WEB_FIELDS.has(field)) return { error: 'Champ invalide.' }
+
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { data: profile } = await supabase
+    .from('profiles').select('role, is_web_dept').eq('id', user.id).single()
+  if (!profile || (profile.role !== 'admin' && !profile.is_web_dept)) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase
+    .from('web_projects')
+    .upsert({ client_id: clientId, [field]: value }, { onConflict: 'client_id' })
+
+  if (error) return { error: error.message }
+  revalidatePath('/web')
+  return { success: true }
+}
+
+// ── Admin : suppression d'une entrée ─────────────────────
+
 export async function deleteEntryAction(entryId: string) {
   const supabase = await createSupabaseServerClient()
   const caller   = await requireAdmin()
