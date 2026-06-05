@@ -398,7 +398,6 @@ export async function toggleWebProjectStepAction(clientId: string, field: string
     .upsert({ client_id: clientId, [field]: value }, { onConflict: 'client_id' })
 
   if (error) return { error: error.message }
-  revalidatePath('/web')
   return { success: true }
 }
 
