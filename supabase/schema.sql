@@ -112,3 +112,17 @@ CREATE POLICY "own_entries_insert" ON public.time_entries FOR INSERT WITH CHECK 
 CREATE POLICY "own_entries_update" ON public.time_entries FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "admin_entries_all"  ON public.time_entries FOR ALL
   USING (public.get_my_role() = 'admin');
+
+-- ── Wireframes ────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.wireframes (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  client_id   UUID REFERENCES public.clients(id) ON DELETE CASCADE,
+  name        TEXT NOT NULL DEFAULT 'Wireframe sans titre',
+  pages       JSONB NOT NULL DEFAULT '[]',
+  created_by  UUID REFERENCES public.profiles(id),
+  created_at  TIMESTAMPTZ DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ DEFAULT NOW()
+);
+ALTER TABLE public.wireframes ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "auth_wireframes_all" ON public.wireframes FOR ALL
+  TO authenticated USING (true) WITH CHECK (true);
