@@ -393,9 +393,20 @@ export async function toggleWebProjectStepAction(clientId: string, field: string
     .from('profiles').select('role, is_web_dept').eq('id', user.id).single()
   if (!profile || (profile.role !== 'admin' && !profile.is_web_dept)) return { error: 'Accès refusé.' }
 
+  // Ensure the row exists first (insert with all fields = false if new client).
+  // ignoreDuplicates means ON CONFLICT DO NOTHING — existing rows are left untouched.
+  const defaults: Record<string, string | boolean> = { client_id: clientId }
+  for (const f of VALID_WEB_FIELDS) defaults[f] = false
+  const { error: initError } = await supabase
+    .from('web_projects')
+    .upsert(defaults, { onConflict: 'client_id', ignoreDuplicates: true })
+  if (initError) return { error: initError.message }
+
+  // Now update only the target field on the guaranteed-existing row.
   const { error } = await supabase
     .from('web_projects')
-    .upsert({ client_id: clientId, [field]: value }, { onConflict: 'client_id' })
+    .update({ [field]: value })
+    .eq('client_id', clientId)
 
   if (error) return { error: error.message }
   return { success: true }

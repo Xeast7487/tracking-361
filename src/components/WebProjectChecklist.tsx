@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { toggleWebProjectStepAction } from '@/app/actions'
 
 type WebProject = {
@@ -161,25 +161,32 @@ export default function WebProjectChecklist({ clients, webProjects }: Props) {
   const [projects, setProjects] = useState<Record<string, WebProject>>(() =>
     Object.fromEntries(webProjects.map(p => [p.client_id, p]))
   )
-  const [saving, setSaving] = useState<Set<string>>(new Set())
+  const savingRef = useRef<Set<string>>(new Set())
 
   async function toggle(clientId: string, field: string) {
     const key = `${clientId}:${field}`
-    if (saving.has(key)) return
+    if (savingRef.current.has(key)) return
+    savingRef.current.add(key)
 
-    const current = projects[clientId] ?? emptyProject(clientId)
-    const oldValue = current[field as keyof WebProject] as boolean
-    const newValue = !oldValue
+    const currentValue = ((projects[clientId] ?? emptyProject(clientId))[field as keyof WebProject]) as boolean
+    const newValue = !currentValue
 
-    setProjects(prev => ({ ...prev, [clientId]: { ...current, [field]: newValue } }))
-    setSaving(prev => new Set([...prev, key]))
+    setProjects(prev => {
+      const latest = prev[clientId] ?? emptyProject(clientId)
+      return { ...prev, [clientId]: { ...latest, [field]: newValue } }
+    })
 
     const res = await toggleWebProjectStepAction(clientId, field, newValue)
     if (res?.error) {
-      setProjects(prev => ({ ...prev, [clientId]: { ...current, [field]: oldValue } }))
+      console.error('[WebProjectChecklist] toggle error:', res.error)
+      alert(`Erreur: ${res.error}`)
+      setProjects(prev => ({
+        ...prev,
+        [clientId]: { ...(prev[clientId] ?? emptyProject(clientId)), [field]: currentValue },
+      }))
     }
 
-    setSaving(prev => { const n = new Set(prev); n.delete(key); return n })
+    savingRef.current.delete(key)
   }
 
   return (
