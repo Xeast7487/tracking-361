@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { todayISO, weekStartISO } from '@/lib/utils'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
+import AdminClockOutButton from '@/components/AdminClockOutButton'
 
 export default async function AdminOverviewPage() {
   const supabase = await createSupabaseServerClient()
@@ -120,6 +121,7 @@ export default async function AdminOverviewPage() {
                 <span className="text-slate-400 text-xs whitespace-nowrap">
                   {t.since} {new Date(s.started_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'America/Toronto' })}
                 </span>
+                <AdminClockOutButton entryId={s.id} label={t.punchOut} />
               </div>
             ))}
           </div>

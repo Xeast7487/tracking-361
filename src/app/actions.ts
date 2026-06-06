@@ -401,6 +401,35 @@ export async function toggleWebProjectStepAction(clientId: string, field: string
   return { success: true }
 }
 
+// ── Admin : punch out forcé ───────────────────────────────
+
+export async function adminClockOutAction(entryId: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { data: entry } = await supabase.from('time_entries')
+    .select('paused_at, total_paused_ms')
+    .eq('id', entryId)
+    .is('ended_at', null)
+    .single()
+
+  if (!entry) return { error: 'Session introuvable.' }
+
+  const now = new Date()
+  let totalPausedMs = entry.total_paused_ms ?? 0
+  if (entry.paused_at) {
+    totalPausedMs += now.getTime() - new Date(entry.paused_at).getTime()
+  }
+
+  const { error } = await supabase.from('time_entries')
+    .update({ ended_at: now.toISOString(), paused_at: null, total_paused_ms: totalPausedMs })
+    .eq('id', entryId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 // ── Admin : suppression d'une entrée ─────────────────────
 
 export async function deleteEntryAction(entryId: string) {
