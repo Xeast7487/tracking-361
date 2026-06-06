@@ -176,6 +176,7 @@ export default function WebProjectChecklist({ clients, webProjects }: Props) {
 
     const res = await toggleWebProjectStepAction(clientId, field, newValue)
     if (res?.error) {
+      console.error('[WebChecklist] Erreur toggle:', res.error, { clientId, field, newValue })
       setProjects(prev => ({ ...prev, [clientId]: { ...(prev[clientId] ?? emptyProject(clientId)), [field]: oldValue } }))
     }
 
