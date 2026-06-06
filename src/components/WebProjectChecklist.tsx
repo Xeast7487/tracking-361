@@ -171,12 +171,12 @@ export default function WebProjectChecklist({ clients, webProjects }: Props) {
     const oldValue = current[field as keyof WebProject] as boolean
     const newValue = !oldValue
 
-    setProjects(prev => ({ ...prev, [clientId]: { ...current, [field]: newValue } }))
+    setProjects(prev => ({ ...prev, [clientId]: { ...(prev[clientId] ?? emptyProject(clientId)), [field]: newValue } }))
     setSaving(prev => new Set([...prev, key]))
 
     const res = await toggleWebProjectStepAction(clientId, field, newValue)
     if (res?.error) {
-      setProjects(prev => ({ ...prev, [clientId]: { ...current, [field]: oldValue } }))
+      setProjects(prev => ({ ...prev, [clientId]: { ...(prev[clientId] ?? emptyProject(clientId)), [field]: oldValue } }))
     }
 
     setSaving(prev => { const n = new Set(prev); n.delete(key); return n })
