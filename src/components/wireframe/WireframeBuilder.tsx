@@ -29,6 +29,7 @@ export default function WireframeBuilder({ wireframe, clients }: Props) {
   const [activePageIdx, setActivePageIdx] = useState(0)
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const [copied, setCopied] = useState(false)
   const [isPending, startTransition] = useTransition()
   const [editingPageName, setEditingPageName] = useState<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -131,6 +132,18 @@ export default function WireframeBuilder({ wireframe, clients }: Props) {
     }))
   }
 
+  function copyShareLink() {
+    const url = `${window.location.origin}/share/${wireframe.id}`
+    navigator.clipboard.writeText(url).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2500)
+    })
+  }
+
+  function openPDF() {
+    window.open(`${window.location.origin}/share/${wireframe.id}`, '_blank')
+  }
+
   const statusColor = saveStatus === 'saved' ? 'text-green-400' : saveStatus === 'error' ? 'text-red-400' : saveStatus === 'saving' ? 'text-slate-400' : 'text-slate-600'
   const statusText = saveStatus === 'saved' ? '✓ Sauvegardé' : saveStatus === 'error' ? '✗ Erreur' : saveStatus === 'saving' ? 'Sauvegarde...' : ''
 
@@ -152,6 +165,22 @@ export default function WireframeBuilder({ wireframe, clients }: Props) {
         <span className="text-xs text-slate-500">{clientName}</span>
         <div className="flex-1" />
         <span className={`text-xs ${statusColor} min-w-24 text-right`}>{statusText}</span>
+        <button
+          onClick={copyShareLink}
+          className={`flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors ${
+            copied
+              ? 'bg-green-600 text-white'
+              : 'bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white'
+          }`}
+        >
+          {copied ? '✓ Lien copié !' : '🔗 Partager'}
+        </button>
+        <button
+          onClick={openPDF}
+          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-500 text-white transition-colors"
+        >
+          📄 Exporter PDF
+        </button>
         <div className="flex items-center gap-1.5 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1">
           <span className="text-xs text-slate-400">{pages.length} page{pages.length !== 1 ? 's' : ''}</span>
           <span className="text-slate-600">·</span>
