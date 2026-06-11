@@ -117,29 +117,38 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
   return (
     <>
       {/* ── Top navigation bar ────────────────────────────── */}
-      <nav className="sticky top-0 z-50 bg-slate-900/90 backdrop-blur border-b border-slate-800">
-        <div className="max-w-6xl mx-auto px-4 h-14 flex items-center gap-4">
+      <nav className="sticky top-0 z-50 bg-slate-950/95 backdrop-blur-md border-b border-slate-800/60 shadow-xl shadow-black/20">
+        {/* Gradient accent line */}
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-blue-600 via-indigo-500 to-blue-400" />
+
+        <div className="max-w-6xl mx-auto px-5 h-16 flex items-center gap-5">
           {/* Logo */}
-          <Link href="/dashboard" className="flex items-center gap-2 flex-shrink-0">
-            <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
+          <Link href="/dashboard" className="flex items-center gap-3 flex-shrink-0 group">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-blue-600/30 group-hover:shadow-blue-500/50 transition-shadow">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
                 <circle cx="12" cy="12" r="10"/>
                 <polyline points="12 6 12 12 16 14"/>
               </svg>
             </div>
-            <span className="font-bold text-sm text-white">Agence 361</span>
+            <div className="flex flex-col leading-none">
+              <span className="text-[10px] font-medium text-slate-500 uppercase tracking-[0.15em]">Agence</span>
+              <span className="font-bold text-white text-base tracking-tight leading-tight">361</span>
+            </div>
           </Link>
 
+          {/* Divider */}
+          <div className="hidden md:block w-px h-6 bg-slate-700/60 flex-shrink-0" />
+
           {/* Desktop nav links */}
-          <div className="hidden md:flex items-center gap-1 flex-1">
+          <div className="hidden md:flex items-center gap-0.5 flex-1">
             {navLinks.map(l => (
               <Link
                 key={l.href}
                 href={l.href}
-                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
+                className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-all duration-150 ${
                   pathname === l.href
-                    ? 'bg-slate-800 text-white font-semibold'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800'
+                    ? 'bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/25 shadow-sm'
+                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/70'
                 }`}
               >
                 {l.label}
@@ -153,25 +162,30 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
           {/* Right section */}
           <div className="flex items-center gap-2 flex-shrink-0">
             {/* User info – desktop */}
-            <div className="hidden md:flex items-center gap-2">
-              <div className="w-7 h-7 rounded-full bg-blue-600/20 border border-blue-600/40 flex items-center justify-center text-xs font-bold text-blue-400">
-                {fullName.charAt(0).toUpperCase()}
+            <div className="hidden md:flex items-center gap-3">
+              <div className="w-px h-5 bg-slate-700/60" />
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/25 to-indigo-600/25 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-300 shadow-sm">
+                  {fullName.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex flex-col leading-none gap-0.5">
+                  <span className="text-xs font-semibold text-slate-200 max-w-[110px] truncate">{fullName}</span>
+                  {role === 'admin' && (
+                    <span className="text-[10px] font-medium text-blue-400/80">{t.admin}</span>
+                  )}
+                </div>
               </div>
-              <span className="text-sm text-slate-300 max-w-[120px] truncate">{fullName}</span>
-              {role === 'admin' && (
-                <span className="text-xs bg-blue-900/50 text-blue-400 border border-blue-800/50 px-1.5 py-0.5 rounded-full">{t.admin}</span>
-              )}
             </div>
 
             {/* User avatar – mobile */}
-            <div className="md:hidden w-8 h-8 rounded-full bg-blue-600/20 border border-blue-600/40 flex items-center justify-center text-xs font-bold text-blue-400">
+            <div className="md:hidden w-8 h-8 rounded-full bg-gradient-to-br from-blue-500/25 to-indigo-600/25 border border-blue-500/30 flex items-center justify-center text-xs font-bold text-blue-300">
               {fullName.charAt(0).toUpperCase()}
             </div>
 
             {/* Language toggle */}
             <button
               onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
-              className="btn-ghost text-xs px-2.5 py-1.5 font-semibold tracking-wide"
+              className="text-xs px-2.5 py-1.5 rounded-md font-semibold tracking-wide text-slate-400 hover:text-slate-200 hover:bg-slate-800/80 border border-transparent hover:border-slate-700/60 transition-all"
               title={lang === 'fr' ? 'Switch to English' : 'Passer en français'}
             >
               {langLabel}
@@ -181,7 +195,7 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
             <button
               onClick={() => startTransition(() => logoutAction())}
               disabled={isPending}
-              className="hidden md:flex btn-ghost text-xs px-2.5 py-1.5"
+              className="hidden md:flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-md font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/8 border border-transparent hover:border-red-500/20 transition-all"
             >
               {isPending ? '...' : t.logout}
             </button>
@@ -190,19 +204,22 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
       </nav>
 
       {/* ── Mobile bottom navigation bar ─────────────────── */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-slate-900/95 backdrop-blur border-t border-slate-800"
+      <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-slate-950/98 backdrop-blur-md border-t border-slate-800/70 shadow-[0_-4px_24px_rgba(0,0,0,0.4)]"
            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
         <div className="flex items-stretch">
           {navLinks.map(l => (
             <Link
               key={l.href}
               href={l.href}
-              className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors min-w-0 ${
+              className={`flex-1 flex flex-col items-center justify-center gap-1.5 py-3 transition-colors min-w-0 relative ${
                 pathname === l.href
                   ? 'text-blue-400'
                   : 'text-slate-500 active:text-slate-300'
               }`}
             >
+              {pathname === l.href && (
+                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-[2px] bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full" />
+              )}
               {l.icon}
               <span className="text-[10px] font-medium leading-none truncate px-0.5 max-w-full">
                 {l.mobile}
@@ -214,7 +231,7 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
           <button
             onClick={() => startTransition(() => logoutAction())}
             disabled={isPending}
-            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-500 active:text-slate-300 transition-colors"
+            className="flex-1 flex flex-col items-center justify-center gap-1.5 py-3 text-slate-500 active:text-slate-300 transition-colors"
           >
             <IconLogout />
             <span className="text-[10px] font-medium leading-none">
