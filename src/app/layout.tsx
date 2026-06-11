@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '@/lib/LanguageContext'
 import { getLang } from '@/lib/getLang'
+import MouseFollower from '@/components/MouseFollower'
 
 export const metadata: Metadata = {
   title: 'Agence 361',
@@ -14,6 +15,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
     <html lang={lang}>
       <body>
         <LanguageProvider initial={lang}>
+          <MouseFollower />
           {children}
         </LanguageProvider>
       </body>
