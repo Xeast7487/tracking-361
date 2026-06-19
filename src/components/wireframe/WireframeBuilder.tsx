@@ -332,7 +332,7 @@ export default function WireframeBuilder({ wireframe, clients }: Props) {
                     value={selectedBlock.note}
                     onChange={e => updateBlockNote(selectedBlock.id, e.target.value)}
                   />
-                  <p className="text-xs text-slate-600 mt-1">Cette note sera utilisée par Claude pour générer le contenu réel.</p>
+                  <p className="text-xs text-slate-600 mt-1">Cette note sera utilisée pour générer le contenu réel.</p>
                 </div>
 
                 <div className="pt-2 border-t border-slate-700">
