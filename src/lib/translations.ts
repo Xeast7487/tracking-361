@@ -50,6 +50,10 @@ export const translations = {
       punchOut: 'Punch out',
       viewReports: 'Voir les rapports',
       manageEmployees: 'Gérer les employés',
+      longBreakTitle: 'Pause prolongée',
+      longBreakDesc: (n: number) => `${n} employé${n > 1 ? 's' : ''} en pause depuis plus de 45 min`,
+      onBreak: 'En pause',
+      onBreakFor: 'En pause depuis',
     },
     adminUsers: {
       title: 'Gestion des employés',
@@ -247,6 +251,10 @@ export const translations = {
       punchOut: 'Punch out',
       viewReports: 'View reports',
       manageEmployees: 'Manage employees',
+      longBreakTitle: 'Extended break',
+      longBreakDesc: (n: number) => `${n} employee${n > 1 ? 's' : ''} on break for over 45 min`,
+      onBreak: 'On break',
+      onBreakFor: 'On break for',
     },
     adminUsers: {
       title: 'Employee Management',
