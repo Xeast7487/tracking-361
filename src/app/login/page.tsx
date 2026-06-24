@@ -107,7 +107,6 @@ export default function LoginPage() {
           <div className="mt-4 bg-slate-900/40 border border-slate-800/60 rounded-xl px-4 py-3 space-y-1.5 backdrop-blur-sm">
             <p className="text-yellow-400/70 text-xs italic animate-fade-in animation-delay-300">🏆 Will a gagné 3 prix et nominé 6 fois</p>
             <p className="text-purple-400/70 text-xs italic animate-fade-in animation-delay-500">⚖️ Adam lui a remporté le prix du plus grand nombre de visites au notaire</p>
-            <p className="text-green-400/70 text-xs italic animate-fade-in animation-delay-700">💻 Mihaja mange du code comme Nick mange de thubs</p>
           </div>
         </div>
 
