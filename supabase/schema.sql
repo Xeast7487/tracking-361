@@ -67,6 +67,9 @@ CREATE TABLE IF NOT EXISTS public.time_entries (
 -- Migration : ajouter les colonnes de pause si la table existe déjà
 ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS paused_at       TIMESTAMPTZ;
 ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS total_paused_ms BIGINT NOT NULL DEFAULT 0;
+-- Migration : facturation client
+ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS charge_client      BOOLEAN    NOT NULL DEFAULT false;
+ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS client_hourly_rate DECIMAL(10,2);
 
 -- ── Helper : lit le rôle sans déclencher les politiques RLS ─
 CREATE OR REPLACE FUNCTION public.get_my_role()

@@ -45,6 +45,10 @@
     @apply inline-flex items-center gap-1 px-2 py-0.5 bg-slate-700/60 text-slate-400
            text-xs font-semibold rounded-full border border-slate-600/50;
   }
+  .badge-client-billing {
+    @apply inline-flex items-center gap-1 px-2 py-0.5 bg-emerald-900/40 text-emerald-400
+           text-xs font-semibold rounded-full border border-emerald-800/50;
+  }
 }
 
 /* ─── Keyframes ──────────────────────────────────────────── */

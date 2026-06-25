@@ -13,6 +13,8 @@ interface EntryForEdit {
   project_id: string | null
   notes: string | null
   is_billable: boolean
+  charge_client: boolean
+  client_hourly_rate: number | null
 }
 
 interface Client  { id: string; name: string }
@@ -38,8 +40,10 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
   const [endedAt,   setEndedAt]   = useState(entry.ended_at ? toLocal(entry.ended_at) : '')
   const [clientId,  setClientId]  = useState(entry.client_id ?? '')
   const [projectId, setProjectId] = useState(entry.project_id ?? '')
-  const [notes,     setNotes]     = useState(entry.notes ?? '')
-  const [billable,  setBillable]  = useState(entry.is_billable)
+  const [notes,           setNotes]           = useState(entry.notes ?? '')
+  const [billable,        setBillable]        = useState(entry.is_billable)
+  const [chargeClient,    setChargeClient]    = useState(entry.charge_client)
+  const [clientHourlyRate, setClientHourlyRate] = useState(entry.client_hourly_rate?.toString() ?? '')
 
   const filteredProjects = projects.filter(p => p.client_id === clientId)
 
@@ -58,12 +62,14 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
     setError('')
     startTransition(async () => {
       const res = await updateEntryAction(entry.id, {
-        started_at: new Date(startedAt).toISOString(),
-        ended_at:   endedAt ? new Date(endedAt).toISOString() : null,
-        client_id:  clientId  || null,
-        project_id: projectId || null,
-        notes:      notes.trim() || null,
-        is_billable: billable,
+        started_at:         new Date(startedAt).toISOString(),
+        ended_at:           endedAt ? new Date(endedAt).toISOString() : null,
+        client_id:          clientId  || null,
+        project_id:         projectId || null,
+        notes:              notes.trim() || null,
+        is_billable:        billable,
+        charge_client:      chargeClient,
+        client_hourly_rate: chargeClient && clientHourlyRate ? parseFloat(clientHourlyRate) : null,
       })
       if (res?.error) setError(res.error)
       else setOpen(false)
@@ -164,6 +170,30 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
                   {t.billableHours}
                 </span>
               </button>
+
+              <button type="button" onClick={() => setChargeClient(b => !b)} className="flex items-center gap-3 group">
+                <div className={`relative w-10 h-5 rounded-full transition ${chargeClient ? 'bg-emerald-600' : 'bg-slate-600'}`}>
+                  <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${chargeClient ? 'left-5' : 'left-0.5'}`} />
+                </div>
+                <span className={`text-sm font-medium transition ${chargeClient ? 'text-emerald-300' : 'text-slate-500'}`}>
+                  {t.chargeClient}
+                </span>
+              </button>
+
+              {chargeClient && (
+                <div>
+                  <label className="label">{t.clientHourlyRate}</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={clientHourlyRate}
+                    onChange={e => setClientHourlyRate(e.target.value)}
+                    placeholder="ex. 95.00"
+                    className="input"
+                  />
+                </div>
+              )}
 
               {error && (
                 <p className="text-red-400 text-sm bg-red-900/20 border border-red-800/50 rounded-lg px-3 py-2">{error}</p>

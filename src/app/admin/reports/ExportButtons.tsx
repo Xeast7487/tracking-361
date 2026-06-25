@@ -8,6 +8,8 @@ interface Entry {
   ended_at: string | null
   notes: string | null
   is_billable: boolean
+  charge_client?: boolean
+  client_hourly_rate?: number | null
   clients:  { name: string } | null
   projects: { name: string } | null
   profiles: { full_name: string } | null
@@ -23,6 +25,9 @@ export default function ExportButtons({ entries }: { entries: Entry[] }) {
       const start = new Date(e.started_at)
       const end   = e.ended_at ? new Date(e.ended_at) : null
       const durH  = end ? ((end.getTime() - start.getTime()) / 3_600_000).toFixed(2) : ''
+      const clientAmount = e.charge_client && e.client_hourly_rate && end
+        ? (((end.getTime() - start.getTime()) / 3_600_000) * e.client_hourly_rate).toFixed(2)
+        : ''
       return [
         e.profiles?.full_name ?? '',
         start.toLocaleDateString(locale),
@@ -32,6 +37,9 @@ export default function ExportButtons({ entries }: { entries: Entry[] }) {
         e.clients?.name  ?? '',
         e.projects?.name ?? '',
         e.is_billable ? t.yes : t.no,
+        e.charge_client ? t.yes : t.no,
+        e.charge_client && e.client_hourly_rate ? e.client_hourly_rate.toFixed(2) : '',
+        clientAmount,
         e.notes ?? '',
       ]
     })

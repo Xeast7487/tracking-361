@@ -71,7 +71,9 @@ export async function clockInAction(
   projectId: string,
   notes: string,
   isBillable: boolean,
-  chargeWebDept: boolean = false
+  chargeWebDept: boolean = false,
+  chargeClient: boolean = false,
+  clientHourlyRate: number | null = null
 ) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -92,6 +94,8 @@ export async function clockInAction(
     notes: notes || null,
     is_billable: isBillable,
     charge_web_dept: chargeWebDept,
+    charge_client: chargeClient,
+    client_hourly_rate: chargeClient ? clientHourlyRate : null,
   })
   if (error) return { error: error.message }
   revalidatePath('/dashboard')
@@ -104,7 +108,7 @@ export async function clockOutAction(entryId: string, notes?: string) {
   if (!user) return { error: 'Non authentifié' }
 
   const { data: entry } = await supabase.from('time_entries')
-    .select('paused_at, total_paused_ms')
+    .select('paused_at, total_paused_ms, started_at, charge_client, client_hourly_rate, projects(name)')
     .eq('id', entryId)
     .eq('user_id', user.id)
     .single()
@@ -120,8 +124,20 @@ export async function clockOutAction(entryId: string, notes?: string) {
     .eq('id', entryId)
     .eq('user_id', user.id)
   if (error) return { error: error.message }
+
+  let clientBillInfo: { hours: number; amount: number; projectName: string } | undefined
+  if (entry?.charge_client && entry.client_hourly_rate && entry.started_at) {
+    const workMs = Math.max(0, now.getTime() - new Date(entry.started_at).getTime() - totalPausedMs)
+    const hours = workMs / 3_600_000
+    clientBillInfo = {
+      hours,
+      amount: hours * entry.client_hourly_rate,
+      projectName: (entry.projects as any)?.name ?? '',
+    }
+  }
+
   revalidatePath('/dashboard')
-  return { success: true }
+  return { success: true, clientBillInfo }
 }
 
 export async function pauseEntryAction(entryId: string) {
@@ -260,12 +276,14 @@ export async function fetchClientsAndProjectsAction() {
 export async function updateEntryAction(
   entryId: string,
   data: {
-    started_at:  string
-    ended_at:    string | null
-    client_id:   string | null
-    project_id:  string | null
-    notes:       string | null
-    is_billable: boolean
+    started_at:        string
+    ended_at:          string | null
+    client_id:         string | null
+    project_id:        string | null
+    notes:             string | null
+    is_billable:       boolean
+    charge_client:     boolean
+    client_hourly_rate: number | null
   }
 ) {
   const supabase = await createSupabaseServerClient()
@@ -343,7 +361,9 @@ export async function addManualEntryAction(formData: FormData) {
   const endTime       = formData.get('end_time') as string
   const notes         = formData.get('notes') as string
   const isBillable    = formData.get('is_billable') === 'true'
-  const chargeWebDept = formData.get('charge_web_dept') === 'true'
+  const chargeWebDept   = formData.get('charge_web_dept') === 'true'
+  const chargeClient    = formData.get('charge_client') === 'true'
+  const clientRateStr   = formData.get('client_hourly_rate') as string
 
   if (!targetUserId || !clientId || !projectId || !dateStr || !startTime || !endTime) {
     return { error: 'Tous les champs obligatoires doivent être remplis.' }
@@ -355,15 +375,17 @@ export async function addManualEntryAction(formData: FormData) {
   if (endedAt <= startedAt) return { error: "L'heure de fin doit être après l'heure de début." }
 
   const { error } = await supabase.from('time_entries').insert({
-    user_id:         targetUserId,
-    client_id:       clientId,
-    project_id:      projectId,
-    started_at:      startedAt.toISOString(),
-    ended_at:        endedAt.toISOString(),
-    notes:           notes || null,
-    is_billable:     isBillable,
-    charge_web_dept: chargeWebDept,
-    total_paused_ms: 0,
+    user_id:            targetUserId,
+    client_id:          clientId,
+    project_id:         projectId,
+    started_at:         startedAt.toISOString(),
+    ended_at:           endedAt.toISOString(),
+    notes:              notes || null,
+    is_billable:        isBillable,
+    charge_web_dept:    chargeWebDept,
+    charge_client:      chargeClient,
+    client_hourly_rate: chargeClient && clientRateStr ? parseFloat(clientRateStr) : null,
+    total_paused_ms:    0,
   })
 
   if (error) return { error: error.message }

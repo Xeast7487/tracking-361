@@ -17,6 +17,8 @@ interface ActiveEntry {
   projects: { name: string } | null
   notes: string | null
   is_billable: boolean
+  charge_client: boolean
+  client_hourly_rate: number | null
 }
 
 export default function ClockWidget({
@@ -43,6 +45,9 @@ export default function ClockWidget({
   const [projectId,  setProjectId]  = useState('')
   const [billable,       setBillable]       = useState(true)
   const [chargeWebDept,  setChargeWebDept]  = useState(false)
+  const [chargeClient,   setChargeClient]   = useState(false)
+  const [clientRate,     setClientRate]     = useState('')
+  const [billingNotif,   setBillingNotif]   = useState<{ hours: number; amount: number; projectName: string } | null>(null)
 
   const [showNewClient,  setShowNewClient]  = useState(false)
   const [newClientName,  setNewClientName]  = useState('')
@@ -97,7 +102,7 @@ export default function ClockWidget({
     if (!projectId) { setError(t.selectProject); return }
     setError('')
     startTransition(async () => {
-      const res = await clockInAction(clientId, projectId, '', billable, chargeWebDept)
+      const res = await clockInAction(clientId, projectId, '', billable, chargeWebDept, chargeClient, clientRate ? parseFloat(clientRate) : null)
       if (res?.error) setError(res.error)
     })
   }
@@ -106,8 +111,10 @@ export default function ClockWidget({
     if (!initial) return
     startTransition(async () => {
       const res = await clockOutAction(initial.id, stopNotes)
-      if (res?.error) setError(res.error)
-      else { setShowStopForm(false); setStopNotes('') }
+      if (res?.error) { setError(res.error); return }
+      if (res.clientBillInfo) setBillingNotif(res.clientBillInfo)
+      setShowStopForm(false)
+      setStopNotes('')
     })
   }
 
@@ -143,16 +150,35 @@ export default function ClockWidget({
           <p><span className="text-slate-500">{t.clientLabel} : </span><span className="text-slate-200">{initial.clients?.name}</span></p>
           <p><span className="text-slate-500">{t.projectLabel} : </span><span className="text-slate-200">{initial.projects?.name}</span></p>
           {initial.notes && <p><span className="text-slate-500">{t.notesLabel} : </span>{initial.notes}</p>}
-          <p>
-            {initial.is_billable
+          <p className="flex items-center gap-2 flex-wrap">
+            {initial.charge_client
+              ? <span className="badge-client-billing">{t.chargeClientBadge}</span>
+              : initial.is_billable
               ? <span className="badge-billable">{t.billable}</span>
               : <span className="badge-unbillable">{t.nonBillable}</span>}
+            {initial.charge_client && initial.client_hourly_rate && (
+              <span className="text-xs text-emerald-400 font-mono">{initial.client_hourly_rate.toFixed(2)} $/h</span>
+            )}
           </p>
           <p className="text-slate-600 text-xs">{t.startedAt} {formatTime(initial.started_at, lang)}</p>
         </div>
         {error && <p className="text-red-400 text-sm">{error}</p>}
         {showStopForm ? (
           <div className="space-y-3">
+            {initial.charge_client && initial.client_hourly_rate && (() => {
+              const [h, m, s] = elapsed.split(':').map(Number)
+              const currentHours = h + m / 60 + s / 3600
+              const estimatedAmount = currentHours * initial.client_hourly_rate
+              return (
+                <div className="bg-emerald-900/20 border border-emerald-700/40 rounded-lg p-3 space-y-1">
+                  <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">{t.clientBillingPreview}</p>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-slate-400">Temps : <span className="font-mono text-white">{elapsed}</span></span>
+                    <span className="font-bold text-emerald-300">{estimatedAmount.toFixed(2)} $</span>
+                  </div>
+                </div>
+              )
+            })()}
             <div>
               <label className="label">{t.addNotes}</label>
               <textarea
@@ -198,6 +224,19 @@ export default function ClockWidget({
   return (
     <div className="card space-y-5">
       <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{t.newSession}</p>
+
+      {billingNotif && (
+        <div className="bg-emerald-900/20 border border-emerald-700/40 rounded-lg p-4 space-y-1">
+          <p className="text-xs font-semibold text-emerald-400 uppercase tracking-wider">Facturation client</p>
+          <p className="text-sm text-slate-300">
+            Vous avez travaillé <span className="font-bold text-white">
+              {Math.floor(billingNotif.hours)}h {Math.round((billingNotif.hours % 1) * 60).toString().padStart(2, '0')}m
+            </span> sur <span className="font-bold text-white">{billingNotif.projectName}</span>
+          </p>
+          <p className="text-lg font-bold text-emerald-300">Le client vous doit {billingNotif.amount.toFixed(2)} $</p>
+          <button onClick={() => setBillingNotif(null)} className="text-xs text-slate-500 hover:text-slate-300 transition mt-1">✕ Fermer</button>
+        </div>
+      )}
 
       {error && (
         <p className="text-red-400 text-sm bg-red-900/20 border border-red-800/50 rounded-lg px-3 py-2">{error}</p>
@@ -269,6 +308,31 @@ export default function ClockWidget({
             {t.chargeWebDept}
           </span>
         </button>
+      )}
+
+      <button type="button" onClick={() => setChargeClient(b => !b)}
+        className="flex items-center gap-3 group">
+        <div className={`relative w-10 h-5 rounded-full transition ${chargeClient ? 'bg-emerald-600' : 'bg-slate-600'}`}>
+          <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${chargeClient ? 'left-5' : 'left-0.5'}`} />
+        </div>
+        <span className={`text-sm font-medium transition ${chargeClient ? 'text-emerald-300' : 'text-slate-500'}`}>
+          {t.chargeClient}
+        </span>
+      </button>
+
+      {chargeClient && (
+        <div>
+          <label className="label">{t.clientHourlyRate}</label>
+          <input
+            type="number"
+            min="0"
+            step="0.01"
+            value={clientRate}
+            onChange={e => setClientRate(e.target.value)}
+            placeholder="ex. 95.00"
+            className="input"
+          />
+        </div>
       )}
 
       <button onClick={handleClockIn} disabled={isPending} className="btn-primary w-full py-3 text-base">

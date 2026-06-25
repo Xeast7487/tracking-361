@@ -15,6 +15,8 @@ export interface TimeEntry {
   project_id: string | null
   notes: string | null
   is_billable: boolean
+  charge_client?: boolean
+  client_hourly_rate?: number | null
   clients:  { name: string } | null
   projects: { name: string } | null
   profiles?: { full_name: string } | null
@@ -69,7 +71,9 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                 <p className="text-sm text-slate-400 truncate">{e.projects?.name ?? '—'}</p>
               </div>
               <div className="flex-shrink-0">
-                {e.is_billable
+                {e.charge_client
+                  ? <span className="badge-client-billing">{t.chargeClientYes}</span>
+                  : e.is_billable
                   ? <span className="badge-billable">{t.billableYes}</span>
                   : <span className="badge-unbillable">{t.billableNo}</span>}
               </div>
@@ -102,13 +106,15 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                   <EditEntryModal
                     key={e.id + (e.ended_at ?? '')}
                     entry={{
-                      id:         e.id,
-                      started_at: e.started_at,
-                      ended_at:   e.ended_at,
-                      client_id:  e.client_id,
-                      project_id: e.project_id,
-                      notes:      e.notes,
-                      is_billable: e.is_billable,
+                      id:                 e.id,
+                      started_at:         e.started_at,
+                      ended_at:           e.ended_at,
+                      client_id:          e.client_id,
+                      project_id:         e.project_id,
+                      notes:              e.notes,
+                      is_billable:        e.is_billable,
+                      charge_client:      e.charge_client ?? false,
+                      client_hourly_rate: e.client_hourly_rate ?? null,
                     }}
                   />
                 )}
@@ -155,7 +161,9 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.clients?.name ?? '—'}</td>
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.projects?.name ?? '—'}</td>
                 <td className="px-4 py-3">
-                  {e.is_billable
+                  {e.charge_client
+                    ? <span className="badge-client-billing">{t.chargeClientYes}</span>
+                    : e.is_billable
                     ? <span className="badge-billable">{t.billableYes}</span>
                     : <span className="badge-unbillable">{t.billableNo}</span>}
                 </td>
@@ -167,13 +175,15 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                         <EditEntryModal
                           key={e.id + (e.ended_at ?? '')}
                           entry={{
-                            id:         e.id,
-                            started_at: e.started_at,
-                            ended_at:   e.ended_at,
-                            client_id:  e.client_id,
-                            project_id: e.project_id,
-                            notes:      e.notes,
-                            is_billable: e.is_billable,
+                            id:                 e.id,
+                            started_at:         e.started_at,
+                            ended_at:           e.ended_at,
+                            client_id:          e.client_id,
+                            project_id:         e.project_id,
+                            notes:              e.notes,
+                            is_billable:        e.is_billable,
+                            charge_client:      e.charge_client ?? false,
+                            client_hourly_rate: e.client_hourly_rate ?? null,
                           }}
                         />
                       )}

@@ -6,7 +6,7 @@ import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 
 interface Props {
-  searchParams: { from?: string; to?: string; user_id?: string; client_id?: string; project_id?: string; billable?: string; web_dept?: string }
+  searchParams: { from?: string; to?: string; user_id?: string; client_id?: string; project_id?: string; billable?: string; web_dept?: string; charge_client?: string }
 }
 
 export default async function ReportsPage({ searchParams }: Props) {
@@ -23,8 +23,9 @@ export default async function ReportsPage({ searchParams }: Props) {
   const userId    = searchParams.user_id    ?? ''
   const clientId  = searchParams.client_id  ?? ''
   const projectId = searchParams.project_id ?? ''
-  const billable  = searchParams.billable   ?? ''
-  const webDept   = searchParams.web_dept   ?? ''
+  const billable      = searchParams.billable      ?? ''
+  const webDept       = searchParams.web_dept      ?? ''
+  const chargeClient  = searchParams.charge_client ?? ''
 
   const [profilesRes, clientsRes, projectsRes, allProjectsRes, allClientsRes] = await Promise.all([
     supabase.from('profiles').select('id, full_name, is_web_dept').eq('is_active', true).order('full_name'),
@@ -38,7 +39,7 @@ export default async function ReportsPage({ searchParams }: Props) {
 
   let query = supabase
     .from('time_entries')
-    .select('id, started_at, ended_at, notes, is_billable, charge_web_dept, total_paused_ms, client_id, project_id, clients(name), projects(name), profiles(full_name, hourly_rate, is_web_dept)')
+    .select('id, started_at, ended_at, notes, is_billable, charge_web_dept, charge_client, client_hourly_rate, total_paused_ms, client_id, project_id, clients(name), projects(name), profiles(full_name, hourly_rate, is_web_dept)')
     .gte('started_at', `${from}T00:00:00`)
     .lte('started_at', `${to}T23:59:59`)
     .order('started_at', { ascending: false })
@@ -48,7 +49,8 @@ export default async function ReportsPage({ searchParams }: Props) {
   if (projectId) query = query.eq('project_id', projectId)
   if (billable === 'true')  query = query.eq('is_billable', true)
   if (billable === 'false') query = query.eq('is_billable', false)
-  if (webDept === 'true')   query = query.eq('charge_web_dept', true)
+  if (webDept === 'true')      query = query.eq('charge_web_dept', true)
+  if (chargeClient === 'true') query = query.eq('charge_client', true)
 
   const { data: entries } = await query
 
@@ -61,6 +63,21 @@ export default async function ReportsPage({ searchParams }: Props) {
     const rate = e.profiles?.hourly_rate ?? 0
     return sum + hours * rate
   }, 0)
+
+  // Calcul facturation clients
+  const clientBillingEntries = (entries ?? []).filter((e: any) => e.charge_client && e.ended_at)
+  const clientBillingMap = new Map<string, { clientName: string; hours: number; amount: number }>()
+  for (const e of clientBillingEntries) {
+    const clientName = (e as any).clients?.name ?? 'Sans client'
+    const ms = Math.max(0, new Date(e.ended_at).getTime() - new Date(e.started_at).getTime() - (e.total_paused_ms ?? 0))
+    const hours = ms / 3_600_000
+    const amount = hours * ((e as any).client_hourly_rate ?? 0)
+    const existing = clientBillingMap.get(clientName)
+    if (existing) { existing.hours += hours; existing.amount += amount }
+    else clientBillingMap.set(clientName, { clientName, hours, amount })
+  }
+  const clientBillingGroups = Array.from(clientBillingMap.values()).sort((a, b) => b.amount - a.amount)
+  const totalClientBillingAmount = clientBillingGroups.reduce((sum, g) => sum + g.amount, 0)
 
   return (
     <div className="space-y-6">
@@ -132,8 +149,52 @@ export default async function ReportsPage({ searchParams }: Props) {
             <option value="true">{t.webDeptOnly}</option>
           </select>
         </div>
+        <div>
+          <label className="label">{t.chargeClient}</label>
+          <select name="charge_client" defaultValue={chargeClient} className="input">
+            <option value="">{t.all}</option>
+            <option value="true">{t.chargeClientOnly}</option>
+          </select>
+        </div>
         <button type="submit" className="btn-primary">{t.filter}</button>
       </form>
+
+      {clientBillingGroups.length > 0 && (
+        <div className="card bg-emerald-900/20 border border-emerald-700/40">
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+            <div>
+              <p className="text-xs text-emerald-400 uppercase tracking-wider font-semibold mb-1">{t.clientBillingTitle}</p>
+              <p className="text-white font-semibold">{t.clientBillingEntries(clientBillingEntries.length)}</p>
+            </div>
+            <div className="text-right">
+              <p className="text-xs text-emerald-400 uppercase tracking-wider font-semibold mb-1">{t.clientBillingTotal}</p>
+              <p className="text-2xl font-bold text-emerald-300">{totalClientBillingAmount.toFixed(2)} $</p>
+            </div>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="text-left border-b border-emerald-800/40">
+                  <th className="pb-2 font-semibold text-emerald-400/80">{t.client}</th>
+                  <th className="pb-2 font-semibold text-emerald-400/80 text-right">{t.clientBillingHours}</th>
+                  <th className="pb-2 font-semibold text-emerald-400/80 text-right">{t.clientBillingAmount}</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-emerald-900/30">
+                {clientBillingGroups.map(g => (
+                  <tr key={g.clientName}>
+                    <td className="py-2 text-slate-200 font-medium">{g.clientName}</td>
+                    <td className="py-2 text-slate-300 text-right font-mono">
+                      {Math.floor(g.hours)}h {Math.round((g.hours % 1) * 60).toString().padStart(2, '0')}m
+                    </td>
+                    <td className="py-2 font-bold text-emerald-300 text-right">{g.amount.toFixed(2)} $</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {webDept === 'true' && webEntries.length > 0 && (
         <div className="card bg-orange-900/20 border border-orange-700/40">

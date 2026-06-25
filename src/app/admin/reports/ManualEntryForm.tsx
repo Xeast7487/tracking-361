@@ -16,9 +16,11 @@ export default function ManualEntryForm({
 }) {
   const [isPending, startTransition] = useTransition()
   const [clientId,  setClientId]  = useState('')
-  const [billable,  setBillable]  = useState(true)
-  const [webDept,   setWebDept]   = useState(false)
-  const [error,     setError]     = useState('')
+  const [billable,     setBillable]     = useState(true)
+  const [webDept,      setWebDept]      = useState(false)
+  const [chargeClient, setChargeClient] = useState(false)
+  const [clientRate,   setClientRate]   = useState('')
+  const [error,        setError]        = useState('')
   const [success,   setSuccess]   = useState('')
   const [open,      setOpen]      = useState(false)
 
@@ -27,8 +29,10 @@ export default function ManualEntryForm({
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    fd.set('is_billable',    billable ? 'true' : 'false')
-    fd.set('charge_web_dept', webDept ? 'true' : 'false')
+    fd.set('is_billable',       billable ? 'true' : 'false')
+    fd.set('charge_web_dept',   webDept ? 'true' : 'false')
+    fd.set('charge_client',     chargeClient ? 'true' : 'false')
+    fd.set('client_hourly_rate', chargeClient ? clientRate : '')
     setError('')
     setSuccess('')
     startTransition(async () => {
@@ -39,6 +43,8 @@ export default function ManualEntryForm({
       setClientId('')
       setBillable(true)
       setWebDept(false)
+      setChargeClient(false)
+      setClientRate('')
       setTimeout(() => setSuccess(''), 3000)
     })
   }
@@ -123,7 +129,29 @@ export default function ManualEntryForm({
             </div>
             <span className={`text-sm ${webDept ? 'text-orange-300' : 'text-slate-500'}`}>Dépt. web</span>
           </button>
+
+          <button type="button" onClick={() => setChargeClient(b => !b)} className="flex items-center gap-2">
+            <div className={`relative w-9 h-5 rounded-full transition ${chargeClient ? 'bg-emerald-600' : 'bg-slate-600'}`}>
+              <div className={`absolute top-0.5 w-4 h-4 bg-white rounded-full shadow transition-all ${chargeClient ? 'left-4' : 'left-0.5'}`} />
+            </div>
+            <span className={`text-sm ${chargeClient ? 'text-emerald-300' : 'text-slate-500'}`}>Facturer client</span>
+          </button>
         </div>
+
+        {chargeClient && (
+          <div className="col-span-2 sm:col-span-1">
+            <label className="label">Taux horaire client ($/h)</label>
+            <input
+              type="number"
+              min="0"
+              step="0.01"
+              value={clientRate}
+              onChange={e => setClientRate(e.target.value)}
+              placeholder="ex. 95.00"
+              className="input"
+            />
+          </div>
+        )}
 
         <div className="col-span-2 sm:col-span-1 flex items-end">
           <button type="submit" disabled={isPending}

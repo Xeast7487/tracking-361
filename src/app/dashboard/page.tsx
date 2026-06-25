@@ -19,14 +19,14 @@ export default async function DashboardPage() {
   const [profileRes, activeRes, clientsRes, projectsRes, todayRes] = await Promise.all([
     supabase.from('profiles').select('full_name, is_web_dept').eq('id', user.id).single(),
     supabase.from('time_entries')
-      .select('id, started_at, notes, is_billable, paused_at, total_paused_ms, clients(name), projects(name)')
+      .select('id, started_at, notes, is_billable, charge_client, client_hourly_rate, paused_at, total_paused_ms, clients(name), projects(name)')
       .eq('user_id', user.id)
       .is('ended_at', null)
       .maybeSingle(),
     supabase.from('clients').select('id, name').order('name'),
     supabase.from('projects').select('id, client_id, name').order('name'),
     supabase.from('time_entries')
-      .select('id, started_at, ended_at, notes, is_billable, total_paused_ms, client_id, project_id, clients(name), projects(name)')
+      .select('id, started_at, ended_at, notes, is_billable, charge_client, client_hourly_rate, total_paused_ms, client_id, project_id, clients(name), projects(name)')
       .eq('user_id', user.id)
       .gte('started_at', `${today}T00:00:00`)
       .order('started_at', { ascending: false }),
