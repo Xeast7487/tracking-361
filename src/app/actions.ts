@@ -146,7 +146,7 @@ export async function pauseEntryAction(entryId: string) {
   if (!user) return { error: 'Non authentifié' }
 
   const { error } = await supabase.from('time_entries')
-    .update({ paused_at: new Date().toISOString() })
+    .update({ paused_at: new Date().toISOString(), long_break_notified_at: null })
     .eq('id', entryId)
     .eq('user_id', user.id)
     .is('paused_at', null)

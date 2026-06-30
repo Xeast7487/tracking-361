@@ -4,6 +4,7 @@ import { todayISO, weekStartISO } from '@/lib/utils'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 import AdminClockOutButton from '@/components/AdminClockOutButton'
+import PushNotificationToggle from '@/components/PushNotificationToggle'
 
 export default async function AdminOverviewPage() {
   const supabase = await createSupabaseServerClient()
@@ -196,9 +197,10 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Quick links */}
-      <div className="flex gap-3 flex-wrap animate-fade-in animation-delay-400">
+      <div className="flex items-center gap-3 flex-wrap animate-fade-in animation-delay-400">
         <Link href="/admin/reports" className="btn-primary">{t.viewReports}</Link>
         <Link href="/admin/users"   className="btn-secondary">{t.manageEmployees}</Link>
+        <PushNotificationToggle />
       </div>
     </div>
   )
