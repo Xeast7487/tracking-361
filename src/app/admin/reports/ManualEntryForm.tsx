@@ -40,12 +40,12 @@ export default function ManualEntryForm({
     const [y, mo, d] = dateStr.split('-').map(Number)
     const [sh, sm]   = startTime.split(':').map(Number)
     const [eh, em]   = endTime.split(':').map(Number)
-    fd.set('started_at', new Date(y, mo - 1, d, sh, sm, 0).toISOString())
-    fd.set('ended_at',   new Date(y, mo - 1, d, eh, em, 0).toISOString())
+    const startedAtISO = new Date(y, mo - 1, d, sh, sm, 0).toISOString()
+    const endedAtISO   = new Date(y, mo - 1, d, eh, em, 0).toISOString()
     setError('')
     setSuccess('')
     startTransition(async () => {
-      const res = await addManualEntryAction(fd)
+      const res = await addManualEntryAction(fd, startedAtISO, endedAtISO)
       if (res?.error) { setError(res.error); return }
       setSuccess('Entrée ajoutée avec succès !')
       ;(e.target as HTMLFormElement).reset()

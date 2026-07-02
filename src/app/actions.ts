@@ -348,7 +348,7 @@ export async function deleteProjectAction(projectId: string) {
 
 // ── Admin : suppression d'une entrée ─────────────────────
 
-export async function addManualEntryAction(formData: FormData) {
+export async function addManualEntryAction(formData: FormData, startedAtISO: string, endedAtISO: string) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user || user.email !== 'a.monier@agence361.com') return { error: 'Accès refusé.' }
@@ -356,23 +356,18 @@ export async function addManualEntryAction(formData: FormData) {
   const targetUserId  = formData.get('target_user_id') as string
   const clientId      = formData.get('client_id') as string
   const projectId     = formData.get('project_id') as string
-  const dateStr       = formData.get('date') as string
-  const startTime     = formData.get('start_time') as string
-  const endTime       = formData.get('end_time') as string
   const notes         = formData.get('notes') as string
   const isBillable    = formData.get('is_billable') === 'true'
   const chargeWebDept   = formData.get('charge_web_dept') === 'true'
   const chargeClient    = formData.get('charge_client') === 'true'
   const clientRateStr   = formData.get('client_hourly_rate') as string
 
-  if (!targetUserId || !clientId || !projectId || !dateStr || !startTime || !endTime) {
+  if (!targetUserId || !clientId || !projectId || !startedAtISO || !endedAtISO) {
     return { error: 'Tous les champs obligatoires doivent être remplis.' }
   }
 
-  const startedAtStr = (formData.get('started_at') as string) || `${dateStr}T${startTime}:00`
-  const endedAtStr   = (formData.get('ended_at')   as string) || `${dateStr}T${endTime}:00`
-  const startedAt = new Date(startedAtStr)
-  const endedAt   = new Date(endedAtStr)
+  const startedAt = new Date(startedAtISO)
+  const endedAt   = new Date(endedAtISO)
 
   if (endedAt <= startedAt) return { error: "L'heure de fin doit être après l'heure de début." }
 
