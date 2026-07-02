@@ -33,6 +33,13 @@ export default function ManualEntryForm({
     fd.set('charge_web_dept',   webDept ? 'true' : 'false')
     fd.set('charge_client',     chargeClient ? 'true' : 'false')
     fd.set('client_hourly_rate', chargeClient ? clientRate : '')
+
+    // Build ISO timestamps on the client so the local timezone is respected
+    const dateStr = fd.get('date') as string
+    const startTime = fd.get('start_time') as string
+    const endTime   = fd.get('end_time') as string
+    fd.set('started_at', new Date(`${dateStr}T${startTime}:00`).toISOString())
+    fd.set('ended_at',   new Date(`${dateStr}T${endTime}:00`).toISOString())
     setError('')
     setSuccess('')
     startTransition(async () => {

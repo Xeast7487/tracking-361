@@ -369,8 +369,10 @@ export async function addManualEntryAction(formData: FormData) {
     return { error: 'Tous les champs obligatoires doivent être remplis.' }
   }
 
-  const startedAt = new Date(`${dateStr}T${startTime}:00`)
-  const endedAt   = new Date(`${dateStr}T${endTime}:00`)
+  const startedAtStr = (formData.get('started_at') as string) || `${dateStr}T${startTime}:00`
+  const endedAtStr   = (formData.get('ended_at')   as string) || `${dateStr}T${endTime}:00`
+  const startedAt = new Date(startedAtStr)
+  const endedAt   = new Date(endedAtStr)
 
   if (endedAt <= startedAt) return { error: "L'heure de fin doit être après l'heure de début." }
 
