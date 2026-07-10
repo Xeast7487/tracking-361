@@ -9,6 +9,7 @@ export interface BillingGroup {
   hours: number
   amount: number
   isPaid: boolean
+  notes: string[]
 }
 
 interface Props {
@@ -53,7 +54,16 @@ export default function ClientBillingTable({ groups, from, to, labels }: Props) 
                       <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                     </svg>
                   )}
-                  <span className={g.isPaid ? 'line-through text-slate-400' : ''}>{g.clientName}</span>
+                  <div>
+                    <span className={g.isPaid ? 'line-through text-slate-400' : ''}>{g.clientName}</span>
+                    {g.notes.length > 0 && (
+                      <ul className="mt-0.5 space-y-0.5">
+                        {g.notes.map((note, i) => (
+                          <li key={i} className="text-xs text-slate-400 leading-snug">{note}</li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </div>
               </td>
               <td className={`py-2 text-right font-mono ${g.isPaid ? 'text-slate-500 line-through' : 'text-slate-300'}`}>

@@ -67,7 +67,7 @@ export default async function ReportsPage({ searchParams }: Props) {
 
   // Calcul facturation clients
   const clientBillingEntries = (entries ?? []).filter((e: any) => e.charge_client && e.ended_at)
-  const clientBillingMap = new Map<string, { clientId: string; clientName: string; hours: number; amount: number; isPaid: boolean }>()
+  const clientBillingMap = new Map<string, { clientId: string; clientName: string; hours: number; amount: number; isPaid: boolean; notes: string[] }>()
   for (const e of clientBillingEntries) {
     const clientId = (e as any).client_id ?? 'no-client'
     const clientName = (e as any).clients?.name ?? 'Sans client'
@@ -75,13 +75,15 @@ export default async function ReportsPage({ searchParams }: Props) {
     const hours = ms / 3_600_000
     const amount = hours * ((e as any).client_hourly_rate ?? 0)
     const entryPaid = (e as any).client_paid === true
+    const note = (e as any).notes?.trim()
     const existing = clientBillingMap.get(clientId)
     if (existing) {
       existing.hours += hours
       existing.amount += amount
       existing.isPaid = existing.isPaid && entryPaid
+      if (note) existing.notes.push(note)
     } else {
-      clientBillingMap.set(clientId, { clientId, clientName, hours, amount, isPaid: entryPaid })
+      clientBillingMap.set(clientId, { clientId, clientName, hours, amount, isPaid: entryPaid, notes: note ? [note] : [] })
     }
   }
   const clientBillingGroups = Array.from(clientBillingMap.values()).sort((a, b) => b.amount - a.amount)
