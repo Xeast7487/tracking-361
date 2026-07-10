@@ -392,6 +392,20 @@ export async function addManualEntryAction(formData: FormData, startedAtISO: str
 
 // ── Facturation client — statut payé ─────────────────────
 
+export async function toggleEntryPaidAction(entryId: string, paid: boolean) {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase
+    .from('time_entries')
+    .update({ client_paid: paid })
+    .eq('id', entryId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/reports')
+  return { success: true }
+}
+
 export async function markClientPaidAction(clientId: string, from: string, to: string, paid: boolean) {
   const supabase = await createSupabaseServerClient()
   const { error } = await supabase

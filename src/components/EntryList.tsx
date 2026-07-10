@@ -1,10 +1,12 @@
 'use client'
 
+import { useTransition } from 'react'
 import { formatDate, formatTime, formatDuration } from '@/lib/utils'
 import DeleteEntryButton from './DeleteEntryButton'
 import EditEntryModal from './EditEntryModal'
 import { useLanguage } from '@/lib/LanguageContext'
 import { translations } from '@/lib/translations'
+import { toggleEntryPaidAction } from '@/app/actions'
 
 export interface TimeEntry {
   id: string
@@ -17,6 +19,7 @@ export interface TimeEntry {
   is_billable: boolean
   charge_client?: boolean
   client_hourly_rate?: number | null
+  client_paid?: boolean
   clients:  { name: string } | null
   projects: { name: string } | null
   profiles?: { full_name: string } | null
@@ -32,6 +35,15 @@ interface Props {
 export default function EntryList({ entries, showEmployee = false, isAdmin = false, allowEdit = false }: Props) {
   const { lang } = useLanguage()
   const t = translations[lang].entries
+  const [paidPending, startPaidTransition] = useTransition()
+
+  const showPaidColumn = isAdmin && entries.some(e => e.charge_client)
+
+  function togglePaid(entryId: string, currentPaid: boolean) {
+    startPaidTransition(() => {
+      toggleEntryPaidAction(entryId, !currentPaid)
+    })
+  }
 
   if (entries.length === 0) {
     return (
@@ -100,8 +112,26 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
             )}
 
             {/* Actions */}
-            {showActions && (
+            {(showActions || (showPaidColumn && e.charge_client)) && (
               <div className="flex items-center gap-2 border-t border-slate-700/60 pt-2">
+                {showPaidColumn && e.charge_client && (
+                  <button
+                    onClick={() => togglePaid(e.id, e.client_paid ?? false)}
+                    disabled={paidPending}
+                    aria-label={e.client_paid ? 'Marquer comme non payé' : 'Marquer comme payé'}
+                    className={`w-5 h-5 rounded border-2 inline-flex items-center justify-center transition-all ${
+                      e.client_paid
+                        ? 'bg-emerald-500 border-emerald-500 text-white'
+                        : 'border-emerald-700 hover:border-emerald-400 bg-transparent'
+                    } ${paidPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    {e.client_paid && (
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    )}
+                  </button>
+                )}
                 {allowEdit && (
                   <EditEntryModal
                     key={e.id + (e.ended_at ?? '')}
@@ -138,6 +168,7 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
               <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.client}</th>
               <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.project}</th>
               <th className="px-4 py-3 font-semibold text-slate-400 whitespace-nowrap">{t.billable}</th>
+              {showPaidColumn && <th className="px-4 py-3 font-semibold text-slate-400 text-center w-16">{t.paid}</th>}
               <th className="px-4 py-3 font-semibold text-slate-400">{t.notes}</th>
               {showActions && <th className="px-4 py-3 w-20" />}
             </tr>
@@ -167,6 +198,28 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                     ? <span className="badge-billable">{t.billableYes}</span>
                     : <span className="badge-unbillable">{t.billableNo}</span>}
                 </td>
+                {showPaidColumn && (
+                  <td className="px-4 py-3 text-center">
+                    {e.charge_client ? (
+                      <button
+                        onClick={() => togglePaid(e.id, e.client_paid ?? false)}
+                        disabled={paidPending}
+                        aria-label={e.client_paid ? 'Marquer comme non payé' : 'Marquer comme payé'}
+                        className={`w-5 h-5 rounded border-2 inline-flex items-center justify-center transition-all ${
+                          e.client_paid
+                            ? 'bg-emerald-500 border-emerald-500 text-white'
+                            : 'border-emerald-700 hover:border-emerald-400 bg-transparent'
+                        } ${paidPending ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      >
+                        {e.client_paid && (
+                          <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ) : null}
+                  </td>
+                )}
                 <td className="px-4 py-3 text-slate-400 max-w-[200px] truncate">{e.notes ?? ''}</td>
                 {showActions && (
                   <td className="px-4 py-3">
