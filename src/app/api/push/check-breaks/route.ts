@@ -2,13 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import webpush from 'web-push'
 
-const BREAK_THRESHOLD_MS = 30 * 60 * 1_000
+export const dynamic = 'force-dynamic'
 
-webpush.setVapidDetails(
-  'mailto:admin@agence361.com',
-  process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-  process.env.VAPID_PRIVATE_KEY!
-)
+const BREAK_THRESHOLD_MS = 30 * 60 * 1_000
 
 function getAdmin() {
   return createClient(
@@ -19,6 +15,12 @@ function getAdmin() {
 }
 
 export async function GET(request: NextRequest) {
+  webpush.setVapidDetails(
+    'mailto:admin@agence361.com',
+    process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+    process.env.VAPID_PRIVATE_KEY!
+  )
+
   const secret = process.env.CRON_SECRET
   if (secret) {
     const auth = request.headers.get('authorization')
