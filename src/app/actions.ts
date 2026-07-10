@@ -390,6 +390,22 @@ export async function addManualEntryAction(formData: FormData, startedAtISO: str
   return { success: true }
 }
 
+// ── Facturation client — statut payé ─────────────────────
+
+export async function markClientPaidAction(clientId: string, from: string, to: string, paid: boolean) {
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase
+    .from('time_entries')
+    .update({ client_paid: paid })
+    .eq('client_id', clientId)
+    .eq('charge_client', true)
+    .gte('started_at', `${from}T00:00:00`)
+    .lte('started_at', `${to}T23:59:59`)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/reports')
+  return { success: true }
+}
+
 // ── Projets Web ───────────────────────────────────────────
 
 const VALID_WEB_FIELDS = new Set([

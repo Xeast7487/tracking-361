@@ -70,6 +70,8 @@ ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS total_paused_ms BIGINT 
 -- Migration : facturation client
 ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS charge_client      BOOLEAN    NOT NULL DEFAULT false;
 ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS client_hourly_rate DECIMAL(10,2);
+-- Migration : statut payé par client
+ALTER TABLE public.time_entries ADD COLUMN IF NOT EXISTS client_paid BOOLEAN NOT NULL DEFAULT false;
 
 -- ── Helper : lit le rôle sans déclencher les politiques RLS ─
 CREATE OR REPLACE FUNCTION public.get_my_role()

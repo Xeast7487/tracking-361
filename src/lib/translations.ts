@@ -94,6 +94,7 @@ export const translations = {
       clientBillingEntries: (n: number) => `${n} entrée${n > 1 ? 's' : ''} à facturer au client`,
       clientBillingHours: 'Heures',
       clientBillingAmount: 'Montant',
+      paid: 'Payé',
     },
     clock: {
       newSession: 'Nouvelle session',
@@ -309,6 +310,7 @@ export const translations = {
       clientBillingEntries: (n: number) => `${n} entr${n > 1 ? 'ies' : 'y'} to bill to client`,
       clientBillingHours: 'Hours',
       clientBillingAmount: 'Amount',
+      paid: 'Paid',
     },
     clock: {
       newSession: 'New session',
