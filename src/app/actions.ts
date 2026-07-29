@@ -442,11 +442,28 @@ export async function toggleWebProjectStepAction(clientId: string, field: string
     .from('profiles').select('role, is_web_dept').eq('id', user.id).single()
   if (!profile || (profile.role !== 'admin' && !profile.is_web_dept)) return { error: 'Accès refusé.' }
 
-  const { error } = await supabase
+  const { data: existing, error: selectError } = await supabase
     .from('web_projects')
-    .upsert({ client_id: clientId, [field]: value }, { onConflict: 'client_id' })
+    .select('id')
+    .eq('client_id', clientId)
+    .maybeSingle()
 
-  if (error) return { error: error.message }
+  if (selectError) return { error: selectError.message }
+
+  if (existing) {
+    const { error: updateError } = await supabase
+      .from('web_projects')
+      .update({ [field]: value })
+      .eq('client_id', clientId)
+    if (updateError) return { error: updateError.message }
+  } else {
+    const { error: insertError } = await supabase
+      .from('web_projects')
+      .insert({ client_id: clientId, [field]: value })
+    if (insertError) return { error: insertError.message }
+  }
+
+  revalidatePath('/web')
   return { success: true }
 }
 
