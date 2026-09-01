@@ -22,11 +22,15 @@ export async function loginAction(formData: FormData) {
   })
 
   const supabase = await createSupabaseServerClient(rememberMe)
-  const { error } = await supabase.auth.signInWithPassword({
+  const { data, error } = await supabase.auth.signInWithPassword({
     email: formData.get('email') as string,
     password: formData.get('password') as string,
   })
   if (error) return { error: 'Courriel ou mot de passe incorrect.' }
+  // Enregistre l'heure de connexion pour la logique de notification des tâches
+  if (data.user) {
+    await supabase.from('profiles').update({ last_login_at: new Date().toISOString() }).eq('id', data.user.id)
+  }
   redirect('/dashboard')
 }
 
@@ -548,5 +552,160 @@ export async function deleteWireframeAction(id: string) {
   const { error } = await supabase.from('wireframes').delete().eq('id', id)
   if (error) return { error: error.message }
   revalidatePath('/web/wireframes')
+  return { success: true }
+}
+
+// ── Tâches ────────────────────────────────────────────────
+
+export async function createTaskAction(data: {
+  title: string
+  description: string
+  assigned_to: string
+  due_date: string | null
+}) {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('tasks').insert({
+    title:       data.title.trim(),
+    description: data.description.trim() || null,
+    assigned_to: data.assigned_to,
+    created_by:  caller.id,
+    due_date:    data.due_date || null,
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/admin/taches')
+  return { success: true }
+}
+
+export async function updateTaskStatusAction(taskId: string, status: 'pending' | 'in_progress' | 'completed') {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { error } = await supabase.from('tasks')
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', taskId)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/taches')
+  revalidatePath('/admin/taches')
+  return { success: true }
+}
+
+export async function deleteTaskAction(taskId: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('tasks').delete().eq('id', taskId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/taches')
+  return { success: true }
+}
+
+// Retourne les tâches non complétées qui doivent déclencher une notification
+export async function fetchPendingTaskNotificationsAction() {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data: profile } = await supabase
+    .from('profiles').select('last_login_at').eq('id', user.id).single()
+  const lastLogin = profile?.last_login_at
+
+  const { data: tasks } = await supabase
+    .from('tasks')
+    .select('id, title, description, due_date, status, task_notifications(dismissed_at)')
+    .eq('assigned_to', user.id)
+    .neq('status', 'completed')
+    .order('created_at', { ascending: false })
+
+  if (!tasks) return []
+
+  return tasks.filter(task => {
+    const notif = (task.task_notifications as any[])?.[0]
+    if (!notif) return true                         // jamais vu → afficher
+    if (!notif.dismissed_at) return true            // jamais rejeté → afficher
+    if (!lastLogin) return false                    // pas de login enregistré → ne pas afficher
+    // rejeté avant le dernier login → afficher à nouveau
+    return new Date(notif.dismissed_at) < new Date(lastLogin)
+  })
+}
+
+// Employé rejette la notification (réapparaîtra à la prochaine connexion)
+export async function dismissTaskNotificationAction(taskId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  await supabase.from('task_notifications').upsert(
+    { task_id: taskId, user_id: user.id, dismissed_at: new Date().toISOString() },
+    { onConflict: 'task_id,user_id' }
+  )
+  return { success: true }
+}
+
+// Employé a vu la tâche (ne plus notifier pour cette session)
+export async function acknowledgeTaskNotificationAction(taskId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  await supabase.from('task_notifications').upsert(
+    { task_id: taskId, user_id: user.id, dismissed_at: new Date().toISOString() },
+    { onConflict: 'task_id,user_id' }
+  )
+  return { success: true }
+}
+
+export async function fetchEmployeeTasksAction() {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data } = await supabase
+    .from('tasks')
+    .select('id, title, description, status, due_date, created_at, profiles!tasks_created_by_fkey(full_name)')
+    .eq('assigned_to', user.id)
+    .order('created_at', { ascending: false })
+
+  return data ?? []
+}
+
+export async function fetchAllTasksAdminAction() {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return []
+
+  const { data } = await supabase
+    .from('tasks')
+    .select('id, title, description, status, due_date, created_at, assigned:profiles!tasks_assigned_to_fkey(full_name), creator:profiles!tasks_created_by_fkey(full_name)')
+    .order('created_at', { ascending: false })
+
+  return data ?? []
+}
+
+export async function createTaskFormAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const title = (formData.get('title') as string | null)?.trim()
+  const description = (formData.get('description') as string | null)?.trim() || null
+  const assigned_to = formData.get('assigned_to') as string | null
+  const due_date = (formData.get('due_date') as string | null) || null
+
+  if (!title || !assigned_to) return { error: 'Titre et assigné requis.' }
+
+  const { error } = await supabase.from('tasks').insert({
+    title,
+    description,
+    assigned_to,
+    created_by: caller.id,
+    due_date,
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/admin/taches')
   return { success: true }
 }

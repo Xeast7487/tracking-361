@@ -131,3 +131,40 @@ CREATE TABLE IF NOT EXISTS public.wireframes (
 ALTER TABLE public.wireframes ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "auth_wireframes_all" ON public.wireframes FOR ALL
   TO authenticated USING (true) WITH CHECK (true);
+
+-- ── Tâches ────────────────────────────────────────────────
+-- Migration : ajouter last_login_at aux profils
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+ALTER TABLE public.profiles ADD COLUMN IF NOT EXISTS is_web_dept BOOLEAN NOT NULL DEFAULT false;
+
+CREATE TABLE IF NOT EXISTS public.tasks (
+  id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  title       TEXT        NOT NULL,
+  description TEXT,
+  assigned_to UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_by  UUID        NOT NULL REFERENCES public.profiles(id),
+  status      TEXT        NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','in_progress','completed')),
+  due_date    DATE,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS public.task_notifications (
+  task_id      UUID        NOT NULL REFERENCES public.tasks(id) ON DELETE CASCADE,
+  user_id      UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  dismissed_at TIMESTAMPTZ,
+  PRIMARY KEY (task_id, user_id)
+);
+
+ALTER TABLE public.tasks              ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.task_notifications ENABLE ROW LEVEL SECURITY;
+
+-- Employé voit ses propres tâches; admin voit tout
+CREATE POLICY "own_tasks_select" ON public.tasks FOR SELECT USING (auth.uid() = assigned_to OR public.get_my_role() = 'admin');
+CREATE POLICY "own_tasks_update" ON public.tasks FOR UPDATE USING (auth.uid() = assigned_to OR public.get_my_role() = 'admin');
+CREATE POLICY "admin_tasks_insert" ON public.tasks FOR INSERT WITH CHECK (public.get_my_role() = 'admin');
+CREATE POLICY "admin_tasks_delete" ON public.tasks FOR DELETE USING (public.get_my_role() = 'admin');
+
+-- Notifications : chaque user gère les siennes + admin lit tout
+CREATE POLICY "own_notifs_all"   ON public.task_notifications FOR ALL USING (auth.uid() = user_id);
+CREATE POLICY "admin_notifs_all" ON public.task_notifications FOR ALL USING (public.get_my_role() = 'admin');

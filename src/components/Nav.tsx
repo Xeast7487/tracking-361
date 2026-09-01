@@ -77,6 +77,13 @@ function IconBriefcase() {
     </svg>
   )
 }
+function IconTask() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
+    </svg>
+  )
+}
 function IconLogout() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -104,12 +111,14 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
         { href: '/admin/users',       label: t.employees,    mobile: t.employees,           icon: <IconUsers /> },
         { href: '/admin/reports',     label: t.reports,      mobile: t.reports,             icon: <IconFile /> },
         { href: '/admin/clients',     label: t.clients,      mobile: t.clients,             icon: <IconBriefcase /> },
+        { href: '/admin/taches',      label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
         { href: '/web',               label: 'Projets Web',  mobile: 'Web',                 icon: <IconWeb /> },
         { href: '/web/wireframes',    label: 'Wireframes',   mobile: 'WF',                  icon: <IconWireframe /> },
       ]
     : [
         { href: '/dashboard',         label: t.dashboard,    mobile: shortLabels.dashboard, icon: <IconClock /> },
         { href: '/dashboard/history', label: t.history,      mobile: shortLabels.history,   icon: <IconHistory /> },
+        { href: '/dashboard/taches',  label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
         ...(isWebDept ? [{ href: '/web', label: 'Projets Web', mobile: 'Web', icon: <IconWeb /> }, { href: '/web/wireframes', label: 'Wireframes', mobile: 'WF', icon: <IconWireframe /> }] : []),
       ]
 

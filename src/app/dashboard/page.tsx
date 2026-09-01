@@ -2,6 +2,8 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import ClockWidget from '@/components/ClockWidget'
 import EntryList from '@/components/EntryList'
+import TaskNotificationModal from '@/components/TaskNotificationModal'
+import { fetchPendingTaskNotificationsAction } from '@/app/actions'
 import { todayISO } from '@/lib/utils'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
@@ -16,7 +18,7 @@ export default async function DashboardPage() {
   const today = todayISO()
   const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
 
-  const [profileRes, activeRes, clientsRes, projectsRes, todayRes] = await Promise.all([
+  const [profileRes, activeRes, clientsRes, projectsRes, todayRes, rawPendingNotifs] = await Promise.all([
     supabase.from('profiles').select('full_name, is_web_dept').eq('id', user.id).single(),
     supabase.from('time_entries')
       .select('id, started_at, notes, is_billable, charge_client, client_hourly_rate, paused_at, total_paused_ms, clients(name), projects(name)')
@@ -30,7 +32,10 @@ export default async function DashboardPage() {
       .eq('user_id', user.id)
       .gte('started_at', `${today}T00:00:00`)
       .order('started_at', { ascending: false }),
+    fetchPendingTaskNotificationsAction(),
   ])
+
+  const pendingNotifs = (rawPendingNotifs ?? []).map(({ id, title, description, due_date }: any) => ({ id, title, description, due_date }))
 
   const isWebDept = profileRes.data?.is_web_dept ?? false
   const fullName  = profileRes.data?.full_name
@@ -49,6 +54,8 @@ export default async function DashboardPage() {
   const dateStr = now.toLocaleDateString(locale, { timeZone: 'America/Toronto', weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
 
   return (
+    <>
+    <TaskNotificationModal tasks={pendingNotifs} firstName={fullName.split(' ')[0]} />
     <div className="space-y-5 sm:space-y-8">
       {/* Header */}
       <div className="flex items-end justify-between animate-fade-in-down">
@@ -74,5 +81,6 @@ export default async function DashboardPage() {
         </div>
       </div>
     </div>
+    </>
   )
 }
