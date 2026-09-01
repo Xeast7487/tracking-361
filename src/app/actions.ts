@@ -463,7 +463,6 @@ export async function toggleWebProjectStepAction(clientId: string, field: string
     if (insertError) return { error: insertError.message }
   }
 
-  revalidatePath('/web')
   return { success: true }
 }
 
