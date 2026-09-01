@@ -13,9 +13,7 @@ type WebProject = {
   p1_acces_environnement: boolean
   p2_recherche_moodboard: boolean
   p2_architecture_site: boolean
-  p2_wireframes_1: boolean
   p2_approbation_1: boolean
-  p2_wireframes_2: boolean
   p2_approbation_2: boolean
   p3_mise_en_place_env: boolean
   p3_structure_gabarits: boolean
@@ -74,9 +72,7 @@ const PHASES = [
     steps: [
       { field: 'p2_recherche_moodboard', label: 'Recherche & Moodboard' },
       { field: 'p2_architecture_site', label: 'Architecture du site' },
-      { field: 'p2_wireframes_1', label: 'Wireframes 1' },
       { field: 'p2_approbation_1', label: 'Approbation client' },
-      { field: 'p2_wireframes_2', label: 'Wireframes 2' },
       { field: 'p2_approbation_2', label: 'Approbation client' },
     ],
   },
@@ -139,7 +135,7 @@ function emptyProject(clientId: string): WebProject {
   return {
     id: '', client_id: clientId,
     p1_rencontre_client: false, p1_brief_ecrit: false, p1_contrat_signe: false, p1_collecte_assets: false, p1_acces_environnement: false,
-    p2_recherche_moodboard: false, p2_architecture_site: false, p2_wireframes_1: false, p2_approbation_1: false, p2_wireframes_2: false, p2_approbation_2: false,
+    p2_recherche_moodboard: false, p2_architecture_site: false, p2_approbation_1: false, p2_approbation_2: false,
     p3_mise_en_place_env: false, p3_structure_gabarits: false, p3_integration_contenu: false, p3_responsive: false, p3_formulaires_fonct: false, p3_seo: false, p3_optimisation_perf: false,
     p4_staging_v1: false, p4_modifications_r1: false, p4_staging_v2: false, p4_modifications_r2: false, p4_approbation_finale: false,
     p5_tests_complets: false, p5_securite_performance: false, p5_mise_en_ligne: false, p5_surveillance: false, p5_formation_client: false,

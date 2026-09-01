@@ -428,7 +428,7 @@ export async function markClientPaidAction(clientId: string, from: string, to: s
 
 const VALID_WEB_FIELDS = new Set([
   'p1_rencontre_client', 'p1_brief_ecrit', 'p1_contrat_signe', 'p1_collecte_assets', 'p1_acces_environnement',
-  'p2_recherche_moodboard', 'p2_architecture_site', 'p2_wireframes_1', 'p2_approbation_1', 'p2_wireframes_2', 'p2_approbation_2',
+  'p2_recherche_moodboard', 'p2_architecture_site', 'p2_approbation_1', 'p2_approbation_2',
   'p3_mise_en_place_env', 'p3_structure_gabarits', 'p3_integration_contenu', 'p3_responsive', 'p3_formulaires_fonct', 'p3_seo', 'p3_optimisation_perf',
   'p4_staging_v1', 'p4_modifications_r1', 'p4_staging_v2', 'p4_modifications_r2', 'p4_approbation_finale',
   'p5_tests_complets', 'p5_securite_performance', 'p5_mise_en_ligne', 'p5_surveillance', 'p5_formation_client',
@@ -509,49 +509,6 @@ export async function deleteEntryAction(entryId: string) {
   const { error } = await supabase.from('time_entries').delete().eq('id', entryId)
   if (error) return { error: error.message }
   revalidatePath('/admin/reports')
-  return { success: true }
-}
-
-// ── Wireframes ────────────────────────────────────────────
-
-export async function createWireframeAction(clientId: string, name: string) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié.' }
-
-  const { data, error } = await supabase
-    .from('wireframes')
-    .insert({ client_id: clientId, name, created_by: user.id, pages: [] })
-    .select('id')
-    .single()
-
-  if (error) return { error: error.message }
-  revalidatePath('/web/wireframes')
-  return { id: data.id }
-}
-
-export async function saveWireframeAction(id: string, name: string, pages: unknown[]) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié.' }
-
-  const { error } = await supabase
-    .from('wireframes')
-    .update({ name, pages, updated_at: new Date().toISOString() })
-    .eq('id', id)
-
-  if (error) return { error: error.message }
-  return { success: true }
-}
-
-export async function deleteWireframeAction(id: string) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return { error: 'Non authentifié.' }
-
-  const { error } = await supabase.from('wireframes').delete().eq('id', id)
-  if (error) return { error: error.message }
-  revalidatePath('/web/wireframes')
   return { success: true }
 }
 
