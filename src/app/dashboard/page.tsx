@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import ClockWidget from '@/components/ClockWidget'
 import EntryList from '@/components/EntryList'
 import TaskNotificationModal from '@/components/TaskNotificationModal'
+import ExplosionLoader from '@/components/ExplosionLoader'
 import { fetchPendingTaskNotificationsAction } from '@/app/actions'
 import { todayISO } from '@/lib/utils'
 import { getLang } from '@/lib/getLang'
@@ -55,6 +56,7 @@ export default async function DashboardPage() {
 
   return (
     <>
+    <ExplosionLoader />
     <TaskNotificationModal tasks={pendingNotifs} firstName={fullName.split(' ')[0]} />
     <div className="space-y-5 sm:space-y-8">
       {/* Header */}

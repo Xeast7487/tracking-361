@@ -98,6 +98,81 @@
 .animation-delay-700 { animation-delay: 700ms; }
 .animation-delay-900 { animation-delay: 900ms; }
 
+/* ─── Explosion Loader ───────────────────────────────────── */
+
+.explosion-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  animation: explosionOverlay 1.05s ease-out forwards;
+}
+
+@keyframes explosionOverlay {
+  0%   { opacity: 1; }
+  48%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.explosion-center {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+.explosion-flash {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  transform: translate(-50%, -50%) scale(0);
+  animation: explosionFlash 0.42s ease-out forwards;
+  box-shadow: 0 0 40px 20px rgba(255, 255, 255, 0.85);
+}
+
+@keyframes explosionFlash {
+  0%   { transform: translate(-50%, -50%) scale(0); opacity: 1; }
+  40%  { transform: translate(-50%, -50%) scale(5.5); opacity: 0.9; }
+  100% { transform: translate(-50%, -50%) scale(0.5); opacity: 0; }
+}
+
+.explosion-particle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  border-radius: 50%;
+  will-change: transform, opacity;
+  animation: explodeParticle 0.68s cubic-bezier(0.1, 0, 0.35, 1) forwards;
+}
+
+@keyframes explodeParticle {
+  0% {
+    transform: translate(-50%, -50%) scale(0);
+    opacity: 1;
+  }
+  35% {
+    transform: translate(
+      calc(-50% + calc(var(--tx) * 0.55)),
+      calc(-50% + calc(var(--ty) * 0.55))
+    ) scale(1.4);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(
+      calc(-50% + var(--tx)),
+      calc(-50% + var(--ty))
+    ) scale(0);
+    opacity: 0;
+  }
+}
+
 /* ─── Print styles ───────────────────────────────────────── */
 @media print {
   nav, .no-print { display: none !important; }
