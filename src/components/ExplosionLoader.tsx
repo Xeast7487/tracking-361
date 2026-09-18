@@ -19,7 +19,7 @@ export default function ExplosionLoader() {
   const [gone, setGone] = useState(false)
 
   useEffect(() => {
-    const t = setTimeout(() => setGone(true), 1050)
+    const t = setTimeout(() => setGone(true), 1700)
     return () => clearTimeout(t)
   }, [])
 
@@ -37,7 +37,7 @@ export default function ExplosionLoader() {
           zIndex: 10,
           textAlign: 'center',
           whiteSpace: 'nowrap',
-          animation: 'explosion-text 0.9s ease-out forwards',
+          animation: 'explosion-text 1.5s ease-out forwards',
           fontWeight: 900,
           fontSize: '1.1rem',
           letterSpacing: '0.04em',
