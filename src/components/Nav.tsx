@@ -50,15 +50,6 @@ function IconFile() {
     </svg>
   )
 }
-function IconWeb() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/>
-      <line x1="2" y1="12" x2="22" y2="12"/>
-      <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
-    </svg>
-  )
-}
 function IconBriefcase() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -102,13 +93,11 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
         { href: '/admin/reports',     label: t.reports,      mobile: t.reports,             icon: <IconFile /> },
         { href: '/admin/clients',     label: t.clients,      mobile: t.clients,             icon: <IconBriefcase /> },
         { href: '/admin/taches',      label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
-        { href: '/web',               label: 'Projets Web',  mobile: 'Web',                 icon: <IconWeb /> },
       ]
     : [
         { href: '/dashboard',         label: t.dashboard,    mobile: shortLabels.dashboard, icon: <IconClock /> },
         { href: '/dashboard/history', label: t.history,      mobile: shortLabels.history,   icon: <IconHistory /> },
         { href: '/dashboard/taches',  label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
-        ...(isWebDept ? [{ href: '/web', label: 'Projets Web', mobile: 'Web', icon: <IconWeb /> }] : []),
       ]
 
   const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
