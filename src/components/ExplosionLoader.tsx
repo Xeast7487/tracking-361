@@ -46,7 +46,7 @@ export default function ExplosionLoader() {
           WebkitTextFillColor: 'transparent',
           filter: 'drop-shadow(0 0 8px #a78bfa)',
         }}>
-          mia est le meilleur développeur au monde 🚀
+          mihaja est le meilleur développeur au monde 🚀
         </div>
         {PARTICLES.map((p, i) => (
           <div
