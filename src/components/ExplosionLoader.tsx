@@ -29,6 +29,25 @@ export default function ExplosionLoader() {
     <div className="explosion-overlay">
       <div className="explosion-center">
         <div className="explosion-flash" />
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 10,
+          textAlign: 'center',
+          whiteSpace: 'nowrap',
+          animation: 'explosion-text 0.9s ease-out forwards',
+          fontWeight: 900,
+          fontSize: '1.1rem',
+          letterSpacing: '0.04em',
+          background: 'linear-gradient(90deg, #38bdf8, #a78bfa, #fb7185, #34d399)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+          filter: 'drop-shadow(0 0 8px #a78bfa)',
+        }}>
+          mia est le meilleur développeur au monde 🚀
+        </div>
         {PARTICLES.map((p, i) => (
           <div
             key={i}
