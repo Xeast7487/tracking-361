@@ -343,6 +343,31 @@ const CSS = `
   }
 
   /* ═══════════════════════════════════════════
+     DB LOADING MESSAGE
+  ═══════════════════════════════════════════ */
+  .db-loading {
+    position: absolute;
+    bottom: 28px;
+    font-size: 0.62rem; letter-spacing: 0.18em;
+    color: #38bdf8; text-transform: uppercase; font-weight: 600; font-family: monospace;
+    opacity: 0;
+    animation: dbPulse 9s linear forwards;
+  }
+  @keyframes dbPulse {
+    0%        { opacity: 0 }
+    14%       { opacity: 0.65 }
+    26%,34%   { opacity: 0.25 }
+    30%       { opacity: 0.75; text-shadow: 0 0 8px #38bdf8 }
+    46%,54%   { opacity: 0.25 }
+    50%       { opacity: 0.70; text-shadow: 0 0 8px #38bdf8 }
+    66%,74%   { opacity: 0.25 }
+    70%       { opacity: 0.75; text-shadow: 0 0 8px #38bdf8 }
+    86%       { opacity: 0.45 }
+    92%       { opacity: 0 }
+    100%      { opacity: 0 }
+  }
+
+  /* ═══════════════════════════════════════════
      VICTORY
   ═══════════════════════════════════════════ */
   .mia-wins {
@@ -415,6 +440,9 @@ export default function ExplosionLoader() {
 
         {/* ── K.O.! ── */}
         <div className="ko-shout">K.O.!</div>
+
+        {/* ── DB loading message ── */}
+        <div className="db-loading">Base de données en chargement...</div>
 
         {/* ══════════════════════════════════════
             MAIN ARENA  (shakeable wrapper)
