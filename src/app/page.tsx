@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { getSupabaseBrowserClient } from '@/lib/supabase-browser'
 import ExplosionLoader from '@/components/ExplosionLoader'
 
-const ANIM_MS = 1100
+const ANIM_MS = 9200
 
 export default function Home() {
   const router = useRouter()
