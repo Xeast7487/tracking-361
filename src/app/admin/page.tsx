@@ -108,8 +108,7 @@ export default async function AdminOverviewPage() {
         {stats.map((s, i) => (
           <div
             key={s.label}
-            className="card animate-fade-in"
-            style={{ animationDelay: `${i * 60}ms` }}
+            className="card"
           >
             <div className="text-slate-500 mb-3">{s.icon}</div>
             <p className={`text-2xl font-bold ${s.color}`}>{s.value}</p>
@@ -120,7 +119,7 @@ export default async function AdminOverviewPage() {
 
       {/* Long break alert */}
       {longBreakSessions.length > 0 && (
-        <div className="animate-fade-in animation-delay-200 rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 flex gap-3 items-start">
+        <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 flex gap-3 items-start">
           <div className="flex-shrink-0 mt-0.5">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
@@ -145,7 +144,7 @@ export default async function AdminOverviewPage() {
       )}
 
       {/* Active sessions */}
-      <div className="animate-fade-in animation-delay-300">
+      <div>
         <h2 className="font-semibold text-slate-300 mb-3">
           {t.currentSessions} {activeSessions.length > 0 && `(${activeSessions.length})`}
         </h2>
@@ -197,7 +196,7 @@ export default async function AdminOverviewPage() {
       </div>
 
       {/* Quick links */}
-      <div className="flex items-center gap-3 flex-wrap animate-fade-in animation-delay-400">
+      <div className="flex items-center gap-3 flex-wrap">
         <Link href="/admin/reports" className="btn-primary">{t.viewReports}</Link>
         <Link href="/admin/users"   className="btn-secondary">{t.manageEmployees}</Link>
         <PushNotificationToggle />

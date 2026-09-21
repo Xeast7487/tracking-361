@@ -92,7 +92,7 @@ export default function EditEntryModal({ entry }: { entry: EntryForEdit }) {
             className="absolute inset-0 bg-black/70 backdrop-blur-sm"
             onClick={() => setOpen(false)}
           />
-          <div className="relative z-10 card w-full max-w-lg animate-scale-in space-y-5 overflow-y-auto max-h-[90dvh]">
+          <div className="relative z-10 card w-full max-w-lg space-y-5 overflow-y-auto max-h-[90dvh]">
             <div className="flex items-center justify-between">
               <h2 className="font-bold text-white text-lg">{t.title}</h2>
               <button

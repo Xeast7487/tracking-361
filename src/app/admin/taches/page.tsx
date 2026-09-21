@@ -30,7 +30,7 @@ export default async function AdminTachesPage() {
   const completed   = tasks.filter(t => t.status === 'completed')
 
   return (
-    <div className="space-y-8 animate-fade-in-up">
+    <div className="space-y-8">
       <div>
         <h1 className="text-xl font-bold text-white">Gestion des tâches</h1>
         <p className="text-slate-500 text-sm mt-1">{tasks.length} tâche{tasks.length !== 1 ? 's' : ''} au total</p>

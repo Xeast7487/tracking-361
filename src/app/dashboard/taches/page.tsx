@@ -32,7 +32,7 @@ export default async function TachesPage() {
   ]
 
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6">
       <div>
         <h1 className="text-xl font-bold text-white">Mes tâches</h1>
         <p className="text-slate-500 text-sm mt-1">{tasks.length} tâche{tasks.length !== 1 ? 's' : ''} au total</p>

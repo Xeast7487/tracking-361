@@ -3,7 +3,6 @@ import { redirect } from 'next/navigation'
 import ClockWidget from '@/components/ClockWidget'
 import EntryList from '@/components/EntryList'
 import TaskNotificationModal from '@/components/TaskNotificationModal'
-import ExplosionLoader from '@/components/ExplosionLoader'
 import { fetchPendingTaskNotificationsAction } from '@/app/actions'
 import { todayISO } from '@/lib/utils'
 import { getLang } from '@/lib/getLang'
@@ -56,11 +55,10 @@ export default async function DashboardPage() {
 
   return (
     <>
-    <ExplosionLoader />
     <TaskNotificationModal tasks={pendingNotifs} firstName={fullName.split(' ')[0]} />
     <div className="space-y-5 sm:space-y-8">
       {/* Header */}
-      <div className="flex items-end justify-between animate-fade-in-down">
+      <div className="flex items-end justify-between">
         <div>
           <p className="text-slate-500 text-xs sm:text-sm capitalize">{dateStr}</p>
           <h1 className="text-xl sm:text-2xl font-bold mt-1 text-white">{greeting}, {fullName.split(' ')[0]}</h1>
@@ -68,7 +66,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Main grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-5 sm:gap-6 items-start animate-fade-in-up animation-delay-100">
+      <div className="grid grid-cols-1 lg:grid-cols-[420px_1fr] gap-5 sm:gap-6 items-start">
         <ClockWidget
           activeEntry={activeEntry as any}
           clients={clients as any}
@@ -77,7 +75,7 @@ export default async function DashboardPage() {
         />
 
         {/* Today's entries */}
-        <div className="space-y-3 animate-fade-in animation-delay-200">
+        <div className="space-y-3">
           <h2 className="font-semibold text-slate-300">{t.today}</h2>
           <EntryList entries={todayEntries as any} allowEdit />
         </div>

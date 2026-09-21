@@ -34,7 +34,7 @@ export default function LoginPage() {
 
       <div className="w-full max-w-sm relative z-10">
         {/* Logo & header */}
-        <div className="text-center mb-8 animate-fade-in-down">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl mb-5 shadow-xl shadow-blue-900/50"
             style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)' }}>
             <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2">
@@ -43,11 +43,11 @@ export default function LoginPage() {
             </svg>
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">Agence 361</h1>
-          <p className="text-slate-400 text-sm mt-2 animate-fade-in animation-delay-200">{t.subtitle}</p>
+          <p className="text-slate-400 text-sm mt-2">{t.subtitle}</p>
         </div>
 
         {/* Form card */}
-        <div className="animate-fade-in-up animation-delay-150">
+        <div>
           <div className="bg-slate-800/60 border border-slate-700/50 rounded-2xl p-6 shadow-2xl backdrop-blur-md">
             <form onSubmit={handleSubmit} className="space-y-5">
               <div>
@@ -106,7 +106,7 @@ export default function LoginPage() {
         </div>
 
         {/* Language toggle */}
-        <div className="text-center mt-5 animate-fade-in animation-delay-900">
+        <div className="text-center mt-5">
           <button
             onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
             className="text-slate-500 hover:text-slate-300 text-xs font-semibold tracking-wider transition-colors px-3 py-1.5 rounded-lg hover:bg-slate-800/60"
