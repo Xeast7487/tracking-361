@@ -101,6 +101,7 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
         { href: '/admin/reports',     label: t.reports,      mobile: t.reports,             icon: <IconFile /> },
         { href: '/admin/clients',     label: t.clients,      mobile: t.clients,             icon: <IconBriefcase /> },
         { href: '/admin/taches',      label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
+        { href: '/dashboard/combat',  label: 'Combat',       mobile: 'Combat',              icon: <IconSword /> },
       ]
     : [
         { href: '/dashboard',         label: t.dashboard,    mobile: shortLabels.dashboard, icon: <IconClock /> },
