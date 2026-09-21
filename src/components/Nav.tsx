@@ -65,6 +65,14 @@ function IconTask() {
     </svg>
   )
 }
+function IconSword() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/>
+      <line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/>
+    </svg>
+  )
+}
 function IconLogout() {
   return (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -98,6 +106,7 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
         { href: '/dashboard',         label: t.dashboard,    mobile: shortLabels.dashboard, icon: <IconClock /> },
         { href: '/dashboard/history', label: t.history,      mobile: shortLabels.history,   icon: <IconHistory /> },
         { href: '/dashboard/taches',  label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
+        { href: '/dashboard/combat',  label: 'Combat',       mobile: 'Combat',              icon: <IconSword /> },
       ]
 
   const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
