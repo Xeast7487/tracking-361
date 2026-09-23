@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import ManualEntryForm from './ManualEntryForm'
+import AvertissementForm from './AvertissementForm'
 import EntryList from '@/components/EntryList'
 import ExportButtons from './ExportButtons'
 import ClientBillingTable from './ClientBillingTable'
@@ -107,6 +108,9 @@ export default async function ReportsPage({ searchParams }: Props) {
           projects={(allProjectsRes.data ?? []) as any}
         />
       )}
+
+      {/* Avertissement écrit / verbal */}
+      <AvertissementForm profiles={(profilesRes.data ?? []) as any} />
 
       {/* Filters */}
       <form className="card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-3 items-end no-print">

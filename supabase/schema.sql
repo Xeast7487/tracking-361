@@ -170,7 +170,7 @@ CREATE TABLE IF NOT EXISTS public.dossier_entries (
   id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
   employee_id UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
   type        TEXT        NOT NULL DEFAULT 'rencontre'
-              CHECK (type IN ('rencontre', 'performance', 'disciplinaire', 'avertissement', 'felicitation', 'note')),
+              CHECK (type IN ('rencontre', 'performance', 'disciplinaire', 'avertissement', 'avertissement_ecrit', 'avertissement_verbal', 'felicitation', 'note')),
   title       TEXT        NOT NULL,
   content     TEXT        NOT NULL,
   created_by  UUID        NOT NULL REFERENCES public.profiles(id),

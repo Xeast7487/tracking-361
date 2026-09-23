@@ -645,7 +645,7 @@ export async function fetchAllTasksAdminAction() {
 
 // ── Dossiers employés ────────────────────────────────────
 
-export type DossierEntryType = 'rencontre' | 'performance' | 'disciplinaire' | 'avertissement' | 'felicitation' | 'note'
+export type DossierEntryType = 'rencontre' | 'performance' | 'disciplinaire' | 'avertissement' | 'avertissement_ecrit' | 'avertissement_verbal' | 'felicitation' | 'note'
 
 export async function createDossierEntryAction(formData: FormData) {
   const supabase = await createSupabaseServerClient()

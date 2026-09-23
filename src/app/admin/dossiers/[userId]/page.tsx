@@ -4,21 +4,25 @@ import Link from 'next/link'
 import { createDossierEntryAction, deleteDossierEntryAction, fetchDossierEntriesAction } from '@/app/actions'
 
 const TYPE_LABELS: Record<string, string> = {
-  rencontre:      'Rencontre',
-  performance:    'Analyse de performance',
-  disciplinaire:  'Rencontre disciplinaire',
-  avertissement:  'Avertissement',
-  felicitation:   'Félicitation',
-  note:           'Note',
+  rencontre:             'Rencontre',
+  performance:           'Analyse de performance',
+  disciplinaire:         'Rencontre disciplinaire',
+  avertissement:         'Avertissement',
+  avertissement_ecrit:   'Avertissement écrit',
+  avertissement_verbal:  'Avertissement verbal',
+  felicitation:          'Félicitation',
+  note:                  'Note',
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  rencontre:      'bg-blue-500/15 text-blue-400 border-blue-500/25',
-  performance:    'bg-violet-500/15 text-violet-400 border-violet-500/25',
-  disciplinaire:  'bg-red-500/15 text-red-400 border-red-500/25',
-  avertissement:  'bg-amber-500/15 text-amber-400 border-amber-500/25',
-  felicitation:   'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
-  note:           'bg-slate-500/15 text-slate-400 border-slate-500/25',
+  rencontre:             'bg-blue-500/15 text-blue-400 border-blue-500/25',
+  performance:           'bg-violet-500/15 text-violet-400 border-violet-500/25',
+  disciplinaire:         'bg-red-500/15 text-red-400 border-red-500/25',
+  avertissement:         'bg-amber-500/15 text-amber-400 border-amber-500/25',
+  avertissement_ecrit:   'bg-orange-500/15 text-orange-400 border-orange-500/25',
+  avertissement_verbal:  'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
+  felicitation:          'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
+  note:                  'bg-slate-500/15 text-slate-400 border-slate-500/25',
 }
 
 export default async function AdminDossierEmployeePage({ params }: { params: { userId: string } }) {
