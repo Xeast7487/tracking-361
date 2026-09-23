@@ -165,6 +165,27 @@ CREATE POLICY "own_tasks_update" ON public.tasks FOR UPDATE USING (auth.uid() = 
 CREATE POLICY "admin_tasks_insert" ON public.tasks FOR INSERT WITH CHECK (public.get_my_role() = 'admin');
 CREATE POLICY "admin_tasks_delete" ON public.tasks FOR DELETE USING (public.get_my_role() = 'admin');
 
+-- ── Dossiers employés ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.dossier_entries (
+  id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  employee_id UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  type        TEXT        NOT NULL DEFAULT 'rencontre'
+              CHECK (type IN ('rencontre', 'performance', 'disciplinaire', 'avertissement', 'felicitation', 'note')),
+  title       TEXT        NOT NULL,
+  content     TEXT        NOT NULL,
+  created_by  UUID        NOT NULL REFERENCES public.profiles(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.dossier_entries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "own_dossier_select" ON public.dossier_entries
+  FOR SELECT USING (auth.uid() = employee_id);
+
+CREATE POLICY "admin_dossier_all" ON public.dossier_entries
+  FOR ALL USING (public.get_my_role() = 'admin');
+
 -- Notifications : chaque user gère les siennes + admin lit tout
 CREATE POLICY "own_notifs_all"   ON public.task_notifications FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "admin_notifs_all" ON public.task_notifications FOR ALL USING (public.get_my_role() = 'admin');

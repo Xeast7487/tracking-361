@@ -65,6 +65,13 @@ function IconTask() {
     </svg>
   )
 }
+function IconFolder() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
+    </svg>
+  )
+}
 function IconSword() {
   return (
     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -101,13 +108,15 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
         { href: '/admin/reports',     label: t.reports,      mobile: t.reports,             icon: <IconFile /> },
         { href: '/admin/clients',     label: t.clients,      mobile: t.clients,             icon: <IconBriefcase /> },
         { href: '/admin/taches',      label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
+        { href: '/admin/dossiers',    label: 'Dossiers',     mobile: 'Dossiers',            icon: <IconFolder /> },
         { href: '/dashboard/combat',  label: 'Combat',       mobile: 'Combat',              icon: <IconSword /> },
       ]
     : [
-        { href: '/dashboard',         label: t.dashboard,    mobile: shortLabels.dashboard, icon: <IconClock /> },
-        { href: '/dashboard/history', label: t.history,      mobile: shortLabels.history,   icon: <IconHistory /> },
-        { href: '/dashboard/taches',  label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
-        { href: '/dashboard/combat',  label: 'Combat',       mobile: 'Combat',              icon: <IconSword /> },
+        { href: '/dashboard',              label: t.dashboard,    mobile: shortLabels.dashboard, icon: <IconClock /> },
+        { href: '/dashboard/history',      label: t.history,      mobile: shortLabels.history,   icon: <IconHistory /> },
+        { href: '/dashboard/taches',       label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
+        { href: '/dashboard/mon-dossier',  label: 'Mon dossier',  mobile: 'Dossier',             icon: <IconFolder /> },
+        { href: '/dashboard/combat',       label: 'Combat',       mobile: 'Combat',              icon: <IconSword /> },
       ]
 
   const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()

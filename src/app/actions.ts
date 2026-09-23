@@ -643,6 +643,64 @@ export async function fetchAllTasksAdminAction() {
   return data ?? []
 }
 
+// ── Dossiers employés ────────────────────────────────────
+
+export type DossierEntryType = 'rencontre' | 'performance' | 'disciplinaire' | 'avertissement' | 'felicitation' | 'note'
+
+export async function createDossierEntryAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const employee_id = formData.get('employee_id') as string | null
+  const type        = formData.get('type') as DossierEntryType | null
+  const title       = (formData.get('title') as string | null)?.trim()
+  const content     = (formData.get('content') as string | null)?.trim()
+
+  if (!employee_id || !type || !title || !content) return { error: 'Tous les champs sont requis.' }
+
+  const { error } = await supabase.from('dossier_entries').insert({
+    employee_id,
+    type,
+    title,
+    content,
+    created_by: caller.id,
+  })
+  if (error) return { error: error.message }
+  revalidatePath(`/admin/dossiers/${employee_id}`)
+  return { success: true }
+}
+
+export async function deleteDossierEntryAction(entryId: string, employeeId: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('dossier_entries').delete().eq('id', entryId)
+  if (error) return { error: error.message }
+  revalidatePath(`/admin/dossiers/${employeeId}`)
+  return { success: true }
+}
+
+export async function fetchDossierEntriesAction(employeeId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  if (!profile) return []
+
+  if (profile.role !== 'admin' && user.id !== employeeId) return []
+
+  const { data } = await supabase
+    .from('dossier_entries')
+    .select('id, type, title, content, created_at, creator:profiles!dossier_entries_created_by_fkey(full_name)')
+    .eq('employee_id', employeeId)
+    .order('created_at', { ascending: false })
+
+  return data ?? []
+}
+
 export async function createTaskFormAction(formData: FormData) {
   const supabase = await createSupabaseServerClient()
   const caller = await requireAdmin()
