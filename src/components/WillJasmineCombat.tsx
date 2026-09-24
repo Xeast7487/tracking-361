@@ -4,6 +4,12 @@
 const HX = 215
 const HY = 80
 
+/* Kamehameha beam geometry */
+const KBX = 138  /* beam start X (Will's extended hands) */
+const KBY = 100  /* beam Y center */
+const KIX = 342  /* beam impact X (Jasmine position) */
+const KIY = 108  /* beam impact Y */
+
 const CSS = `
   .wj-overlay {
     position: relative;
@@ -24,8 +30,8 @@ const CSS = `
   .wsf3 { background: rgba(251,191,36,0.45);  animation: wsfM 0.45s 3.60s ease-out forwards; }
   .wsf4 { background: rgba(255,255,255,0.28); animation: wsfQ 0.28s 4.90s ease-out forwards; }
   .wsf5 { background: rgba(239,68,68,0.40);   animation: wsfM 0.40s 6.00s ease-out forwards; }
-  /* TABLE SMASH @ 7.70s — extreme red flash */
-  .wsf6 { background: rgba(239,68,68,1.00);   animation: wsfCrash 1.10s 7.70s ease-out forwards; }
+  /* KAMEHAMEHA @ 7.70s — éclair bleu-blanc */
+  .wsf6 { background: rgba(186,230,253,0.92); animation: wsfCrash 1.10s 7.70s ease-out forwards; }
   @keyframes wsfQ     { 0%{opacity:0} 25%{opacity:1} 100%{opacity:0} }
   @keyframes wsfM     { 0%{opacity:0} 15%{opacity:1} 100%{opacity:0} }
   @keyframes wsfCrash { 0%{opacity:0} 8%{opacity:0.85} 35%{opacity:0.60} 100%{opacity:0} }
@@ -74,11 +80,11 @@ const CSS = `
     66.6%         { transform: translate(-6px, 3px) }
     66.9%         { transform: translate( 6px,-3px) }
     67.2%         { transform: translate(0,0) }
-    /* TABLE SMASH @ 7.70s = 85.6% */
-    85.5%         { transform: translate(-18px, 9px) }
-    86.2%         { transform: translate( 18px,-9px) }
-    86.9%         { transform: translate(-13px, 6px) }
-    87.6%         { transform: translate( 13px,-6px) }
+    /* KAMEHAMEHA @ 7.70s = 85.6% */
+    85.5%         { transform: translate(-22px, 11px) }
+    86.2%         { transform: translate( 22px,-11px) }
+    86.9%         { transform: translate(-15px, 7px) }
+    87.6%         { transform: translate( 15px,-7px) }
     88.3%         { transform: translate(-8px, 4px) }
     89.0%,100%    { transform: translate(0,0) }
   }
@@ -126,10 +132,10 @@ const CSS = `
     38%,44% { width: 68px }
     48%     { width: 40px }
     74%,80% { width: 40px }
-    84%     { width: 10px; box-shadow: 0 0 14px #ef4444 }
-    85%     { box-shadow: 0 0 26px #fff, 0 0 8px #ef4444 }
-    86%     { box-shadow: 0 0 14px #ef4444 }
-    87%     { box-shadow: 0 0 26px #fff, 0 0 8px #ef4444 }
+    85%     { width: 10px; box-shadow: 0 0 14px #38bdf8 }
+    86%     { box-shadow: 0 0 26px #fff, 0 0 8px #38bdf8 }
+    87%     { box-shadow: 0 0 14px #38bdf8 }
+    88%     { box-shadow: 0 0 26px #fff, 0 0 8px #38bdf8 }
     92%     { width: 10px }
     97%,100%{ width: 0px; box-shadow: none }
   }
@@ -141,7 +147,9 @@ const CSS = `
   }
   @keyframes willSurge {
     0%,75%   { filter: drop-shadow(0 0 5px #fb923caa) }
-    82%      { filter: drop-shadow(0 0 20px #fb923c) drop-shadow(0 0 40px #c2410c) }
+    77%      { filter: drop-shadow(0 0 14px #7dd3fc) drop-shadow(0 0 28px #0ea5e9) }
+    83%      { filter: drop-shadow(0 0 36px #ffffff) drop-shadow(0 0 70px #38bdf8) drop-shadow(0 0 100px #0ea5e9) }
+    87%      { filter: drop-shadow(0 0 20px #7dd3fc) drop-shadow(0 0 40px #38bdf8) }
     90%,100% { filter: drop-shadow(0 0 8px #fb923cbb) }
   }
   @keyframes willBody {
@@ -163,11 +171,11 @@ const CSS = `
     63%      { transform: translate(100px, 112px) rotate(-5deg) }
     66%      { transform: translate(142px,  98px) rotate(-20deg) }
     70%      { transform: translate(100px, 130px) rotate(0deg) }
-    /* CHARGE UP */
-    77%      { transform: translate(100px, 137px) rotate(5deg) }
-    83%      { transform: translate(100px, 130px) rotate(0deg) }
-    /* TABLE SMASH @ 7.70s – Will grabs and hurls Jasmine onto table */
-    86%      { transform: translate(160px, 125px) rotate(-25deg) }
+    /* KAMEHAMEHA CHARGE @ 7.0s — se ramasse, mains en coupe */
+    77%      { transform: translate(85px, 136px) rotate(-8deg) }
+    83%      { transform: translate(82px, 133px) rotate(-12deg) }
+    /* KAMEHAMEHA FIRE @ 7.70s — bras tendus en avant */
+    86%      { transform: translate(90px, 130px) rotate(-6deg) }
     89%      { transform: translate(100px, 130px) rotate(0deg) }
     100%     { transform: translate(100px, 130px) rotate(0deg) }
   }
@@ -176,22 +184,20 @@ const CSS = `
   .will-arm-punch { animation: willPunch 9s linear forwards }
   .will-arm-kick  { animation: willKick  9s linear forwards }
   .will-leg-r     { animation: willLegR  9s linear forwards }
-  .will-arm-grab  { animation: willGrab  9s linear forwards }
+  .will-arm-cup   { animation: willCup   9s linear forwards }
+  .will-arm-kame  { animation: willKame  9s linear forwards }
   .will-arm-vic   { animation: willVic   9s linear forwards }
 
   @keyframes willRest  {
     0%,13%  {opacity:1} 16%,18% {opacity:0}
     20%,38% {opacity:1} 41%,43% {opacity:0}
     45%,62% {opacity:1} 65%,71% {opacity:0}
-    72%,83% {opacity:1} 85%,91% {opacity:0}
-    92%,100%{opacity:0}
+    72%,76% {opacity:1} 77%,100%{opacity:0}
   }
   @keyframes willPunch {
     0%,13%  {opacity:0} 16%,18% {opacity:1}
     20%,38% {opacity:0} 41%,43% {opacity:1}
-    45%,62% {opacity:0} 65%,71% {opacity:0}
-    72%,83% {opacity:0} 85%,91% {opacity:0}
-    92%,100%{opacity:0}
+    45%,100%{opacity:0}
   }
   @keyframes willKick {
     0%,63%  {opacity:0} 65%,71% {opacity:1}
@@ -201,12 +207,60 @@ const CSS = `
     0%,62%  {opacity:1} 65%,71% {opacity:0}
     72%,100%{opacity:1}
   }
-  @keyframes willGrab {
-    0%,83%  {opacity:0} 85%,91% {opacity:1}
+  /* mains en coupe — phase de charge KAME... */
+  @keyframes willCup {
+    0%,76%  {opacity:0} 77%,84% {opacity:1}
+    85%,100%{opacity:0}
+  }
+  /* bras tendus en avant — tir HAMEHA! */
+  @keyframes willKame {
+    0%,84%  {opacity:0} 85%,91% {opacity:1}
     92%,100%{opacity:0}
   }
   @keyframes willVic {
     0%,91%  {opacity:0} 93%,100%{opacity:1}
+  }
+
+  /* ══════════════ KAMEHAMEHA BEAM ══════════════ */
+  .kame-beam-halo {
+    transform-box: fill-box;
+    transform-origin: left center;
+    opacity: 0;
+    animation: kameHalo 1.60s 7.70s ease-out forwards;
+  }
+  .kame-beam-core {
+    transform-box: fill-box;
+    transform-origin: left center;
+    opacity: 0;
+    animation: kameCore 1.60s 7.70s ease-out forwards;
+  }
+  @keyframes kameHalo {
+    0%   { opacity:0; transform: scaleX(0) }
+    8%   { opacity:0.5; transform: scaleX(0.12) }
+    22%  { opacity:0.38; transform: scaleX(1) }
+    80%  { opacity:0.28; transform: scaleX(1) }
+    100% { opacity:0; transform: scaleX(1) }
+  }
+  @keyframes kameCore {
+    0%   { opacity:0; transform: scaleX(0) }
+    8%   { opacity:1; transform: scaleX(0.12) }
+    22%  { opacity:1; transform: scaleX(1) }
+    80%  { opacity:0.9; transform: scaleX(1) }
+    100% { opacity:0; transform: scaleX(1) }
+  }
+
+  /* ══════════════ AURA DE CHARGE ══════════════ */
+  .kame-aura {
+    transform-box: fill-box;
+    transform-origin: center center;
+    opacity: 0;
+    animation: kameAura 0.72s 7.00s ease-in-out forwards;
+  }
+  @keyframes kameAura {
+    0%  { opacity:0; transform: scale(0.3) }
+    38% { opacity:1; transform: scale(1.5) }
+    70% { opacity:0.6; transform: scale(1.1) }
+    100%{ opacity:0; transform: scale(0.9) }
   }
 
   /* JASMINE – right fighter (purple, faces left) */
@@ -234,15 +288,14 @@ const CSS = `
     65%      { transform: translate(362px, 130px) rotate(15deg) }
     68%      { transform: translate(356px, 130px) rotate(24deg) }
     72%      { transform: translate(342px, 130px) rotate(0deg) }
-    /* Backing off before grab */
+    /* Recule avant le Kamehameha */
     80%      { transform: translate(350px, 130px) rotate(2deg) }
     84%      { transform: translate(342px, 130px) rotate(0deg) }
-    /* TABLE SMASH – Will grabs her, body flies onto table */
-    86%      { transform: translate(370px, 126px) rotate(28deg) }
-    88%      { transform: translate(420px, 148px) rotate(72deg) }
-    90%      { transform: translate(450px, 170px) rotate(105deg) }
-    /* On the broken table, limp */
-    93%,100% { transform: translate(460px, 178px) rotate(110deg) }
+    /* KAMEHAMEHA — soufflée par le rayon */
+    86%      { transform: translate(368px, 128px) rotate(25deg) }
+    88%      { transform: translate(420px, 115px) rotate(60deg) }
+    90%      { transform: translate(480px, 105px) rotate(90deg) }
+    93%,100% { transform: translate(560px, 98px) rotate(105deg) }
   }
 
   .jas-arm-rest  { animation: jasRest  9s linear forwards }
@@ -257,35 +310,6 @@ const CSS = `
     0%,23%  {opacity:0} 26%,30% {opacity:1}
     32%,54% {opacity:0} 57%,62% {opacity:1}
     64%,100%{opacity:0}
-  }
-
-  /* TABLE (two halves that split on impact) */
-  .table-left {
-    transform-box: fill-box; transform-origin: 100% 50%;
-    animation: tableLeft 9s linear forwards;
-  }
-  .table-right {
-    transform-box: fill-box; transform-origin: 0% 50%;
-    animation: tableRight 9s linear forwards;
-  }
-  @keyframes tableLeft {
-    0%,85.4%  { transform: rotate(0deg); opacity: 1 }
-    86.5%     { transform: rotate(-22deg) translate(-8px, 4px); opacity: 1 }
-    90%,100%  { transform: rotate(-30deg) translate(-14px, 10px); opacity: 1 }
-  }
-  @keyframes tableRight {
-    0%,85.4%  { transform: rotate(0deg); opacity: 1 }
-    86.5%     { transform: rotate(22deg) translate(8px, 4px); opacity: 1 }
-    90%,100%  { transform: rotate(30deg) translate(14px, 10px); opacity: 1 }
-  }
-
-  /* TABLE CRACK flash */
-  .table-crack {
-    opacity: 0;
-    animation: crackIn 0.80s 7.70s ease-out forwards;
-  }
-  @keyframes crackIn {
-    0%  {opacity:0} 15%{opacity:1} 80%{opacity:0.6} 100%{opacity:0}
   }
 
   /* hit flash circles */
@@ -320,6 +344,8 @@ const CSS = `
   .wht4 { animation: whtPop 0.55s 4.90s ease-out forwards }
   .wht5 { animation: whtM   0.55s 6.00s ease-out forwards }
   .wht6 { animation: whtBig 1.05s 7.70s ease-out forwards }
+  /* KAME... texte de charge */
+  .wht-kame { animation: whtCharge 0.72s 7.00s ease-in-out forwards }
   @keyframes whtPop {
     0%  { opacity:0; transform:scale(0.3) rotate(-15deg) }
     35% { opacity:1; transform:scale(1.15) rotate(6deg) }
@@ -333,10 +359,16 @@ const CSS = `
     100%{ opacity:0; transform:scale(0.85) rotate(3deg) translateY(-15px) }
   }
   @keyframes whtBig {
-    0%  { opacity:0; transform:scale(0.1) rotate(-22deg) }
-    20% { opacity:1; transform:scale(1.7) rotate(-8deg) }
-    55% { opacity:1; transform:scale(1.3) rotate(-5deg) }
-    100%{ opacity:0; transform:scale(1.0) rotate(-5deg) translateY(-25px) }
+    0%  { opacity:0; transform:scale(0.1) rotate(-18deg) }
+    20% { opacity:1; transform:scale(1.8) rotate(-8deg) }
+    55% { opacity:1; transform:scale(1.4) rotate(-5deg) }
+    100%{ opacity:0; transform:scale(1.0) rotate(-5deg) translateY(-28px) }
+  }
+  @keyframes whtCharge {
+    0%  { opacity:0; transform:scale(0.5) }
+    40% { opacity:1; transform:scale(1.1) }
+    80% { opacity:0.7; transform:scale(1.0) }
+    100%{ opacity:0; transform:scale(0.9) }
   }
 
   /* victory */
@@ -349,10 +381,6 @@ const CSS = `
   }
   @keyframes wWinsIn { to { opacity:1; transform: scale(1) translateY(0) } }
 `
-
-/* table position in SVG */
-const TX = 390
-const TY = 162
 
 function wSparks(n: number, inner: number, outer: number, stroke: string, w: number) {
   return Array.from({ length: n }, (_, i) => {
@@ -368,16 +396,16 @@ function wSparks(n: number, inner: number, outer: number, stroke: string, w: num
   })
 }
 
-function tableSparks() {
-  const colors = ['#ffffff', '#ef4444', '#fbbf24', '#c084fc']
-  return Array.from({ length: 16 }, (_, i) => {
-    const a = (i / 16) * Math.PI * 2
-    const len = i % 3 === 0 ? 56 : i % 3 === 1 ? 40 : 30
+function kameSparks() {
+  const colors = ['#ffffff', '#bae6fd', '#7dd3fc', '#38bdf8']
+  return Array.from({ length: 18 }, (_, i) => {
+    const a = (i / 18) * Math.PI * 2
+    const len = i % 3 === 0 ? 60 : i % 3 === 1 ? 44 : 30
     return (
       <line
         key={i}
-        x1={TX + Math.cos(a) * 14} y1={TY + Math.sin(a) * 14}
-        x2={TX + Math.cos(a) * len} y2={TY + Math.sin(a) * len}
+        x1={KIX + Math.cos(a) * 14} y1={KIY + Math.sin(a) * 14}
+        x2={KIX + Math.cos(a) * len} y2={KIY + Math.sin(a) * len}
         stroke={colors[i % 4]} strokeWidth={i % 3 === 0 ? 4 : 2.5}
         strokeLinecap="round"
       />
@@ -430,6 +458,16 @@ export default function WillJasmineCombat() {
                 <feGaussianBlur stdDeviation="9" result="b" />
                 <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
               </filter>
+              <filter id="wkameGlow">
+                <feGaussianBlur stdDeviation="7" result="b" />
+                <feMerge><feMergeNode in="b" /><feMergeNode in="SourceGraphic" /></feMerge>
+              </filter>
+              <linearGradient id="wkameGrad" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%"   stopColor="#ffffff"  stopOpacity={1} />
+                <stop offset="20%"  stopColor="#e0f2fe"  stopOpacity={0.98} />
+                <stop offset="55%"  stopColor="#38bdf8"  stopOpacity={0.88} />
+                <stop offset="100%" stopColor="#0284c7"  stopOpacity={0.6} />
+              </linearGradient>
             </defs>
 
             {/* crowd silhouettes */}
@@ -450,36 +488,25 @@ export default function WillJasmineCombat() {
             <line x1={20} y1={155} x2={480} y2={155} stroke="#3b1212" strokeWidth={2} />
             <line x1={20} y1={155} x2={480} y2={155} stroke="#fb923c20" strokeWidth={8} />
 
-            {/* TABLE — two halves that break */}
-            {/* left half */}
-            <g className="table-left">
-              {/* tabletop left side */}
-              <rect x={TX - 52} y={TY - 8} width={52} height={7} rx={2} fill="#6b3a1f" stroke="#4a2512" strokeWidth={1} />
-              {/* left leg */}
-              <rect x={TX - 50} y={TY - 1} width={5} height={18} rx={1} fill="#5a2e12" />
-            </g>
-            {/* right half */}
-            <g className="table-right">
-              {/* tabletop right side */}
-              <rect x={TX} y={TY - 8} width={52} height={7} rx={2} fill="#6b3a1f" stroke="#4a2512" strokeWidth={1} />
-              {/* right leg */}
-              <rect x={TX + 45} y={TY - 1} width={5} height={18} rx={1} fill="#5a2e12" />
-            </g>
-
-            {/* table crack label */}
-            <text
-              className="table-crack"
-              x={TX} y={TY - 20}
-              textAnchor="middle"
-              fill="#ef4444"
-              stroke="#000" strokeWidth={1.5} paintOrder="stroke"
-              fontSize={13} fontWeight={900} fontFamily="monospace"
-            >
-              CRACK!!!
-            </text>
-
-            {/* TABLE SMASH sparks (at table position) */}
-            <g className="wspark wsp6">{tableSparks()}</g>
+            {/* ══ KAMEHAMEHA BEAM (derrière les personnages) ══ */}
+            {/* halo externe */}
+            <rect
+              className="kame-beam-halo"
+              x={KBX} y={KBY - 24}
+              width={480 - KBX} height={48}
+              rx={20}
+              fill="#7dd3fc"
+              filter="url(#wkameGlow)"
+            />
+            {/* noyau du rayon */}
+            <rect
+              className="kame-beam-core"
+              x={KBX} y={KBY - 14}
+              width={480 - KBX} height={28}
+              rx={11}
+              fill="url(#wkameGrad)"
+              filter="url(#wkameGlow)"
+            />
 
             {/* WILL */}
             <g className="will-g">
@@ -493,15 +520,21 @@ export default function WillJasmineCombat() {
               <line className="will-arm-punch" x1={0} y1={-31} x2={ 44} y2={-22} stroke="#fb923c" strokeWidth={2.5} strokeLinecap="round" />
               {/* right leg – kick */}
               <line className="will-arm-kick"  x1={0} y1={-10} x2={ 42} y2={-26} stroke="#fb923c" strokeWidth={2.5} strokeLinecap="round" />
-              {/* both arms extended – grab+slam */}
-              <line className="will-arm-grab"  x1={0} y1={-31} x2={ 46} y2={-20} stroke="#fb923c" strokeWidth={3.0} strokeLinecap="round" />
-              <line className="will-arm-grab"  x1={0} y1={-31} x2={-20} y2={-14} stroke="#fb923c" strokeWidth={3.0} strokeLinecap="round" />
+              {/* mains en coupe – charge KAME... */}
+              <line className="will-arm-cup"   x1={0} y1={-31} x2={ 22} y2={-8}  stroke="#fb923c" strokeWidth={2.8} strokeLinecap="round" />
+              <line className="will-arm-cup"   x1={0} y1={-31} x2={-4}  y2={-8}  stroke="#fb923c" strokeWidth={2.8} strokeLinecap="round" />
+              {/* bras tendus en avant – tir HAMEHA! */}
+              <line className="will-arm-kame"  x1={0} y1={-31} x2={ 48} y2={-22} stroke="#fb923c" strokeWidth={3.0} strokeLinecap="round" />
+              <line className="will-arm-kame"  x1={0} y1={-31} x2={ 46} y2={-30} stroke="#fb923c" strokeWidth={3.0} strokeLinecap="round" />
               {/* victory arm */}
               <line className="will-arm-vic"   x1={0} y1={-31} x2={-26} y2={-58} stroke="#fb923c" strokeWidth={2.5} strokeLinecap="round" />
               {/* left leg */}
               <line x1={0} y1={-10} x2={-15} y2={22} stroke="#fb923c" strokeWidth={2.5} strokeLinecap="round" />
               {/* right leg */}
               <line className="will-leg-r" x1={0} y1={-10} x2={16} y2={22} stroke="#fb923c" strokeWidth={2.5} strokeLinecap="round" />
+              {/* aura de charge Kamehameha */}
+              <circle className="kame-aura" cx={0} cy={-30} r={36} fill="none" stroke="#7dd3fc" strokeWidth={3} />
+              <circle className="kame-aura" cx={0} cy={-30} r={22} fill="#bae6fd" />
             </g>
 
             {/* JASMINE */}
@@ -519,20 +552,22 @@ export default function WillJasmineCombat() {
               <line x1={0} y1={-10} x2={-16} y2={22} stroke="#c084fc" strokeWidth={2.5} strokeLinecap="round" />
             </g>
 
-            {/* HIT EFFECTS (at center, for punches/kicks) */}
+            {/* HIT EFFECTS (coups normaux au centre) */}
             <circle className="wflash wf1" cx={HX} cy={HY} r={14} fill="#ffffffbb" filter="url(#wglow)" />
             <circle className="wflash wf2" cx={HX} cy={HY} r={14} fill="#fb923caa" filter="url(#wglow)" />
             <circle className="wflash wf3" cx={HX} cy={HY} r={22} fill="#fbbf24cc" filter="url(#wglow)" />
             <circle className="wflash wf4" cx={HX} cy={HY} r={14} fill="#ffffffbb" filter="url(#wglow)" />
             <circle className="wflash wf5" cx={HX} cy={HY} r={19} fill="#c084fcbb" filter="url(#wglow)" />
-            {/* TABLE SMASH flash at table position */}
-            <circle className="wflash wf6" cx={TX} cy={TY} r={36} fill="#ef4444cc" filter="url(#wbigGlow)" />
+            {/* impact du Kamehameha sur Jasmine */}
+            <circle className="wflash wf6" cx={KIX} cy={KIY} r={42} fill="#bae6fdcc" filter="url(#wbigGlow)" />
 
             <g className="wspark wsp1">{wSparks(5, 14, 30, '#facc15', 2.5)}</g>
             <g className="wspark wsp2">{wSparks(5, 14, 30, '#fb923c', 2.5)}</g>
             <g className="wspark wsp3">{wSparks(8, 14, 36, '#fbbf24', 3)}</g>
             <g className="wspark wsp4">{wSparks(5, 14, 30, '#facc15', 2.5)}</g>
             <g className="wspark wsp5">{wSparks(6, 14, 30, '#c084fc', 2.5)}</g>
+            {/* étincelles bleu/blanc à l'impact Kamehameha */}
+            <g className="wspark wsp6">{kameSparks()}</g>
 
             {/* hit text labels */}
             {([
@@ -554,16 +589,29 @@ export default function WillJasmineCombat() {
                 {label}
               </text>
             ))}
-            {/* TABLE SMASH text at table position */}
+
+            {/* KAME... texte de charge (au-dessus de Will) */}
+            <text
+              className="whtxt wht-kame"
+              x={100} y={55}
+              textAnchor="middle"
+              fill="#bae6fd"
+              stroke="#0ea5e9" strokeWidth={1} paintOrder="stroke"
+              fontSize={13} fontWeight={900} fontFamily="monospace"
+            >
+              KAME...
+            </text>
+
+            {/* KAMEHAMEHA!! texte de tir */}
             <text
               className="whtxt wht6"
-              x={TX} y={TY - 40}
+              x={250} y={48}
               textAnchor="middle"
-              fill="#ef4444"
+              fill="#7dd3fc"
               stroke="#000" strokeWidth={2} paintOrder="stroke"
               fontSize={22} fontWeight={900} fontFamily="monospace"
             >
-              TABLE BRISÉE!!
+              KAMEHAMEHA!!
             </text>
           </svg>
 
