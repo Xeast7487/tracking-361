@@ -234,7 +234,7 @@ const CSS = `
   }
 
   /* ═══════════════════════════════════════════
-     ESPACE CLEF  (right fighter, faces left)
+     ESPACE COUILLE  (right fighter, faces left)
   ═══════════════════════════════════════════ */
   .ec-g {
     transform-box: fill-box; transform-origin: 50% 80%;
@@ -422,7 +422,7 @@ export default function CombatArena() {
             </div>
             <div className="vs-badge">VS</div>
             <div className="hb-col" style={{ alignItems: 'flex-start' }}>
-              <div className="hb-name hb-name-r">Espace Clef</div>
+              <div className="hb-name hb-name-r">Espace Couille</div>
               <div className="hb-track"><div className="ec-hp" /></div>
             </div>
           </div>
