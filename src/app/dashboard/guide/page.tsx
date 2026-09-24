@@ -10,6 +10,9 @@ const toc = [
   { id: 'section-5', label: '5. Projets, priorités et échéances' },
   { id: 'section-6', label: '6. Relation avec les clients' },
   { id: 'section-7', label: '7. Création, révisions et approbations' },
+  { id: 'section-8', label: '8. Horaires et présence' },
+  { id: 'section-9', label: '9. Milieu de travail' },
+  { id: 'section-10', label: '10. Comportement et attitude' },
 ]
 
 export default async function GuidePage() {
@@ -309,16 +312,194 @@ export default async function GuidePage() {
             <div className="space-y-3 text-slate-300 leading-relaxed mt-5">
               <p>
                 Chaque proposition doit servir la marque du client et l'objectif du mandat. Avant de produire,
-                consulte les informations…
+                consulte les informations approuvées : brief, guide de style, références visuelles, exemples
+                fournis ou validés. Ne commence pas à créer sur des suppositions.
+              </p>
+              <p>
+                Lorsqu'un premier jet est prêt, explique brièvement les choix faits et la façon dont ils
+                répondent au mandat. Présente ton travail avec assurance, mais reste ouvert aux commentaires.
+                Les révisions font partie du processus créatif, pas d'un échec.
+              </p>
+              <p>
+                Une approbation formelle est requise avant de passer à l'étape suivante ou de livrer au client.
+                Ne présume pas qu'un silence équivaut à un accord. Confirme que le travail a bien été validé
+                par la personne responsable.
+              </p>
+              <p>
+                Si les demandes de révision sortent du cadre du mandat original — nouvelles orientations,
+                ajouts importants, changements de stratégie — signale-le à la personne responsable du projet
+                avant de poursuivre. Ces ajouts peuvent avoir un impact sur le budget ou les échéances.
+              </p>
+              <p>
+                Garde une version propre de chaque livrable approuvé dans le dossier du projet. En cas de
+                divergence sur ce qui a été validé, c'est la version archivée qui fait foi.
               </p>
             </div>
-            <div className="mt-6 flex gap-3 p-4 rounded-xl bg-amber-950/30 border border-amber-800/40">
-              <span className="text-amber-400 flex-shrink-0 mt-0.5 text-base">⚠</span>
-              <p className="text-amber-300 text-sm leading-relaxed">
-                <strong className="text-amber-200">Section incomplète.</strong>{' '}
-                Le texte fourni s'arrête ici. Merci de compléter le contenu de la section 7 et de mettre
-                ce guide à jour.
-              </p>
+          </section>
+
+          {/* Section 8 */}
+          <section id="section-8" className="scroll-mt-6">
+            <SectionHeading number="8" title="Horaires et présence" />
+            <div className="space-y-8 mt-5">
+
+              <div>
+                <SubHeading>Heures de travail</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    Nos heures de bureau sont du <strong className="text-white font-semibold">lundi au vendredi,
+                    de 8 h 30 à 16 h 00</strong>. Ce cadre nous permet de rester synchronisés entre collègues
+                    et de rester disponibles pour nos clients pendant les heures normales d'affaires.
+                  </p>
+                  <p>
+                    La ponctualité est une marque de respect envers l'équipe. Si tu prévois arriver en retard
+                    ou devoir quitter plus tôt, avise à l'avance la personne concernée. Un simple message
+                    suffit — pas besoin de se justifier longuement, mais il est important de prévenir.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <SubHeading>Absences et imprévus</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    En cas d'absence imprévue (maladie, urgence personnelle), avise le plus tôt possible —
+                    idéalement avant le début de la journée. Si tu as des livrables urgents en cours,
+                    mentionne-le pour qu'on puisse organiser le suivi.
+                  </p>
+                  <p>
+                    Pour les congés planifiés, parles-en à l'avance afin qu'on puisse s'organiser en
+                    conséquence, surtout s'il y a des projets ou des clients actifs à cette période.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <SubHeading>Suivi des heures</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    Nous utilisons le système de pointage intégré à cette plateforme. Démarre ta session au
+                    début de ta journée et assure-toi de la terminer correctement à la fin. Le suivi des heures
+                    nous aide à facturer correctement nos clients et à bien gérer nos ressources.
+                  </p>
+                  <p>
+                    Associe chaque session au bon client et au bon projet. Si tu travailles sur plusieurs
+                    mandats dans une même journée, crée une entrée distincte pour chacun.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          {/* Section 9 */}
+          <section id="section-9" className="scroll-mt-6">
+            <SectionHeading number="9" title="Milieu de travail" />
+            <div className="space-y-8 mt-5">
+
+              <div>
+                <SubHeading>Notre espace</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    Nous disposons d'un grand bureau commun entièrement équipé. Tout le matériel nécessaire
+                    au travail est mis à ta disposition sur place. Si tu as besoin d'un outil ou d'une
+                    fourniture particulière, parles-en à la direction.
+                  </p>
+                  <p>
+                    Un réfrigérateur avec des boissons est disponible pour tous les employés — c'est un petit
+                    avantage qu'on est heureux d'offrir. On te demande simplement d'en faire usage avec respect
+                    et de ne pas y laisser des aliments ou des contenants personnels sur de longues périodes.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <SubHeading>Propreté et ordre</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    Chacun contribue à garder l'espace propre et ordonné. Range ce que tu utilises,
+                    nettoie après toi dans les espaces communs et laisse ton poste de travail en bon état
+                    en fin de journée.
+                  </p>
+                  <p>
+                    Des clients viennent parfois travailler ou se rencontrer dans nos locaux. L'environnement
+                    que nous leur offrons reflète qui nous sommes. Un espace bien tenu, c'est aussi une
+                    marque de professionnalisme.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </section>
+
+          {/* Section 10 */}
+          <section id="section-10" className="scroll-mt-6">
+            <SectionHeading number="10" title="Comportement et attitude" />
+            <div className="space-y-8 mt-5">
+
+              <div>
+                <SubHeading>Respect mutuel</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    Nous formons une petite équipe et le respect est la base de notre façon de travailler
+                    ensemble. Cela se traduit dans les échanges quotidiens : le ton qu'on emploie, la façon
+                    dont on donne ou reçoit une critique, la manière dont on réagit sous pression.
+                  </p>
+                  <p>
+                    Sois attentif à l'impact de tes paroles et de ton attitude sur tes collègues. Un milieu
+                    de travail agréable, c'est une responsabilité partagée. Si quelque chose te dérange,
+                    aborde-le directement et calmement avec la personne concernée plutôt que de laisser
+                    la situation s'envenimer.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <SubHeading>Présence et sérieux dans le travail</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    Nous encourageons une ambiance détendue — c'est une valeur que nous tenons à préserver.
+                    Cela ne signifie pas pour autant que le sérieux du travail est mis de côté. On peut
+                    avoir du plaisir et rester concentrés, efficaces et fiables en même temps.
+                  </p>
+                  <p>
+                    Sois présent pendant les heures de travail. Limite les distractions non liées au travail
+                    durant les périodes de production ou lors de réunions. Si tu as besoin de décompresser
+                    un moment, c'est tout à fait normal — prends une pause, et reviens concentré.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <SubHeading>Tenue vestimentaire</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    La tenue est décontractée au quotidien. On ne s'attend pas à du veston-cravate. On
+                    s'attend cependant à une apparence soignée et propre — des vêtements en bon état,
+                    appropriés à un contexte de travail.
+                  </p>
+                  <p>
+                    Puisque des clients peuvent passer à nos locaux à l'improviste ou lors de rendez-vous
+                    planifiés, garde en tête que tu représentes l'agence à tout moment. Une tenue propre
+                    et professionnelle n'empêche pas d'être à l'aise.
+                  </p>
+                </div>
+              </div>
+
+              <div>
+                <SubHeading>Professionnalisme en présence des clients</SubHeading>
+                <div className="space-y-3 text-slate-300 leading-relaxed">
+                  <p>
+                    Lorsque des clients sont dans nos locaux, accueille-les chaleureusement, même si tu
+                    n'es pas directement impliqué dans leur dossier. Un sourire, un bonjour — ce sont des
+                    détails qui comptent et qui contribuent à l'image que nous projetons.
+                  </p>
+                  <p>
+                    Évite les conversations privées ou les sujets sensibles qui pourraient être entendus
+                    par des visiteurs. Sois attentif à l'ambiance générale du bureau en leur présence.
+                  </p>
+                </div>
+              </div>
+
             </div>
           </section>
 
