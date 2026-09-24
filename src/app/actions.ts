@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
+import webpush from 'web-push'
+import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 
 // ── Auth ──────────────────────────────────────────────────
 
@@ -647,42 +649,238 @@ export async function fetchAllTasksAdminAction() {
 
 export type DossierEntryType = 'rencontre' | 'performance' | 'disciplinaire' | 'avertissement' | 'avertissement_ecrit' | 'avertissement_verbal' | 'felicitation' | 'note'
 
+async function sendDossierPushToEmployee(employeeId: string, title: string) {
+  try {
+    webpush.setVapidDetails(
+      'mailto:admin@agence361.com',
+      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
+      process.env.VAPID_PRIVATE_KEY!
+    )
+    const admin = createSupabaseAdminClient()
+    const { data: subs } = await admin
+      .from('push_subscriptions')
+      .select('endpoint, p256dh, auth_key')
+      .eq('user_id', employeeId)
+    if (!subs || subs.length === 0) return
+    const payload = JSON.stringify({
+      title: '📁 Nouveau document à votre dossier',
+      body: title,
+      url: '/dashboard/mon-dossier',
+      tag: 'dossier-entry',
+    })
+    const failed: string[] = []
+    await Promise.all(subs.map(async (sub: any) => {
+      try {
+        await webpush.sendNotification(
+          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
+          payload
+        )
+      } catch (err: any) {
+        if (err.statusCode === 410 || err.statusCode === 404) failed.push(sub.endpoint)
+      }
+    }))
+    if (failed.length > 0) {
+      await admin.from('push_subscriptions').delete().in('endpoint', failed)
+    }
+  } catch {}
+}
+
 export async function createDossierEntryAction(formData: FormData) {
   const supabase = await createSupabaseServerClient()
-  const caller = await requireAdmin()
+  const caller   = await requireAdmin()
   if (!caller) return { error: 'Accès refusé.' }
 
-  const employee_id = formData.get('employee_id') as string | null
-  const type        = formData.get('type') as DossierEntryType | null
-  const title       = (formData.get('title') as string | null)?.trim()
-  const content     = (formData.get('content') as string | null)?.trim()
+  const employee_id     = formData.get('employee_id') as string | null
+  const type            = formData.get('type') as DossierEntryType | null
+  const title           = (formData.get('title') as string | null)?.trim()
+  const content         = (formData.get('content') as string | null)?.trim()
+  const is_confidential = formData.get('is_confidential') === 'on'
+  const file            = formData.get('file') as File | null
 
   if (!employee_id || !type || !title || !content) return { error: 'Tous les champs sont requis.' }
 
-  const { error } = await supabase.from('dossier_entries').insert({
-    employee_id,
-    type,
-    title,
-    content,
-    created_by: caller.id,
-  })
+  const { data: newEntry, error } = await supabase
+    .from('dossier_entries')
+    .insert({ employee_id, type, title, content, is_confidential, created_by: caller.id })
+    .select('id')
+    .single()
   if (error) return { error: error.message }
+
+  const admin = createSupabaseAdminClient()
+
+  if (file && file.size > 0 && newEntry?.id) {
+    if (file.size > 10 * 1024 * 1024) return { error: 'Fichier trop grand (max 10 Mo).' }
+    const ext  = file.name.split('.').pop()
+    const safe = `${Date.now()}.${ext}`
+    const path = `${employee_id}/${newEntry.id}/${safe}`
+    const buf  = await file.arrayBuffer()
+    const { error: upErr } = await admin.storage
+      .from('dossier-files')
+      .upload(path, buf, { contentType: file.type, upsert: false })
+    if (!upErr) {
+      await admin.from('dossier_attachments').insert({
+        entry_id: newEntry.id, name: file.name, storage_path: path,
+        size_bytes: file.size, mime_type: file.type, uploaded_by: caller.id,
+      })
+    }
+  }
+
+  await admin.from('dossier_activity_log').insert({
+    employee_id, entry_id: newEntry?.id ?? null, action: 'create', actor_id: caller.id,
+  })
+
+  if (!is_confidential) {
+    sendDossierPushToEmployee(employee_id, title)
+  }
+
   revalidatePath(`/admin/dossiers/${employee_id}`)
   return { success: true }
 }
 
-export async function deleteDossierEntryAction(entryId: string, employeeId: string) {
+export async function updateDossierEntryAction(
+  entryId: string,
+  employeeId: string,
+  formData: FormData
+) {
   const supabase = await createSupabaseServerClient()
-  const caller = await requireAdmin()
+  const caller   = await requireAdmin()
   if (!caller) return { error: 'Accès refusé.' }
 
-  const { error } = await supabase.from('dossier_entries').delete().eq('id', entryId)
+  const type            = formData.get('type') as string | null
+  const title           = (formData.get('title') as string | null)?.trim()
+  const content         = (formData.get('content') as string | null)?.trim()
+  const is_confidential = formData.get('is_confidential') === 'on'
+
+  if (!type || !title || !content) return { error: 'Tous les champs sont requis.' }
+
+  const { error } = await supabase
+    .from('dossier_entries')
+    .update({ type, title, content, is_confidential, updated_at: new Date().toISOString() })
+    .eq('id', entryId)
   if (error) return { error: error.message }
+
+  await createSupabaseAdminClient().from('dossier_activity_log').insert({
+    employee_id: employeeId, entry_id: entryId, action: 'edit', actor_id: caller.id,
+  })
+
   revalidatePath(`/admin/dossiers/${employeeId}`)
   return { success: true }
 }
 
-export async function fetchDossierEntriesAction(employeeId: string) {
+export async function deleteDossierEntryAction(entryId: string, employeeId: string) {
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const admin = createSupabaseAdminClient()
+
+  const { data: attachments } = await admin
+    .from('dossier_attachments')
+    .select('storage_path')
+    .eq('entry_id', entryId)
+
+  if (attachments && attachments.length > 0) {
+    await admin.storage.from('dossier-files').remove(attachments.map((a: any) => a.storage_path))
+  }
+
+  await admin.from('dossier_activity_log').insert({
+    employee_id: employeeId, entry_id: entryId, action: 'delete', actor_id: caller.id,
+  })
+
+  const supabase = await createSupabaseServerClient()
+  const { error } = await supabase.from('dossier_entries').delete().eq('id', entryId)
+  if (error) return { error: error.message }
+
+  revalidatePath(`/admin/dossiers/${employeeId}`)
+  return { success: true }
+}
+
+export async function signDossierEntryAction(entryId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const { data: entry } = await supabase
+    .from('dossier_entries')
+    .select('id, employee_id, signed_at')
+    .eq('id', entryId)
+    .single()
+
+  if (!entry || entry.employee_id !== user.id) return { error: 'Accès refusé.' }
+  if (entry.signed_at) return { error: 'Déjà signé.' }
+
+  const { error } = await supabase
+    .from('dossier_entries')
+    .update({ signed_at: new Date().toISOString(), signed_by: user.id })
+    .eq('id', entryId)
+    .eq('employee_id', user.id)
+  if (error) return { error: error.message }
+
+  await createSupabaseAdminClient().from('dossier_activity_log').insert({
+    employee_id: user.id, entry_id: entryId, action: 'sign', actor_id: user.id,
+  })
+
+  revalidatePath('/dashboard/mon-dossier')
+  return { success: true }
+}
+
+export async function uploadDossierAttachmentAction(formData: FormData) {
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const entry_id    = formData.get('entry_id') as string | null
+  const employee_id = formData.get('employee_id') as string | null
+  const file        = formData.get('file') as File | null
+
+  if (!entry_id || !employee_id || !file || file.size === 0) return { error: 'Fichier manquant.' }
+  if (file.size > 10 * 1024 * 1024) return { error: 'Fichier trop grand (max 10 Mo).' }
+
+  const ext  = file.name.split('.').pop()
+  const safe = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  const path = `${employee_id}/${entry_id}/${safe}`
+  const buf  = await file.arrayBuffer()
+
+  const admin = createSupabaseAdminClient()
+  const { error: upErr } = await admin.storage
+    .from('dossier-files')
+    .upload(path, buf, { contentType: file.type, upsert: false })
+  if (upErr) return { error: upErr.message }
+
+  const { error } = await admin.from('dossier_attachments').insert({
+    entry_id, name: file.name, storage_path: path,
+    size_bytes: file.size, mime_type: file.type, uploaded_by: caller.id,
+  })
+  if (error) {
+    await admin.storage.from('dossier-files').remove([path])
+    return { error: error.message }
+  }
+
+  revalidatePath(`/admin/dossiers/${employee_id}`)
+  return { success: true }
+}
+
+export async function deleteDossierAttachmentAction(attachmentId: string, employeeId: string) {
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const admin = createSupabaseAdminClient()
+  const { data: att } = await admin
+    .from('dossier_attachments')
+    .select('storage_path')
+    .eq('id', attachmentId)
+    .single()
+  if (!att) return { error: 'Introuvable.' }
+
+  await admin.storage.from('dossier-files').remove([att.storage_path])
+  await admin.from('dossier_attachments').delete().eq('id', attachmentId)
+
+  revalidatePath(`/admin/dossiers/${employeeId}`)
+  return { success: true }
+}
+
+export async function fetchDossierEntriesAction(
+  employeeId: string,
+  filters?: { type?: string; search?: string; from?: string; to?: string }
+) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return []
@@ -692,13 +890,61 @@ export async function fetchDossierEntriesAction(employeeId: string) {
 
   if (profile.role !== 'admin' && user.id !== employeeId) return []
 
-  const { data } = await supabase
+  let query = supabase
     .from('dossier_entries')
-    .select('id, type, title, content, created_at, creator:profiles!dossier_entries_created_by_fkey(full_name)')
+    .select(`id, type, title, content, created_at, is_confidential, signed_at, signed_by,
+      creator:profiles!dossier_entries_created_by_fkey(full_name),
+      attachments:dossier_attachments(id, name, size_bytes, mime_type)`)
+    .eq('employee_id', employeeId)
+
+  if (filters?.type && filters.type !== 'all') {
+    query = query.eq('type', filters.type) as any
+  }
+  if (filters?.search) {
+    const s = filters.search.replace(/[%_]/g, '\\$&')
+    query = query.or(`title.ilike.%${s}%,content.ilike.%${s}%`) as any
+  }
+  if (filters?.from) {
+    query = query.gte('created_at', filters.from) as any
+  }
+  if (filters?.to) {
+    query = query.lte('created_at', `${filters.to}T23:59:59`) as any
+  }
+
+  const { data } = await (query as any).order('created_at', { ascending: false })
+  return (data ?? []) as any[]
+}
+
+export async function logDossierViewAction(employeeId: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return
+  await createSupabaseAdminClient().from('dossier_activity_log').insert({
+    employee_id: employeeId, entry_id: null, action: 'view', actor_id: user.id,
+  })
+}
+
+export async function fetchDossierActivityAction(employeeId: string) {
+  const caller = await requireAdmin()
+  if (!caller) return []
+
+  const { data } = await createSupabaseAdminClient()
+    .from('dossier_activity_log')
+    .select('id, action, created_at, entry_id, actor:profiles!dossier_activity_log_actor_id_fkey(full_name)')
     .eq('employee_id', employeeId)
     .order('created_at', { ascending: false })
+    .limit(50)
 
-  return data ?? []
+  return (data ?? []) as any[]
+}
+
+export async function logDossierExportAction(employeeId: string) {
+  const caller = await requireAdmin()
+  if (!caller) return
+  await createSupabaseAdminClient().from('dossier_activity_log').insert({
+    employee_id: employeeId, entry_id: null, action: 'export', actor_id: caller.id,
+  })
+  revalidatePath(`/admin/dossiers/${employeeId}`)
 }
 
 export async function createTaskFormAction(formData: FormData) {

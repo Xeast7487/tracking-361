@@ -167,24 +167,77 @@ CREATE POLICY "admin_tasks_delete" ON public.tasks FOR DELETE USING (public.get_
 
 -- ── Dossiers employés ────────────────────────────────────
 CREATE TABLE IF NOT EXISTS public.dossier_entries (
-  id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
-  employee_id UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
-  type        TEXT        NOT NULL DEFAULT 'rencontre'
-              CHECK (type IN ('rencontre', 'performance', 'disciplinaire', 'avertissement', 'avertissement_ecrit', 'avertissement_verbal', 'felicitation', 'note')),
-  title       TEXT        NOT NULL,
-  content     TEXT        NOT NULL,
-  created_by  UUID        NOT NULL REFERENCES public.profiles(id),
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  id               UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  employee_id      UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  type             TEXT        NOT NULL DEFAULT 'rencontre'
+                   CHECK (type IN ('rencontre', 'performance', 'disciplinaire', 'avertissement', 'avertissement_ecrit', 'avertissement_verbal', 'felicitation', 'note')),
+  title            TEXT        NOT NULL,
+  content          TEXT        NOT NULL,
+  is_confidential  BOOLEAN     NOT NULL DEFAULT false,
+  signed_at        TIMESTAMPTZ,
+  signed_by        UUID        REFERENCES public.profiles(id),
+  created_by       UUID        NOT NULL REFERENCES public.profiles(id),
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 ALTER TABLE public.dossier_entries ENABLE ROW LEVEL SECURITY;
 
+-- Employé voit seulement ses entrées non-confidentielles
 CREATE POLICY "own_dossier_select" ON public.dossier_entries
-  FOR SELECT USING (auth.uid() = employee_id);
+  FOR SELECT USING (auth.uid() = employee_id AND is_confidential = false);
 
 CREATE POLICY "admin_dossier_all" ON public.dossier_entries
   FOR ALL USING (public.get_my_role() = 'admin');
+
+-- ── Pièces jointes au dossier ────────────────────────────
+CREATE TABLE IF NOT EXISTS public.dossier_attachments (
+  id           UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  entry_id     UUID        NOT NULL REFERENCES public.dossier_entries(id) ON DELETE CASCADE,
+  name         TEXT        NOT NULL,
+  storage_path TEXT        NOT NULL,
+  size_bytes   BIGINT,
+  mime_type    TEXT,
+  uploaded_by  UUID        NOT NULL REFERENCES public.profiles(id),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.dossier_attachments ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "admin_attachments_all" ON public.dossier_attachments
+  FOR ALL USING (public.get_my_role() = 'admin');
+
+CREATE POLICY "own_attachments_select" ON public.dossier_attachments
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM public.dossier_entries e
+      WHERE e.id = entry_id
+        AND e.employee_id = auth.uid()
+        AND e.is_confidential = false
+    )
+  );
+
+-- ── Journal d'activité du dossier ────────────────────────
+CREATE TABLE IF NOT EXISTS public.dossier_activity_log (
+  id          UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  employee_id UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  entry_id    UUID        REFERENCES public.dossier_entries(id) ON DELETE SET NULL,
+  action      TEXT        NOT NULL CHECK (action IN ('view', 'create', 'edit', 'delete', 'sign', 'export')),
+  actor_id    UUID        NOT NULL REFERENCES public.profiles(id),
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+ALTER TABLE public.dossier_activity_log ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "admin_activity_all" ON public.dossier_activity_log
+  FOR ALL USING (public.get_my_role() = 'admin');
+
+CREATE POLICY "own_activity_select" ON public.dossier_activity_log
+  FOR SELECT USING (auth.uid() = employee_id);
+
+-- ── Stockage des pièces jointes ──────────────────────────
+-- Bucket privé "dossier-files" (max 10 Mo, PDF/images)
+-- Créé via: INSERT INTO storage.buckets ...
 
 -- Notifications : chaque user gère les siennes + admin lit tout
 CREATE POLICY "own_notifs_all"   ON public.task_notifications FOR ALL USING (auth.uid() = user_id);
