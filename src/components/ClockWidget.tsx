@@ -5,6 +5,7 @@ import { clockInAction, clockOutAction, pauseEntryAction, resumeEntryAction, cre
 import { formatTime } from '@/lib/utils'
 import { useLanguage } from '@/lib/LanguageContext'
 import { translations } from '@/lib/translations'
+import TrackingToast, { ToastType } from '@/components/TrackingToast'
 
 interface Client  { id: string; name: string }
 interface Project { id: string; client_id: string; name: string }
@@ -56,6 +57,9 @@ export default function ClockWidget({
 
   const [showStopForm, setShowStopForm] = useState(false)
   const [stopNotes,    setStopNotes]    = useState('')
+  const [toast, setToast] = useState<{ type: ToastType; id: number } | null>(null)
+
+  const showToast = (type: ToastType) => setToast({ type, id: Date.now() })
 
   const filteredProjects = projects.filter(p => p.client_id === clientId)
 
@@ -104,6 +108,7 @@ export default function ClockWidget({
     startTransition(async () => {
       const res = await clockInAction(clientId, projectId, '', billable, chargeWebDept, chargeClient, clientRate ? parseFloat(clientRate) : null)
       if (res?.error) setError(res.error)
+      else showToast('start')
     })
   }
 
@@ -115,6 +120,7 @@ export default function ClockWidget({
       if (res.clientBillInfo) setBillingNotif(res.clientBillInfo)
       setShowStopForm(false)
       setStopNotes('')
+      showToast('stop')
     })
   }
 
@@ -123,6 +129,7 @@ export default function ClockWidget({
     startTransition(async () => {
       const res = await pauseEntryAction(initial.id)
       if (res?.error) setError(res.error)
+      else showToast('pause')
     })
   }
 
@@ -131,6 +138,7 @@ export default function ClockWidget({
     startTransition(async () => {
       const res = await resumeEntryAction(initial.id)
       if (res?.error) setError(res.error)
+      else showToast('resume')
     })
   }
 
@@ -138,6 +146,8 @@ export default function ClockWidget({
   if (initial) {
     const isPaused = !!initial.paused_at
     return (
+      <>
+      {toast && <TrackingToast key={toast.id} type={toast.type} onDone={() => setToast(null)} />}
       <div className="card space-y-4">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${isPaused ? 'bg-amber-400' : 'bg-green-400 animate-pulse'}`} />
@@ -217,11 +227,14 @@ export default function ClockWidget({
           </div>
         )}
       </div>
+      </>
     )
   }
 
   // ── Start session form ───────────────────────────────────
   return (
+    <>
+    {toast && <TrackingToast key={toast.id} type={toast.type} onDone={() => setToast(null)} />}
     <div className="card space-y-5">
       <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">{t.newSession}</p>
 
@@ -339,5 +352,6 @@ export default function ClockWidget({
         {isPending ? t.starting : t.startSession}
       </button>
     </div>
+    </>
   )
 }

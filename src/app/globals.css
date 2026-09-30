@@ -52,6 +52,16 @@
 }
 
 
+/* ─── Tracking toast bounce ─────────────────────────────── */
+@keyframes bounce-x {
+  0%, 100% { transform: translateX(0); }
+  30%       { transform: translateX(-6px); }
+  70%       { transform: translateX(6px); }
+}
+.animate-bounce-x {
+  animation: bounce-x 1.3s ease-in-out infinite;
+}
+
 /* ─── Print styles ───────────────────────────────────────── */
 @media print {
   nav, .no-print { display: none !important; }
