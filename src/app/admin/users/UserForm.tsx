@@ -13,8 +13,6 @@ interface User {
   hourly_rate: number | null
   is_active: boolean
   is_web_dept: boolean
-  discord_user_id?: string | null
-  notify_discord?: boolean
 }
 
 interface Props {
@@ -102,38 +100,6 @@ export default function UserForm({ mode, user }: Props) {
         </div>
       )}
 
-      {mode === 'edit' && (
-        <div className="col-span-full border-t border-slate-700/50 pt-3 space-y-3">
-          <p className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Notifications Discord</p>
-          <div>
-            <label className="label">Discord User ID</label>
-            <input
-              name="discord_user_id"
-              type="text"
-              defaultValue={user?.discord_user_id ?? ''}
-              placeholder="ex: 737391146707452048"
-              className="input font-mono text-xs"
-            />
-            <p className="text-xs text-slate-600 mt-1">Clic droit sur l'utilisateur dans Discord → Copier l'identifiant</p>
-          </div>
-          <div className="flex items-center gap-3">
-            <input
-              name="notify_discord"
-              type="checkbox"
-              id={`notify_discord_${user?.id}`}
-              value="true"
-              defaultChecked={user?.notify_discord ?? false}
-              className="w-4 h-4 accent-violet-500"
-            />
-            <div>
-              <label htmlFor={`notify_discord_${user?.id}`} className="text-sm font-medium text-slate-200 cursor-pointer">
-                Notifier si résumé manquant
-              </label>
-              <p className="text-xs text-slate-500">Le bot envoie un DM à 17h si l'employé n'a pas écrit son résumé</p>
-            </div>
-          </div>
-        </div>
-      )}
 
       {error   && <p className="text-red-400 text-sm col-span-full">{error}</p>}
       {success && <p className="text-green-400 text-sm col-span-full">{success}</p>}

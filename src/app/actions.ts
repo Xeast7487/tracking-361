@@ -241,14 +241,12 @@ export async function updateUserAction(userId: string, formData: FormData) {
   const caller   = await requireAdmin()
   if (!caller) return { error: 'Accès refusé.' }
 
-  const fullName       = formData.get('full_name') as string
-  const role           = formData.get('role') as string
-  const rateStr        = formData.get('hourly_rate') as string
-  const isActive       = formData.get('is_active') === 'true'
-  const isWebDept      = formData.get('is_web_dept') === 'true'
-  const discordUserId  = (formData.get('discord_user_id') as string)?.trim() || null
-  const notifyDiscord  = formData.get('notify_discord') === 'true'
-  const password       = formData.get('password') as string
+  const fullName  = formData.get('full_name') as string
+  const role      = formData.get('role') as string
+  const rateStr   = formData.get('hourly_rate') as string
+  const isActive  = formData.get('is_active') === 'true'
+  const isWebDept = formData.get('is_web_dept') === 'true'
+  const password  = formData.get('password') as string
 
   if (password) {
     await admin.auth.admin.updateUserById(userId, { password })
@@ -260,8 +258,6 @@ export async function updateUserAction(userId: string, formData: FormData) {
     hourly_rate: rateStr ? parseFloat(rateStr) : null,
     is_active: isActive,
     is_web_dept: isWebDept,
-    discord_user_id: discordUserId,
-    notify_discord: notifyDiscord,
   }).eq('id', userId)
 
   if (error) return { error: error.message }

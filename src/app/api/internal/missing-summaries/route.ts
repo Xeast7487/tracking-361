@@ -13,9 +13,8 @@ export async function GET(req: NextRequest) {
   const [punchedRes, summariesRes] = await Promise.all([
     supabase
       .from('time_entries')
-      .select('user_id, profiles!inner(full_name, discord_user_id, notify_discord)')
-      .gte('started_at', `${today}T00:00:00`)
-      .eq('profiles.notify_discord', true),
+      .select('user_id, profiles(full_name)')
+      .gte('started_at', `${today}T00:00:00`),
     supabase
       .from('daily_summaries')
       .select('user_id')
@@ -23,19 +22,14 @@ export async function GET(req: NextRequest) {
   ])
 
   const summaryIds = new Set((summariesRes.data ?? []).map((s: any) => s.user_id))
-
   const seen = new Set<string>()
-  const missing: { name: string; discord_user_id: string }[] = []
+  const missing: string[] = []
 
   for (const e of (punchedRes.data ?? []) as any[]) {
-    const uid = e.user_id
-    const profile = e.profiles
-    if (seen.has(uid)) continue
-    seen.add(uid)
-    if (summaryIds.has(uid)) continue
-    if (!profile?.discord_user_id) continue
-    missing.push({ name: profile.full_name, discord_user_id: profile.discord_user_id })
+    if (seen.has(e.user_id) || summaryIds.has(e.user_id)) continue
+    seen.add(e.user_id)
+    missing.push(e.profiles?.full_name ?? e.user_id)
   }
 
-  return Response.json(missing)
+  return Response.json({ missing, date: today })
 }
