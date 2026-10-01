@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { fetchDailySummariesAction } from '@/app/actions'
 import ManagerAiChat from '@/components/ManagerAiChat'
+import ClientStatusWidget from '@/components/ClientStatusWidget'
 
 function formatDate(date: string) {
   return new Date(date + 'T12:00:00').toLocaleDateString('fr-CA', {
@@ -22,13 +23,51 @@ export default async function AdminResumesPage({ searchParams }: Props) {
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
   const selectedDate = params.date ?? today
 
-  const [summaries, activeEmployees] = await Promise.all([
+  const weekStart = new Date()
+  weekStart.setDate(weekStart.getDate() - weekStart.getDay() + (weekStart.getDay() === 0 ? -6 : 1))
+  const weekStartISO = weekStart.toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
+
+  const [summaries, activeEmployees, weekEntriesRes] = await Promise.all([
     fetchDailySummariesAction(selectedDate),
     supabase.from('profiles').select('id, full_name').eq('is_active', true).eq('role', 'employee').order('full_name'),
+    supabase.from('time_entries')
+      .select('client_id, started_at, ended_at, clients(id, name), profiles(full_name)')
+      .gte('started_at', `${weekStartISO}T00:00:00`)
+      .not('ended_at', 'is', null)
+      .order('started_at', { ascending: false }),
   ])
 
   const employeesWithSummary = new Set(summaries.map((s: any) => s.user_id))
   const missing = (activeEmployees.data ?? []).filter(e => !employeesWithSummary.has(e.id))
+
+  // Agréger stats clients de la semaine
+  const clientMap = new Map<string, { id: string; name: string; ms: number; lastAt: string | null; lastEmployee: string | null }>()
+  for (const e of (weekEntriesRes.data ?? []) as any[]) {
+    const cid = e.clients?.id ?? e.client_id
+    const cname = e.clients?.name ?? 'Inconnu'
+    if (!cid) continue
+    const ms = e.ended_at ? new Date(e.ended_at).getTime() - new Date(e.started_at).getTime() : 0
+    const existing = clientMap.get(cid)
+    if (!existing) {
+      clientMap.set(cid, { id: cid, name: cname, ms, lastAt: e.started_at, lastEmployee: e.profiles?.full_name ?? null })
+    } else {
+      existing.ms += ms
+      if (!existing.lastAt || e.started_at > existing.lastAt) {
+        existing.lastAt = e.started_at
+        existing.lastEmployee = e.profiles?.full_name ?? null
+      }
+    }
+  }
+  const clientStats = [...clientMap.values()]
+    .sort((a, b) => b.ms - a.ms)
+    .map(c => ({
+      id: c.id,
+      name: c.name,
+      weekHours: Math.floor(c.ms / 3_600_000),
+      weekMinutes: Math.floor((c.ms % 3_600_000) / 60_000),
+      lastActivity: c.lastAt,
+      lastEmployee: c.lastEmployee,
+    }))
 
   // Navigation: 7 derniers jours
   const days: string[] = []
@@ -61,6 +100,8 @@ export default async function AdminResumesPage({ searchParams }: Props) {
           ))}
         </div>
       </div>
+
+      {clientStats.length > 0 && <ClientStatusWidget clients={clientStats} />}
 
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
         {/* Colonne principale : résumés */}

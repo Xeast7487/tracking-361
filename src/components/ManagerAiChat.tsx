@@ -104,6 +104,15 @@ export default function ManagerAiChat() {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const prompt = (e as CustomEvent<string>).detail
+      if (prompt) send(prompt)
+    }
+    window.addEventListener('manager-ai-prompt', handler)
+    return () => window.removeEventListener('manager-ai-prompt', handler)
+  }, [messages, streaming]) // eslint-disable-line react-hooks/exhaustive-deps
+
   const send = async (userMessage: string) => {
     const trimmed = userMessage.trim()
     if (!trimmed || streaming) return
@@ -147,7 +156,7 @@ export default function ManagerAiChat() {
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-11rem)] min-h-[560px] max-h-[900px] bg-slate-950 border border-slate-800/60 rounded-2xl overflow-hidden">
+    <div id="manager-ai-chat" className="flex flex-col h-[calc(100vh-11rem)] min-h-[560px] max-h-[900px] bg-slate-950 border border-slate-800/60 rounded-2xl overflow-hidden">
 
       {/* Header */}
       <div className="flex items-center justify-between gap-3 px-5 py-4 border-b border-slate-800/60 flex-shrink-0">
