@@ -149,7 +149,7 @@ export default async function AdminResumesPage({ searchParams }: Props) {
         </div>
 
         {/* Colonne IA */}
-        <div className="xl:sticky xl:top-6">
+        <div>
           <ManagerAiChat />
         </div>
       </div>

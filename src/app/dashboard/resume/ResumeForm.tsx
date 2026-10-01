@@ -15,7 +15,6 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
-  const [autoTriggered, setAutoTriggered] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const draftBtnRef = useRef<{ generate: () => void } | null>(null)
 
@@ -27,13 +26,6 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
     }, 2000)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [content]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  useEffect(() => {
-    if (!initialContent && hasPunches && !autoTriggered) {
-      setAutoTriggered(true)
-      draftBtnRef.current?.generate()
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSave(text: string) {
     setSaved(false)
@@ -50,19 +42,12 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
   return (
     <div className="bg-slate-900 border border-slate-800/60 rounded-2xl overflow-hidden">
 
-      {/* Empty state CTA */}
-      {isEmpty && (
-        <div className="px-5 pt-5 pb-3 flex items-center justify-between gap-3 border-b border-slate-800/40">
-          <p className="text-xs text-slate-500">
-            {hasPunches
-              ? "On genere ton resume depuis tes punches..."
-              : "Decris ce sur quoi tu as travaille aujourd'hui."}
+      {/* Banner quand vide + punches dispo */}
+      {isEmpty && hasPunches && (
+        <div className="px-5 pt-4 pb-0">
+          <p className="text-xs text-violet-400/80 bg-violet-500/8 border border-violet-500/15 rounded-lg px-3 py-2">
+            Tes punches d&apos;aujourd&apos;hui sont disponibles — clique sur <strong>Générer</strong> pour créer ton résumé automatiquement.
           </p>
-          <SummaryDraftButton
-            ref={draftBtnRef}
-            onDraftReady={(text) => { setContent(text); setSaved(false) }}
-            autoLabel={autoTriggered && !initialContent}
-          />
         </div>
       )}
 
@@ -71,7 +56,7 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
         <textarea
           value={content}
           onChange={e => { setContent(e.target.value); setSaved(false) }}
-          placeholder="Sur quoi as-tu travaille aujourd'hui ? Quels clients, quels projets ? Y a-t-il des infos importantes a partager avec l'equipe ?"
+          placeholder="Sur quoi as-tu travaillé aujourd'hui ? Quels clients, quels projets ? Y a-t-il des infos importantes à partager avec l'équipe ?"
           rows={10}
           className="w-full bg-transparent px-5 py-5 text-sm text-slate-200 placeholder-slate-600 resize-none focus:outline-none leading-relaxed"
         />
@@ -82,21 +67,18 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer — SummaryDraftButton toujours ici, une seule instance */}
       <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-slate-800/60 bg-slate-900/60">
         <div className="flex items-center gap-3 min-w-0">
-          {!isEmpty && (
-            <SummaryDraftButton
-              ref={draftBtnRef}
-              onDraftReady={(text) => { setContent(text); setSaved(false); handleSave(text) }}
-              autoLabel={false}
-            />
-          )}
+          <SummaryDraftButton
+            ref={draftBtnRef}
+            onDraftReady={(text) => { setContent(text); setSaved(false) }}
+          />
           <span className="text-xs text-slate-600 truncate">
             {error && <span className="text-red-400">{error}</span>}
-            {saved && !error && <span className="text-emerald-400">Sauvegarde automatique</span>}
+            {saved && !error && <span className="text-emerald-400">Sauvegardé</span>}
             {!saved && !error && lastUpdated && (
-              <>Derniere sauvegarde {new Date(lastUpdated).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}</>
+              <>Dernière sauvegarde {new Date(lastUpdated).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}</>
             )}
           </span>
         </div>
