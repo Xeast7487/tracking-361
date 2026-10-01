@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useRef, useEffect } from 'react'
 import { saveDailySummaryAction } from '@/app/actions'
+import SummaryDraftButton from '@/components/SummaryDraftButton'
 
 interface Props {
   initialContent: string
@@ -37,6 +38,7 @@ export default function ResumeForm({ initialContent, lastUpdated }: Props) {
 
   return (
     <div className="space-y-3">
+      <SummaryDraftButton onDraftReady={(text) => { setContent(text); setSaved(false); handleSave(text) }} />
       <div className="relative">
         <textarea
           value={content}

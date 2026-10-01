@@ -15,7 +15,7 @@ export default async function AdminOverviewPage() {
   const t = translations[lang].adminOverview
   const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
 
-  const [activeRes, weekRes, profilesRes] = await Promise.all([
+  const [activeRes, weekRes, profilesRes, punchedTodayRes, summariesTodayRes] = await Promise.all([
     supabase.from('time_entries')
       .select('id, started_at, paused_at, profiles(full_name), clients(name), projects(name)')
       .is('ended_at', null)
@@ -25,11 +25,28 @@ export default async function AdminOverviewPage() {
       .gte('started_at', `${weekStart}T00:00:00`)
       .not('ended_at', 'is', null),
     supabase.from('profiles').select('id').eq('is_active', true),
+    supabase.from('time_entries')
+      .select('user_id, profiles(full_name)')
+      .gte('started_at', `${today}T00:00:00`)
+      .order('user_id'),
+    supabase.from('daily_summaries')
+      .select('user_id')
+      .eq('date', today),
   ])
 
   const activeSessions = (activeRes.data ?? []) as any[]
   const weekEntries    = weekRes.data ?? []
   const employeeCount  = profilesRes.data?.length ?? 0
+
+  const punchedTodayIds = new Set((punchedTodayRes.data ?? []).map((e: any) => e.user_id))
+  const summaryTodayIds = new Set((summariesTodayRes.data ?? []).map((s: any) => s.user_id))
+  const punchedByUser = new Map<string, string>()
+  for (const e of (punchedTodayRes.data ?? []) as any[]) {
+    if (!punchedByUser.has(e.user_id)) punchedByUser.set(e.user_id, e.profiles?.full_name ?? e.user_id)
+  }
+  const missingSummaryNames = [...punchedByUser.entries()]
+    .filter(([id]) => !summaryTodayIds.has(id))
+    .map(([, name]) => name)
 
   const BREAK_THRESHOLD_MS = 45 * 60 * 1_000
   const now = Date.now()
@@ -195,10 +212,26 @@ export default async function AdminOverviewPage() {
         )}
       </div>
 
+      {/* Missing summary alert */}
+      {missingSummaryNames.length > 0 && (
+        <Link href="/admin/resumes" className="flex items-start gap-3 rounded-xl border border-violet-500/30 bg-violet-500/8 p-4 transition-colors hover:bg-violet-500/12">
+          <svg className="mt-0.5 flex-shrink-0 text-violet-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <div>
+            <p className="text-sm font-semibold text-violet-300">
+              {missingSummaryNames.length} employé{missingSummaryNames.length > 1 ? 's' : ''} sans résumé aujourd'hui
+            </p>
+            <p className="text-xs text-violet-400/70 mt-0.5">{missingSummaryNames.join(', ')} ont punché mais n'ont pas encore écrit de résumé.</p>
+          </div>
+        </Link>
+      )}
+
       {/* Quick links */}
       <div className="flex items-center gap-3 flex-wrap">
         <Link href="/admin/reports" className="btn-primary">{t.viewReports}</Link>
         <Link href="/admin/users"   className="btn-secondary">{t.manageEmployees}</Link>
+        <Link href="/admin/resumes" className="btn-secondary">Résumés & IA</Link>
         <PushNotificationToggle />
       </div>
     </div>
