@@ -156,7 +156,7 @@ export default async function AdminDossierEmployeePage({
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">
-              Historique — {entries.length} entrée{entries.length !== 1 ? 's' : ''}
+              Historique · {entries.length} entrée{entries.length !== 1 ? 's' : ''}
               {hasFilters && <span className="ml-1 text-blue-500">(filtré)</span>}
             </h2>
           </div>
@@ -195,8 +195,8 @@ export default async function AdminDossierEmployeePage({
                     'bg-slate-600'
                   }`} />
                   <span className="text-slate-400">{ACTION_LABELS[log.action] ?? log.action}</span>
-                  <span className="text-slate-600">—</span>
-                  <span className="text-slate-500">{log.actor?.full_name ?? '—'}</span>
+                  <span className="text-slate-600">·</span>
+                  <span className="text-slate-500">{log.actor?.full_name ?? '-'}</span>
                   <span className="ml-auto text-xs text-slate-600 whitespace-nowrap">{logDate} {logTime}</span>
                 </div>
               )

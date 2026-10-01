@@ -24,21 +24,21 @@ export async function POST(_req: NextRequest) {
     .select('started_at, ended_at, total_paused_ms, notes, clients(name), projects(name)')
     .eq('user_id', user.id)
     .gte('started_at', `${today}T00:00:00`)
-    .not('ended_at', 'is', null)
     .order('started_at')
 
   if (!entries?.length) {
     return new Response('Aucune entrée de temps pour aujourd\'hui.', { status: 200 })
   }
 
+  const nowMs = Date.now()
   const lines = entries.map((e: any) => {
-    const durationMs = Math.max(0,
-      new Date(e.ended_at).getTime() - new Date(e.started_at).getTime() - (e.total_paused_ms ?? 0)
-    )
+    const endMs = e.ended_at ? new Date(e.ended_at).getTime() : nowMs
+    const durationMs = Math.max(0, endMs - new Date(e.started_at).getTime() - (e.total_paused_ms ?? 0))
     const client = (e.clients as any)?.name ?? 'N/A'
     const project = (e.projects as any)?.name ?? 'N/A'
     const notes = e.notes ? ` (note : ${e.notes})` : ''
-    return `- ${formatHours(durationMs)} sur "${client} / ${project}"${notes}`
+    const inProgress = !e.ended_at ? ' [en cours]' : ''
+    return `- ${formatHours(durationMs)}${inProgress} sur "${client} / ${project}"${notes}`
   }).join('\n')
 
   const stream = anthropic.messages.stream({

@@ -59,7 +59,7 @@ export default function PushNotificationToggle() {
   if (status === 'denied') {
     return (
       <p className="text-xs text-slate-500">
-        Notifications bloquées — autorise-les dans les paramètres du navigateur.
+        Notifications bloquees, autorise-les dans les parametres du navigateur.
       </p>
     )
   }
@@ -71,7 +71,7 @@ export default function PushNotificationToggle() {
         className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"
       >
         <span className="w-2 h-2 rounded-full bg-green-400 flex-shrink-0" />
-        Notifications actives — Désactiver
+        Notifications actives · Désactiver
       </button>
     )
   }

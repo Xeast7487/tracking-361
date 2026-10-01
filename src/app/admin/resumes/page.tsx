@@ -101,8 +101,6 @@ export default async function AdminResumesPage({ searchParams }: Props) {
         </div>
       </div>
 
-      {clientStats.length > 0 && <ClientStatusWidget clients={clientStats} />}
-
       <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
         {/* Colonne principale : résumés */}
         <div className="space-y-4">
@@ -155,6 +153,8 @@ export default async function AdminResumesPage({ searchParams }: Props) {
           <ManagerAiChat />
         </div>
       </div>
+
+      {clientStats.length > 0 && <ClientStatusWidget clients={clientStats} />}
     </div>
   )
 }

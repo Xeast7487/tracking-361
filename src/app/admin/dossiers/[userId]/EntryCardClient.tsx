@@ -252,7 +252,7 @@ export function EntryCardClient({
 
             <div className="flex items-center gap-4 mt-3 text-xs text-slate-500 flex-wrap">
               <span>{date}</span>
-              <span>Ajouté par&nbsp;: <span className="text-slate-400">{entry.creator?.full_name ?? '—'}</span></span>
+              <span>Ajouté par&nbsp;: <span className="text-slate-400">{entry.creator?.full_name ?? '-'}</span></span>
               {entry.signed_at && (
                 <span className="text-teal-600">
                   Signé le {new Date(entry.signed_at).toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })}

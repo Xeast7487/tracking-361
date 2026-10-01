@@ -52,7 +52,7 @@ export default async function UsersPage() {
                 </div>
               </div>
               <div className="flex items-center justify-between border-t border-slate-700/60 pt-3">
-                <span className="text-sm text-slate-400">{u.hourly_rate ? `${u.hourly_rate}$ / h` : '—'}</span>
+                <span className="text-sm text-slate-400">{u.hourly_rate ? `${u.hourly_rate}$ / h` : '-'}</span>
                 <UserForm mode="edit" user={u} />
               </div>
             </div>
@@ -84,7 +84,7 @@ export default async function UsersPage() {
                       {u.role === 'admin' ? t.roleAdmin : t.roleEmployee}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-300">{u.hourly_rate ? `${u.hourly_rate}$` : '—'}</td>
+                  <td className="px-4 py-3 text-slate-300">{u.hourly_rate ? `${u.hourly_rate}$` : '-'}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
                       u.is_active ? 'bg-green-900/40 text-green-400' : 'bg-slate-700 text-slate-500'

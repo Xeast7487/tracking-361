@@ -1,23 +1,32 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useImperativeHandle, forwardRef } from 'react'
 
 interface Props {
   onDraftReady: (text: string) => void
+  autoLabel?: boolean
 }
 
-export default function SummaryDraftButton({ onDraftReady }: Props) {
+export interface SummaryDraftButtonRef {
+  generate: () => void
+}
+
+const SummaryDraftButton = forwardRef<SummaryDraftButtonRef, Props>(function SummaryDraftButton(
+  { onDraftReady, autoLabel },
+  ref
+) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   const generate = async () => {
+    if (loading) return
     setLoading(true)
     setError('')
     try {
       const res = await fetch('/api/ai/draft-summary', { method: 'POST' })
       if (!res.ok) {
         const msg = await res.text()
-        setError(msg || 'Erreur lors de la génération')
+        setError(msg || 'Erreur lors de la generation')
         return
       }
       const reader = res.body!.getReader()
@@ -29,13 +38,15 @@ export default function SummaryDraftButton({ onDraftReady }: Props) {
         full += decoder.decode(value, { stream: true })
       }
       if (full.trim()) onDraftReady(full.trim())
-      else setError('Aucune entrée de temps trouvée pour aujourd\'hui.')
+      else setError("Aucune entree de temps trouvee pour aujourd'hui.")
     } catch {
       setError('Erreur de connexion')
     } finally {
       setLoading(false)
     }
   }
+
+  useImperativeHandle(ref, () => ({ generate }))
 
   return (
     <div className="flex items-center gap-3">
@@ -47,18 +58,20 @@ export default function SummaryDraftButton({ onDraftReady }: Props) {
         {loading ? (
           <>
             <span className="w-3 h-3 border border-violet-400 border-t-transparent rounded-full animate-spin" />
-            Génération…
+            {autoLabel ? 'Generation automatique...' : 'Generation...'}
           </>
         ) : (
           <>
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 2a10 10 0 1 0 10 10"/><path d="M12 6v6l4 2"/><circle cx="18" cy="6" r="3"/>
             </svg>
-            Générer un brouillon IA
+            Generer un brouillon IA
           </>
         )}
       </button>
       {error && <span className="text-xs text-red-400">{error}</span>}
     </div>
   )
-}
+})
+
+export default SummaryDraftButton

@@ -17,9 +17,13 @@ export default async function ResumePage() {
 
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
 
-  const [mySummary, allSummaries] = await Promise.all([
+  const [mySummary, allSummaries, punchesRes] = await Promise.all([
     fetchMySummaryAction(),
     fetchDailySummariesAction(),
+    supabase.from('time_entries')
+      .select('id', { count: 'exact', head: true })
+      .eq('user_id', user.id)
+      .gte('started_at', `${today}T00:00:00`),
   ])
 
   const teamSummaries = allSummaries.filter((s: any) => s.user_id !== user.id)
@@ -45,6 +49,7 @@ export default async function ResumePage() {
         <ResumeForm
           initialContent={mySummary?.content ?? ''}
           lastUpdated={mySummary?.updated_at ?? null}
+          hasPunches={!!(punchesRes.count && punchesRes.count > 0)}
         />
       </div>
 

@@ -151,7 +151,7 @@ export default async function AdminOverviewPage() {
                 <div key={s.id} className="flex items-center gap-2 text-xs text-orange-300">
                   <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" />
                   <span className="font-medium">{s.profiles?.full_name}</span>
-                  <span className="text-orange-400/60">—</span>
+                  <span className="text-orange-400/60">·</span>
                   <span className="text-orange-400/80">{t.onBreakFor} {formatPauseDuration(s.paused_at)}</span>
                 </div>
               ))}
@@ -199,7 +199,7 @@ export default async function AdminOverviewPage() {
                         </span>
                       )}
                     </div>
-                    <p className="text-slate-400 text-xs">{s.clients?.name} — {s.projects?.name}</p>
+                    <p className="text-slate-400 text-xs">{s.clients?.name} · {s.projects?.name}</p>
                   </div>
                   <span className="text-slate-400 text-xs whitespace-nowrap">
                     {t.since} {new Date(s.started_at).toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit', timeZone: 'America/Toronto' })}

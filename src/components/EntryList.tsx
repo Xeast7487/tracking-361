@@ -79,8 +79,8 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                 {showEmployee && e.profiles?.full_name && (
                   <p className="text-xs text-slate-500 font-medium mb-0.5">{e.profiles.full_name}</p>
                 )}
-                <p className="font-semibold text-white leading-tight truncate">{e.clients?.name ?? '—'}</p>
-                <p className="text-sm text-slate-400 truncate">{e.projects?.name ?? '—'}</p>
+                <p className="font-semibold text-white leading-tight truncate">{e.clients?.name ?? '-'}</p>
+                <p className="text-sm text-slate-400 truncate">{e.projects?.name ?? '-'}</p>
               </div>
               <div className="flex-shrink-0">
                 {e.charge_client
@@ -178,7 +178,7 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
               <tr key={e.id} className="hover:bg-slate-800/40 transition">
                 {showEmployee && (
                   <td className="px-4 py-3 text-slate-200 whitespace-nowrap font-medium">
-                    {e.profiles?.full_name ?? '—'}
+                    {e.profiles?.full_name ?? '-'}
                   </td>
                 )}
                 <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{formatDate(e.started_at, lang)}</td>
@@ -189,8 +189,8 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                 <td className="px-4 py-3 text-slate-200 whitespace-nowrap font-semibold">
                   {formatDuration(e.started_at, e.ended_at, e.total_paused_ms, t.inProgress)}
                 </td>
-                <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.clients?.name ?? '—'}</td>
-                <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.projects?.name ?? '—'}</td>
+                <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.clients?.name ?? '-'}</td>
+                <td className="px-4 py-3 text-slate-300 whitespace-nowrap">{e.projects?.name ?? '-'}</td>
                 <td className="px-4 py-3">
                   {e.charge_client
                     ? <span className="badge-client-billing">{t.chargeClientYes}</span>

@@ -7,14 +7,17 @@ import SummaryDraftButton from '@/components/SummaryDraftButton'
 interface Props {
   initialContent: string
   lastUpdated: string | null
+  hasPunches?: boolean
 }
 
-export default function ResumeForm({ initialContent, lastUpdated }: Props) {
+export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: Props) {
   const [content, setContent] = useState(initialContent)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [isPending, startTransition] = useTransition()
+  const [autoTriggered, setAutoTriggered] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const draftBtnRef = useRef<{ generate: () => void } | null>(null)
 
   // Auto-save debounced 2s after typing
   useEffect(() => {
@@ -25,6 +28,14 @@ export default function ResumeForm({ initialContent, lastUpdated }: Props) {
     }, 2000)
     return () => { if (timerRef.current) clearTimeout(timerRef.current) }
   }, [content]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-generate draft if summary is empty and punches exist
+  useEffect(() => {
+    if (!initialContent && hasPunches && !autoTriggered) {
+      setAutoTriggered(true)
+      draftBtnRef.current?.generate()
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleSave(text: string) {
     setSaved(false)
@@ -38,7 +49,11 @@ export default function ResumeForm({ initialContent, lastUpdated }: Props) {
 
   return (
     <div className="space-y-3">
-      <SummaryDraftButton onDraftReady={(text) => { setContent(text); setSaved(false); handleSave(text) }} />
+      <SummaryDraftButton
+        ref={draftBtnRef}
+        onDraftReady={(text) => { setContent(text); setSaved(false); handleSave(text) }}
+        autoLabel={autoTriggered && !initialContent}
+      />
       <div className="relative">
         <textarea
           value={content}
@@ -57,10 +72,10 @@ export default function ResumeForm({ initialContent, lastUpdated }: Props) {
       <div className="flex items-center justify-between gap-3">
         <div className="text-xs text-slate-500">
           {error && <span className="text-red-400">{error}</span>}
-          {saved && !error && <span className="text-emerald-400">Sauvegardé</span>}
+          {saved && !error && <span className="text-emerald-400">Sauvegarde</span>}
           {!saved && !error && lastUpdated && (
             <span>
-              Dernière mise à jour :{' '}
+              Derniere mise a jour :{' '}
               {new Date(lastUpdated).toLocaleTimeString('fr-CA', { hour: '2-digit', minute: '2-digit' })}
             </span>
           )}
@@ -70,7 +85,7 @@ export default function ResumeForm({ initialContent, lastUpdated }: Props) {
           disabled={isPending || !content.trim()}
           className="text-xs font-semibold px-4 py-2 rounded-lg bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/25 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
-          {isPending ? 'Sauvegarde…' : 'Sauvegarder'}
+          {isPending ? 'Sauvegarde...' : 'Sauvegarder'}
         </button>
       </div>
     </div>

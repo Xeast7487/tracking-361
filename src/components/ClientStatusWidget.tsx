@@ -41,7 +41,7 @@ export default function ClientStatusWidget({ clients }: Props) {
 
   return (
     <div className="space-y-3">
-      <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Clients — semaine en cours</h2>
+      <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Clients · semaine en cours</h2>
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-2 2xl:grid-cols-3 gap-2">
         {clients.map(c => {
           const hasActivity = c.weekHours > 0 || c.weekMinutes > 0
@@ -62,7 +62,7 @@ export default function ClientStatusWidget({ clients }: Props) {
                 <p className={`text-lg font-bold leading-none ${hasActivity ? 'text-white' : 'text-slate-600'}`}>
                   {hasActivity
                     ? `${c.weekHours}h${c.weekMinutes > 0 ? ` ${String(c.weekMinutes).padStart(2, '0')}m` : ''}`
-                    : '—'}
+                    : '-'}
                 </p>
                 <p className="text-[11px] text-slate-500">
                   {lastLabel
