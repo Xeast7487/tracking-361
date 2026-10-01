@@ -947,6 +947,62 @@ export async function logDossierExportAction(employeeId: string) {
   revalidatePath(`/admin/dossiers/${employeeId}`)
 }
 
+// ── Résumés quotidiens ────────────────────────────────────
+
+export async function saveDailySummaryAction(content: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
+
+  const { error } = await supabase
+    .from('daily_summaries')
+    .upsert(
+      { user_id: user.id, summary_date: today, content: content.trim(), updated_at: new Date().toISOString() },
+      { onConflict: 'user_id,summary_date' }
+    )
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/resume')
+  revalidatePath('/admin/resumes')
+  return { success: true }
+}
+
+export async function fetchDailySummariesAction(date?: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+
+  const targetDate = date ?? new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
+
+  const { data } = await supabase
+    .from('daily_summaries')
+    .select('id, user_id, summary_date, content, updated_at, profiles(full_name)')
+    .eq('summary_date', targetDate)
+    .order('updated_at', { ascending: false })
+
+  return (data ?? []) as any[]
+}
+
+export async function fetchMySummaryAction(date?: string) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+
+  const targetDate = date ?? new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
+
+  const { data } = await supabase
+    .from('daily_summaries')
+    .select('id, content, updated_at')
+    .eq('user_id', user.id)
+    .eq('summary_date', targetDate)
+    .maybeSingle()
+
+  return data ?? null
+}
+
+// ── Tâches ────────────────────────────────────────────────
+
 export async function createTaskFormAction(formData: FormData) {
   const supabase = await createSupabaseServerClient()
   const caller = await requireAdmin()

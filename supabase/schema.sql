@@ -242,3 +242,28 @@ CREATE POLICY "own_activity_select" ON public.dossier_activity_log
 -- Notifications : chaque user gère les siennes + admin lit tout
 CREATE POLICY "own_notifs_all"   ON public.task_notifications FOR ALL USING (auth.uid() = user_id);
 CREATE POLICY "admin_notifs_all" ON public.task_notifications FOR ALL USING (public.get_my_role() = 'admin');
+
+-- ── Résumés quotidiens ────────────────────────────────────
+CREATE TABLE IF NOT EXISTS public.daily_summaries (
+  id           UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id      UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  summary_date DATE        NOT NULL DEFAULT CURRENT_DATE,
+  content      TEXT        NOT NULL,
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE(user_id, summary_date)
+);
+
+ALTER TABLE public.daily_summaries ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_summaries_select" ON public.daily_summaries
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "own_summary_insert" ON public.daily_summaries
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+CREATE POLICY "own_summary_update" ON public.daily_summaries
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "admin_summaries_all" ON public.daily_summaries
+  FOR ALL USING (public.get_my_role() = 'admin');
