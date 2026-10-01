@@ -1,7 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { fetchDailySummariesAction } from '@/app/actions'
-import AiChat from '@/components/AiChat'
+import ManagerAiChat from '@/components/ManagerAiChat'
 
 function formatDate(date: string) {
   return new Date(date + 'T12:00:00').toLocaleDateString('fr-CA', {
@@ -62,9 +62,9 @@ export default async function AdminResumesPage({ searchParams }: Props) {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6 items-start">
         {/* Colonne principale : résumés */}
-        <div className="lg:col-span-2 space-y-4">
+        <div className="space-y-4">
           {summaries.length === 0 && (
             <div className="text-center py-16 text-slate-600">
               <svg className="w-10 h-10 mx-auto mb-3 opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -110,9 +110,8 @@ export default async function AdminResumesPage({ searchParams }: Props) {
         </div>
 
         {/* Colonne IA */}
-        <div className="space-y-3">
-          <h2 className="text-xs font-semibold text-slate-500 uppercase tracking-widest">Assistant IA</h2>
-          <AiChat />
+        <div className="xl:sticky xl:top-6">
+          <ManagerAiChat />
         </div>
       </div>
     </div>
