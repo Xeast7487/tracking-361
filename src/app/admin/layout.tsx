@@ -18,9 +18,11 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   if (profile?.role !== 'admin') redirect('/dashboard')
 
+  const isOwner = user.email === 'a.monier@agence361.com'
+
   return (
     <div className="min-h-screen">
-      <Nav fullName={profile.full_name} role="admin" isWebDept={true} />
+      <Nav fullName={profile.full_name} role="admin" isWebDept={true} isOwner={isOwner} />
       <main className="max-w-6xl mx-auto px-4 pt-5 pb-28 sm:pt-8 sm:pb-8 overflow-x-auto">
         {children}
       </main>

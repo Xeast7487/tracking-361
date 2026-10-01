@@ -1026,3 +1026,61 @@ export async function createTaskFormAction(formData: FormData) {
   revalidatePath('/admin/taches')
   return { success: true }
 }
+
+// ── Paramètres Discord (owner uniquement) ─────────────────
+
+const OWNER_EMAIL = 'a.monier@agence361.com'
+
+async function requireOwner() {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user || user.email !== OWNER_EMAIL) return null
+  const { data } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+  return data?.role === 'admin' ? user : null
+}
+
+export async function getDiscordSettingsAction() {
+  const caller = await requireOwner()
+  if (!caller) return null
+  const admin = getAdminClient()
+  const [tokenRes, ownerRes] = await Promise.all([
+    admin.from('app_settings').select('value').eq('key', 'discord_bot_token').maybeSingle(),
+    admin.from('app_settings').select('value').eq('key', 'discord_owner_id').maybeSingle(),
+  ])
+  return {
+    discord_bot_token: tokenRes.data?.value ?? '',
+    discord_owner_id: ownerRes.data?.value ?? '',
+  }
+}
+
+export async function saveDiscordSettingAction(key: string, value: string) {
+  const caller = await requireOwner()
+  if (!caller) return { error: 'Accès refusé.' }
+  const admin = getAdminClient()
+  const { error } = await admin.from('app_settings').upsert({ key, value, updated_at: new Date().toISOString() })
+  if (error) return { error: error.message }
+  return { success: true }
+}
+
+export async function getEmployeesNotifyAction() {
+  const caller = await requireOwner()
+  if (!caller) return []
+  const admin = getAdminClient()
+  const { data } = await admin
+    .from('profiles')
+    .select('id, full_name, notify_discord')
+    .eq('is_active', true)
+    .eq('role', 'employee')
+    .order('full_name')
+  return data ?? []
+}
+
+export async function updateEmployeeNotifyAction(userId: string, notify: boolean) {
+  const caller = await requireOwner()
+  if (!caller) return { error: 'Accès refusé.' }
+  const admin = getAdminClient()
+  const { error } = await admin.from('profiles').update({ notify_discord: notify }).eq('id', userId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/parametres')
+  return { success: true }
+}

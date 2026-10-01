@@ -77,25 +77,17 @@ export async function POST(req: NextRequest) {
     `[${s.summary_date}] ${(s.profiles as any)?.full_name ?? 'Inconnu'} :\n${s.content}`
   ).join('\n\n---\n\n')
 
-  const system = `Tu es l'assistant IA de l'Agence 361, dédié à la gestion de projet. Tu as accès aux données complètes de l'équipe des 30 derniers jours : punch in/out par client/projet ET les résumés quotidiens écrits par les employés.
+  const system = `Tu es l'assistant de l'Agence 361. Tu parles directement au gestionnaire, en français, de façon naturelle et concise — comme si tu lui faisais un point verbal rapide.
 
-Tu peux répondre à des questions comme :
-- "Où en est-on avec le client X ?" → synthèse des heures + résumés concernant X
-- "Qui a travaillé sur Y et pourquoi ?" → croise les punches et les résumés
-- "Combien d'heures sur Z cette semaine ?" → calcule depuis les punches
-- "Y a-t-il des trous dans les résumés ?" → identifie les jours sans explication
+Quand on te demande où on en est avec un client ou un projet, réponds simplement : ce qu'on a fait, quand, combien d'heures, et ce que les employés ont dit dans leurs résumés. Donne les dates. Pas de mise en forme complexe, pas de titres, pas de listes à puces si ce n'est pas nécessaire — juste du texte clair.
 
-Sois précis, professionnel, et concis. Si une information manque dans les résumés mais est visible dans les punches, mentionne-le explicitement. Réponds TOUJOURS en français.
+Voici les données de l'équipe des 30 derniers jours.
 
-════════════════════════════════════
-PUNCH IN/OUT — 30 DERNIERS JOURS
-════════════════════════════════════
-${timeContext || 'Aucune entrée de temps pour cette période.'}
+HEURES PAR JOUR
+${timeContext || 'Aucune entrée.'}
 
-════════════════════════════════════
-RÉSUMÉS QUOTIDIENS DES EMPLOYÉS
-════════════════════════════════════
-${summaryContext || 'Aucun résumé pour cette période.'}`
+RÉSUMÉS DES EMPLOYÉS
+${summaryContext || 'Aucun résumé.'}`
 
   const stream = anthropic.messages.stream({
     model: 'claude-sonnet-4-6',

@@ -10,7 +10,7 @@ export async function GET(req: NextRequest) {
   const supabase = await createSupabaseServerClient()
   const today = new Date().toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
 
-  const [punchedRes, summariesRes] = await Promise.all([
+  const [punchedRes, summariesRes, notifyRes] = await Promise.all([
     supabase
       .from('time_entries')
       .select('user_id, profiles(full_name)')
@@ -19,13 +19,20 @@ export async function GET(req: NextRequest) {
       .from('daily_summaries')
       .select('user_id')
       .eq('summary_date', today),
+    supabase
+      .from('profiles')
+      .select('id')
+      .eq('notify_discord', true)
+      .eq('is_active', true),
   ])
 
   const summaryIds = new Set((summariesRes.data ?? []).map((s: any) => s.user_id))
+  const notifyIds = new Set((notifyRes.data ?? []).map((p: any) => p.id))
   const seen = new Set<string>()
   const missing: string[] = []
 
   for (const e of (punchedRes.data ?? []) as any[]) {
+    if (!notifyIds.has(e.user_id)) continue
     if (seen.has(e.user_id) || summaryIds.has(e.user_id)) continue
     seen.add(e.user_id)
     missing.push(e.profiles?.full_name ?? e.user_id)
