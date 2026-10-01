@@ -36,7 +36,7 @@ export default async function DashboardPage() {
     supabase.from('daily_summaries')
       .select('id, content')
       .eq('user_id', user.id)
-      .eq('date', today)
+      .eq('summary_date', today)
       .maybeSingle(),
     fetchPendingTaskNotificationsAction(),
   ])

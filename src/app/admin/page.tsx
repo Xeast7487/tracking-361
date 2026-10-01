@@ -31,7 +31,7 @@ export default async function AdminOverviewPage() {
       .order('user_id'),
     supabase.from('daily_summaries')
       .select('user_id')
-      .eq('date', today),
+      .eq('summary_date', today),
   ])
 
   const activeSessions = (activeRes.data ?? []) as any[]

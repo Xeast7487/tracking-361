@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
     supabase
       .from('daily_summaries')
       .select('user_id')
-      .eq('date', today),
+      .eq('summary_date', today),
   ])
 
   const summaryIds = new Set((summariesRes.data ?? []).map((s: any) => s.user_id))

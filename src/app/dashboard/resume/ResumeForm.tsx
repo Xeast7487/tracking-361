@@ -60,7 +60,7 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
           </p>
           <SummaryDraftButton
             ref={draftBtnRef}
-            onDraftReady={(text) => { setContent(text); setSaved(false); handleSave(text) }}
+            onDraftReady={(text) => { setContent(text); setSaved(false) }}
             autoLabel={autoTriggered && !initialContent}
           />
         </div>
