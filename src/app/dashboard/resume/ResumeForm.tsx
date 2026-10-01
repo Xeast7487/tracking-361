@@ -18,7 +18,6 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
   const [autoTriggered, setAutoTriggered] = useState(false)
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const draftBtnRef = useRef<{ generate: () => void } | null>(null)
-  const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   useEffect(() => {
     if (content === initialContent) return
@@ -61,7 +60,7 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
           </p>
           <SummaryDraftButton
             ref={draftBtnRef}
-            onDraftReady={(text) => { setContent(text); setSaved(false); handleSave(text); textareaRef.current?.focus() }}
+            onDraftReady={(text) => { setContent(text); setSaved(false); handleSave(text) }}
             autoLabel={autoTriggered && !initialContent}
           />
         </div>
@@ -70,7 +69,6 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
       {/* Textarea */}
       <div className="relative">
         <textarea
-          ref={textareaRef}
           value={content}
           onChange={e => { setContent(e.target.value); setSaved(false) }}
           placeholder="Sur quoi as-tu travaille aujourd'hui ? Quels clients, quels projets ? Y a-t-il des infos importantes a partager avec l'equipe ?"
