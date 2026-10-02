@@ -46,7 +46,7 @@ export default function ResumeForm({ initialContent, lastUpdated, hasPunches }: 
       {isEmpty && hasPunches && (
         <div className="px-5 pt-4 pb-0">
           <p className="text-xs text-violet-400/80 bg-violet-500/8 border border-violet-500/15 rounded-lg px-3 py-2">
-            Tes punches d&apos;aujourd&apos;hui sont disponibles — clique sur <strong>Générer</strong> pour créer ton résumé automatiquement.
+            Tes punches d&apos;aujourd&apos;hui sont disponibles, clique sur <strong>Générer</strong> pour créer ton résumé automatiquement.
           </p>
         </div>
       )}

@@ -32,7 +32,7 @@ L'employé(e) a été informé(e) des conséquences en cas de récidive.`,
   },
   avertissement_ecrit: {
     title: `Avertissement écrit`,
-    content: `AVERTISSEMENT ÉCRIT — ${today()}
+    content: `AVERTISSEMENT ÉCRIT - ${today()}
 
 Motif : [décrire le motif]
 
@@ -55,7 +55,7 @@ Mesures demandées :
   },
   performance: {
     title: `Évaluation de performance`,
-    content: `ÉVALUATION DE PERFORMANCE — ${today()}
+    content: `ÉVALUATION DE PERFORMANCE - ${today()}
 
 Points forts :
 -
@@ -246,7 +246,7 @@ export function DossierEntryFormClient({ employeeId }: { employeeId: string }) {
 
         <div className="flex items-center justify-between gap-4">
           <p className="text-xs text-slate-600">
-            {type !== 'rencontre' && TEMPLATES[type] ? '✦ Gabarit appliqué — modifiez au besoin' : ''}
+            {type !== 'rencontre' && TEMPLATES[type] ? '✦ Gabarit appliqué - modifiez au besoin' : ''}
           </p>
           <button
             type="submit"

@@ -99,7 +99,7 @@ export default async function ExportDossierPage({ params }: { params: { userId: 
                   </div>
                   <p className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap">{entry.content}</p>
                   <div className="mt-3 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                    <span>Ajouté par : {entry.creator?.full_name ?? '—'}</span>
+                    <span>Ajouté par : {entry.creator?.full_name ?? '-'}</span>
                     {signDate
                       ? <span className="text-teal-700 font-medium">✓ Signé le {signDate}</span>
                       : <span className="text-slate-400">Non signé</span>
@@ -118,7 +118,7 @@ export default async function ExportDossierPage({ params }: { params: { userId: 
 
         {/* Pied de page */}
         <div className="mt-8 pt-4 border-t border-slate-200 text-xs text-slate-400">
-          Document confidentiel — Généré le {exportDate}
+          Document confidentiel - Généré le {exportDate}
         </div>
       </div>
     </div>

@@ -326,8 +326,8 @@ export default async function GuidePage() {
                 par la personne responsable.
               </p>
               <p>
-                Si les demandes de révision sortent du cadre du mandat original — nouvelles orientations,
-                ajouts importants, changements de stratégie — signale-le à la personne responsable du projet
+                Si les demandes de révision sortent du cadre du mandat original - nouvelles orientations,
+                ajouts importants, changements de stratégie - signale-le à la personne responsable du projet
                 avant de poursuivre. Ces ajouts peuvent avoir un impact sur le budget ou les échéances.
               </p>
               <p>
@@ -353,7 +353,7 @@ export default async function GuidePage() {
                   <p>
                     La ponctualité est une marque de respect envers l'équipe. Si tu prévois arriver en retard
                     ou devoir quitter plus tôt, avise à l'avance la personne concernée. Un simple message
-                    suffit — pas besoin de se justifier longuement, mais il est important de prévenir.
+                    suffit - pas besoin de se justifier longuement, mais il est important de prévenir.
                   </p>
                 </div>
               </div>
@@ -362,7 +362,7 @@ export default async function GuidePage() {
                 <SubHeading>Absences et imprévus</SubHeading>
                 <div className="space-y-3 text-slate-300 leading-relaxed">
                   <p>
-                    En cas d'absence imprévue (maladie, urgence personnelle), avise le plus tôt possible —
+                    En cas d'absence imprévue (maladie, urgence personnelle), avise le plus tôt possible -
                     idéalement avant le début de la journée. Si tu as des livrables urgents en cours,
                     mentionne-le pour qu'on puisse organiser le suivi.
                   </p>
@@ -405,7 +405,7 @@ export default async function GuidePage() {
                     fourniture particulière, parles-en à la direction.
                   </p>
                   <p>
-                    Un réfrigérateur avec des boissons est disponible pour tous les employés — c'est un petit
+                    Un réfrigérateur avec des boissons est disponible pour tous les employés - c'est un petit
                     avantage qu'on est heureux d'offrir. On te demande simplement d'en faire usage avec respect
                     et de ne pas y laisser des aliments ou des contenants personnels sur de longues périodes.
                   </p>
@@ -457,14 +457,14 @@ export default async function GuidePage() {
                 <SubHeading>Présence et sérieux dans le travail</SubHeading>
                 <div className="space-y-3 text-slate-300 leading-relaxed">
                   <p>
-                    Nous encourageons une ambiance détendue — c'est une valeur que nous tenons à préserver.
+                    Nous encourageons une ambiance détendue - c'est une valeur que nous tenons à préserver.
                     Cela ne signifie pas pour autant que le sérieux du travail est mis de côté. On peut
                     avoir du plaisir et rester concentrés, efficaces et fiables en même temps.
                   </p>
                   <p>
                     Sois présent pendant les heures de travail. Limite les distractions non liées au travail
                     durant les périodes de production ou lors de réunions. Si tu as besoin de décompresser
-                    un moment, c'est tout à fait normal — prends une pause, et reviens concentré.
+                    un moment, c'est tout à fait normal - prends une pause, et reviens concentré.
                   </p>
                 </div>
               </div>
@@ -474,7 +474,7 @@ export default async function GuidePage() {
                 <div className="space-y-3 text-slate-300 leading-relaxed">
                   <p>
                     La tenue est décontractée au quotidien. On ne s'attend pas à du veston-cravate. On
-                    s'attend cependant à une apparence soignée et propre — des vêtements en bon état,
+                    s'attend cependant à une apparence soignée et propre - des vêtements en bon état,
                     appropriés à un contexte de travail.
                   </p>
                   <p>
@@ -490,7 +490,7 @@ export default async function GuidePage() {
                 <div className="space-y-3 text-slate-300 leading-relaxed">
                   <p>
                     Lorsque des clients sont dans nos locaux, accueille-les chaleureusement, même si tu
-                    n'es pas directement impliqué dans leur dossier. Un sourire, un bonjour — ce sont des
+                    n'es pas directement impliqué dans leur dossier. Un sourire, un bonjour - ce sont des
                     détails qui comptent et qui contribuent à l'image que nous projetons.
                   </p>
                   <p>

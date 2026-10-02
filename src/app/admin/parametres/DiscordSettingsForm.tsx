@@ -63,7 +63,7 @@ export default function DiscordSettingsForm({ initialToken, initialOwnerId, empl
           </div>
           <div>
             <h2 className="font-semibold text-white text-sm">Bot Discord</h2>
-            <p className="text-xs text-slate-500">TiClaude — configuration de connexion</p>
+            <p className="text-xs text-slate-500">TiClaude - configuration de connexion</p>
           </div>
         </div>
 

@@ -130,8 +130,8 @@ export default async function AdminTachesPage() {
 }
 
 function TaskRow({ task }: { task: any }) {
-  const assignedName = task.assigned?.full_name ?? '—'
-  const creatorName  = task.creator?.full_name  ?? '—'
+  const assignedName = task.assigned?.full_name ?? '-'
+  const creatorName  = task.creator?.full_name  ?? '-'
 
   return (
     <div className="bg-slate-900 border border-slate-800/60 rounded-xl p-5">

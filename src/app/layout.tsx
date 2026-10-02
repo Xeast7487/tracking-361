@@ -5,7 +5,7 @@ import { getLang } from '@/lib/getLang'
 
 export const metadata: Metadata = {
   title: 'Agence 361',
-  description: 'Suivi des heures — Agence 361',
+  description: 'Suivi des heures - Agence 361',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

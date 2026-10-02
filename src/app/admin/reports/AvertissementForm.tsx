@@ -103,8 +103,8 @@ export default function AvertissementForm({ profiles }: { profiles: Profile[] })
               required
               placeholder={
                 type === 'avertissement_ecrit'
-                  ? 'Ex. Avertissement écrit — 22 septembre 2026'
-                  : 'Ex. Avertissement verbal — 22 septembre 2026'
+                  ? 'Ex. Avertissement écrit - 22 septembre 2026'
+                  : 'Ex. Avertissement verbal - 22 septembre 2026'
               }
               className="input"
             />
