@@ -396,6 +396,54 @@ export async function addManualEntryAction(formData: FormData, startedAtISO: str
   return { success: true }
 }
 
+// ── Admin : démarrer un punch pour un employé ────────────
+
+export async function adminStartPunchAction(formData: FormData, startedAtISO: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const targetUserId    = formData.get('target_user_id') as string
+  const clientId        = formData.get('client_id') as string
+  const projectId       = formData.get('project_id') as string
+  const notes           = formData.get('notes') as string
+  const isBillable      = formData.get('is_billable') === 'true'
+  const chargeWebDept   = formData.get('charge_web_dept') === 'true'
+  const chargeClient    = formData.get('charge_client') === 'true'
+  const clientRateStr   = formData.get('client_hourly_rate') as string
+
+  if (!targetUserId || !clientId || !projectId || !startedAtISO) {
+    return { error: 'Tous les champs obligatoires doivent être remplis.' }
+  }
+
+  const { data: existing } = await supabase
+    .from('time_entries')
+    .select('id')
+    .eq('user_id', targetUserId)
+    .is('ended_at', null)
+    .maybeSingle()
+  if (existing) return { error: 'Cet employé a déjà un punch en cours.' }
+
+  const { error } = await supabase.from('time_entries').insert({
+    user_id:            targetUserId,
+    client_id:          clientId,
+    project_id:         projectId,
+    started_at:         startedAtISO,
+    ended_at:           null,
+    notes:              notes || null,
+    is_billable:        isBillable,
+    charge_web_dept:    chargeWebDept,
+    charge_client:      chargeClient,
+    client_hourly_rate: chargeClient && clientRateStr ? parseFloat(clientRateStr) : null,
+    total_paused_ms:    0,
+  })
+
+  if (error) return { error: error.message }
+  revalidatePath('/admin/reports')
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
 // ── Facturation client — statut payé ─────────────────────
 
 export async function toggleEntryPaidAction(entryId: string, paid: boolean) {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addManualEntryAction } from '@/app/actions'
+import { addManualEntryAction, adminStartPunchAction } from '@/app/actions'
 
 interface Profile { id: string; full_name: string }
 interface Client  { id: string; name: string }
@@ -15,47 +15,64 @@ export default function ManualEntryForm({
   projects: Project[]
 }) {
   const [isPending, startTransition] = useTransition()
-  const [clientId,  setClientId]  = useState('')
+  const [mode, setMode] = useState<'complete' | 'start'>('complete')
+  const [clientId,     setClientId]     = useState('')
   const [billable,     setBillable]     = useState(true)
   const [webDept,      setWebDept]      = useState(false)
   const [chargeClient, setChargeClient] = useState(false)
   const [clientRate,   setClientRate]   = useState('')
   const [error,        setError]        = useState('')
-  const [success,   setSuccess]   = useState('')
-  const [open,      setOpen]      = useState(false)
+  const [success,      setSuccess]      = useState('')
+  const [open,         setOpen]         = useState(false)
 
   const filteredProjects = projects.filter(p => p.client_id === clientId)
+
+  function reset(form: HTMLFormElement) {
+    form.reset()
+    setClientId('')
+    setBillable(true)
+    setWebDept(false)
+    setChargeClient(false)
+    setClientRate('')
+  }
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
-    fd.set('is_billable',       billable ? 'true' : 'false')
-    fd.set('charge_web_dept',   webDept ? 'true' : 'false')
-    fd.set('charge_client',     chargeClient ? 'true' : 'false')
-    fd.set('client_hourly_rate', chargeClient ? clientRate : '')
+    fd.set('is_billable',        billable      ? 'true' : 'false')
+    fd.set('charge_web_dept',    webDept       ? 'true' : 'false')
+    fd.set('charge_client',      chargeClient  ? 'true' : 'false')
+    fd.set('client_hourly_rate', chargeClient  ? clientRate : '')
 
-    const dateStr = fd.get('date') as string
+    const dateStr   = fd.get('date') as string
     const startTime = fd.get('start_time') as string
-    const endTime   = fd.get('end_time') as string
     const [y, mo, d] = dateStr.split('-').map(Number)
     const [sh, sm]   = startTime.split(':').map(Number)
-    const [eh, em]   = endTime.split(':').map(Number)
     const startedAtISO = new Date(y, mo - 1, d, sh, sm, 0).toISOString()
-    const endedAtISO   = new Date(y, mo - 1, d, eh, em, 0).toISOString()
+
     setError('')
     setSuccess('')
-    startTransition(async () => {
-      const res = await addManualEntryAction(fd, startedAtISO, endedAtISO)
-      if (res?.error) { setError(res.error); return }
-      setSuccess('Entrée ajoutée avec succès !')
-      ;(e.target as HTMLFormElement).reset()
-      setClientId('')
-      setBillable(true)
-      setWebDept(false)
-      setChargeClient(false)
-      setClientRate('')
-      setTimeout(() => setSuccess(''), 3000)
-    })
+
+    if (mode === 'start') {
+      startTransition(async () => {
+        const res = await adminStartPunchAction(fd, startedAtISO)
+        if (res?.error) { setError(res.error); return }
+        setSuccess('Punch démarré ! L\'employé peut se puncher out lui-même.')
+        reset(e.target as HTMLFormElement)
+        setTimeout(() => setSuccess(''), 4000)
+      })
+    } else {
+      const endTime = fd.get('end_time') as string
+      const [eh, em] = endTime.split(':').map(Number)
+      const endedAtISO = new Date(y, mo - 1, d, eh, em, 0).toISOString()
+      startTransition(async () => {
+        const res = await addManualEntryAction(fd, startedAtISO, endedAtISO)
+        if (res?.error) { setError(res.error); return }
+        setSuccess('Entrée ajoutée avec succès !')
+        reset(e.target as HTMLFormElement)
+        setTimeout(() => setSuccess(''), 3000)
+      })
+    }
   }
 
   if (!open) return (
@@ -75,6 +92,38 @@ export default function ManualEntryForm({
         </h3>
         <button onClick={() => setOpen(false)} className="text-slate-500 hover:text-slate-300 text-xs">✕ Fermer</button>
       </div>
+
+      {/* Mode toggle */}
+      <div className="flex gap-1 p-1 bg-slate-800/60 rounded-lg mb-5 w-fit">
+        <button
+          type="button"
+          onClick={() => setMode('complete')}
+          className={`text-xs font-semibold px-3 py-1.5 rounded-md transition ${
+            mode === 'complete'
+              ? 'bg-purple-600 text-white'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Saisie complète
+        </button>
+        <button
+          type="button"
+          onClick={() => setMode('start')}
+          className={`text-xs font-semibold px-3 py-1.5 rounded-md transition ${
+            mode === 'start'
+              ? 'bg-emerald-600 text-white'
+              : 'text-slate-400 hover:text-slate-200'
+          }`}
+        >
+          Démarrer un punch
+        </button>
+      </div>
+
+      {mode === 'start' && (
+        <p className="text-xs text-emerald-400/80 bg-emerald-500/8 border border-emerald-500/15 rounded-lg px-3 py-2 mb-4">
+          Le punch sera ouvert sans heure de fin. L&apos;employé pourra se puncher out lui-même depuis son tableau de bord.
+        </p>
+      )}
 
       <form onSubmit={handleSubmit} className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3">
 
@@ -97,10 +146,12 @@ export default function ManualEntryForm({
           <input name="start_time" type="time" required className="input" />
         </div>
 
-        <div>
-          <label className="label">Heure fin</label>
-          <input name="end_time" type="time" required className="input" />
-        </div>
+        {mode === 'complete' && (
+          <div>
+            <label className="label">Heure fin</label>
+            <input name="end_time" type="time" required className="input" />
+          </div>
+        )}
 
         <div>
           <label className="label">Client</label>
@@ -151,21 +202,23 @@ export default function ManualEntryForm({
           <div className="col-span-2 sm:col-span-1">
             <label className="label">Taux horaire client ($/h)</label>
             <input
-              type="number"
-              min="0"
-              step="0.01"
-              value={clientRate}
-              onChange={e => setClientRate(e.target.value)}
-              placeholder="ex. 95.00"
-              className="input"
+              type="number" min="0" step="0.01"
+              value={clientRate} onChange={e => setClientRate(e.target.value)}
+              placeholder="ex. 95.00" className="input"
             />
           </div>
         )}
 
         <div className="col-span-2 sm:col-span-1 flex items-end">
           <button type="submit" disabled={isPending}
-            className="w-full py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition">
-            {isPending ? 'Enregistrement...' : 'Ajouter'}
+            className={`w-full py-2 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition ${
+              mode === 'start'
+                ? 'bg-emerald-600 hover:bg-emerald-500'
+                : 'bg-purple-600 hover:bg-purple-500'
+            }`}>
+            {isPending
+              ? 'Enregistrement...'
+              : mode === 'start' ? 'Démarrer le punch' : 'Ajouter'}
           </button>
         </div>
 
