@@ -1143,7 +1143,7 @@ export async function submitLeaveRequestAction(formData: FormData) {
   const type       = formData.get('type') as string
   const start_date = formData.get('start_date') as string
   const end_date   = formData.get('end_date') as string
-  const notes      = (formData.get('notes') as string) || null
+  const notes      = (formData.get('notes') as string) || ''
 
   if (!type || !start_date || !end_date) return { error: 'Champs requis manquants.' }
   if (end_date < start_date) return { error: 'La date de fin doit être après la date de début.' }
