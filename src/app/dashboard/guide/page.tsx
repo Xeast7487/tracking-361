@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import Link from 'next/link'
 
 const toc = [
   { id: 'intro',      label: 'Introduction' },
@@ -13,6 +14,7 @@ const toc = [
   { id: 'section-8', label: '8. Horaires et présence' },
   { id: 'section-9', label: '9. Milieu de travail' },
   { id: 'section-10', label: '10. Comportement et attitude' },
+  { id: 'section-11', label: '11. Clause de non-concurrence' },
 ]
 
 export default async function GuidePage() {
@@ -500,6 +502,43 @@ export default async function GuidePage() {
                 </div>
               </div>
 
+            </div>
+          </section>
+
+          {/* Section 11 */}
+          <section id="section-11" className="scroll-mt-6">
+            <SectionHeading number="11" title="Clause de non-concurrence" />
+            <div className="space-y-4 mt-5">
+              <div className="space-y-3 text-slate-300 leading-relaxed">
+                <p>
+                  Tout membre de l&apos;équipe d&apos;Agence 361° est tenu de signer une clause de non-concurrence
+                  conformément à l&apos;article 2089 du Code civil du Québec. Cette clause vise à protéger
+                  les intérêts légitimes de l&apos;agence, notamment sa clientèle et son savoir-faire.
+                </p>
+                <p>
+                  La clause prévoit une restriction de <strong className="text-white">12 mois</strong> suivant
+                  la fin d&apos;emploi, applicable sur le territoire de la <strong className="text-white">province
+                  de Québec</strong>, pour des services similaires à ceux offerts par l&apos;agence.
+                </p>
+              </div>
+              <div className="p-4 bg-blue-950/40 border border-blue-800/30 rounded-xl flex items-start gap-4">
+                <div className="p-2.5 bg-blue-500/15 rounded-lg flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#60a5fa" strokeWidth="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-white mb-0.5">Document à signer et remettre à la direction</p>
+                  <p className="text-xs text-slate-400 mb-3">
+                    Imprimez le document, signez-le, et remettez l&apos;original signé à votre responsable.
+                  </p>
+                  <Link
+                    href="/dashboard/guide/non-concurrence"
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white text-xs font-semibold rounded-lg transition"
+                  >
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+                    Voir et imprimer la clause
+                  </Link>
+                </div>
+              </div>
             </div>
           </section>
 

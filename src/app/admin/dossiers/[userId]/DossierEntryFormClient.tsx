@@ -13,6 +13,7 @@ const TYPE_LABELS: Record<string, string> = {
   avertissement_verbal: 'Avertissement verbal',
   felicitation:         'Félicitation',
   note:                 'Note',
+  non_concurrence:      'Non-concurrence',
 }
 
 const today = () => new Date().toLocaleDateString('fr-CA', { day: 'numeric', month: 'long', year: 'numeric' })
@@ -91,6 +92,17 @@ Suivi prévu : `,
 Cet accomplissement démontre [qualités/compétences].
 
 Bravo et continuez sur cette lancée !`,
+  },
+  non_concurrence: {
+    title: `Clause de non-concurrence signée`,
+    content: `La clause de non-concurrence a été signée le ${today()}.
+
+Document original remis à la direction et archivé ci-joint.
+
+Résumé des conditions acceptées :
+- Durée : 12 mois suivant la fin d'emploi
+- Territoire : Province de Québec
+- Services visés : marketing numérique, développement web, stratégie de marque et services similaires`,
   },
   rencontre: {
     title: `Rencontre du ${today()}`,

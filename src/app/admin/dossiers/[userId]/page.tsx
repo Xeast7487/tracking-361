@@ -15,6 +15,7 @@ const TYPE_LABELS: Record<string, string> = {
   avertissement_verbal: 'Avertissement verbal',
   felicitation:         'Félicitation',
   note:                 'Note',
+  non_concurrence:      'Non-concurrence',
 }
 
 const TYPE_COLORS: Record<string, string> = {
@@ -26,6 +27,7 @@ const TYPE_COLORS: Record<string, string> = {
   avertissement_verbal: 'bg-yellow-500/15 text-yellow-400 border-yellow-500/25',
   felicitation:         'bg-emerald-500/15 text-emerald-400 border-emerald-500/25',
   note:                 'bg-slate-500/15 text-slate-400 border-slate-500/25',
+  non_concurrence:      'bg-rose-500/15 text-rose-400 border-rose-500/25',
 }
 
 const ACTION_LABELS: Record<string, string> = {
