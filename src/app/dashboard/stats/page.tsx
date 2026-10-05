@@ -62,7 +62,14 @@ export default async function StatsPage() {
 
   const r = getDateRanges()
 
-  const [weekRes, prevWeekRes, monthRes, prevMonthRes] = await Promise.all([
+  // Last 8 weeks for bar chart
+  const chartWeekStarts = Array.from({ length: 8 }, (_, i) => {
+    const d = new Date(r.weekStart)
+    d.setDate(d.getDate() - (7 - i) * 7)
+    return d.toISOString().split('T')[0]
+  })
+
+  const [weekRes, prevWeekRes, monthRes, prevMonthRes, chartRes] = await Promise.all([
     supabase.from('time_entries').select('started_at, ended_at, total_paused_ms, is_billable, client_id, clients(name)')
       .eq('user_id', user.id).not('ended_at', 'is', null)
       .gte('started_at', `${r.weekStart}T00:00:00`).lte('started_at', `${r.todayStr}T23:59:59`),
@@ -75,12 +82,27 @@ export default async function StatsPage() {
     supabase.from('time_entries').select('started_at, ended_at, total_paused_ms')
       .eq('user_id', user.id).not('ended_at', 'is', null)
       .gte('started_at', `${r.prevMonthStart}T00:00:00`).lte('started_at', `${r.prevMonthEnd}T23:59:59`),
+    supabase.from('time_entries').select('started_at, ended_at, total_paused_ms')
+      .eq('user_id', user.id).not('ended_at', 'is', null)
+      .gte('started_at', `${chartWeekStarts[0]}T00:00:00`).lte('started_at', `${r.todayStr}T23:59:59`),
   ])
 
-  const weekEntries     = weekRes.data     ?? []
-  const prevWeekEntries = prevWeekRes.data ?? []
-  const monthEntries    = monthRes.data    ?? []
+  const weekEntries      = weekRes.data      ?? []
+  const prevWeekEntries  = prevWeekRes.data  ?? []
+  const monthEntries     = monthRes.data     ?? []
   const prevMonthEntries = prevMonthRes.data ?? []
+  const chartAllEntries  = chartRes.data     ?? []
+
+  // Group chart entries by week
+  const chartWeeks = chartWeekStarts.map((ws, i) => {
+    const nextWs = chartWeekStarts[i + 1]
+    const entries = chartAllEntries.filter(e => {
+      const d = e.started_at.slice(0, 10)
+      return d >= ws && (nextWs ? d < nextWs : true)
+    })
+    return { ws, hours: calcHours(entries), isCurrent: i === 7 }
+  })
+  const maxChartHours = Math.max(...chartWeeks.map(w => w.hours), 1)
 
   const hoursWeek      = calcHours(weekEntries)
   const hoursPrevWeek  = calcHours(prevWeekEntries)
@@ -177,6 +199,38 @@ export default async function StatsPage() {
           </div>
         </div>
       )}
+
+      {/* Bar chart — 8 semaines */}
+      <div className="card p-5">
+        <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-5">8 dernières semaines</p>
+        <div className="flex items-end gap-1.5 h-28">
+          {chartWeeks.map((w, i) => {
+            const pct = maxChartHours > 0 ? (w.hours / maxChartHours) * 100 : 0
+            const [, mm, dd] = w.ws.split('-')
+            const label = `${dd}/${mm}`
+            return (
+              <div key={i} className="flex-1 flex flex-col items-center gap-1.5 h-full justify-end group">
+                <span className="text-[10px] text-slate-500 font-mono opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                  {w.hours > 0 ? fmt(w.hours) : ''}
+                </span>
+                <div className="w-full relative flex items-end" style={{ height: '80px' }}>
+                  <div
+                    className={`w-full rounded-t-md transition-all duration-500 ${
+                      w.isCurrent
+                        ? 'bg-gradient-to-t from-blue-600 to-blue-400'
+                        : 'bg-slate-700 group-hover:bg-slate-600'
+                    }`}
+                    style={{ height: `${Math.max(pct, w.hours > 0 ? 4 : 0)}%` }}
+                  />
+                </div>
+                <span className={`text-[9px] font-mono ${w.isCurrent ? 'text-blue-400' : 'text-slate-600'}`}>
+                  {label}
+                </span>
+              </div>
+            )
+          })}
+        </div>
+      </div>
 
       {hoursMonth === 0 && (
         <div className="text-center py-12 text-slate-600 text-sm">Aucune heure enregistree ce mois.</div>

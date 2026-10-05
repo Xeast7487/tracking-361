@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { LanguageProvider } from '@/lib/LanguageContext'
+import { ToastProvider } from '@/components/ToastProvider'
 import { getLang } from '@/lib/getLang'
 
 export const metadata: Metadata = {
@@ -23,7 +24,9 @@ export default async function RootLayout({ children }: { children: React.ReactNo
       </head>
       <body>
         <LanguageProvider initial={lang}>
-          {children}
+          <ToastProvider>
+            {children}
+          </ToastProvider>
         </LanguageProvider>
         <script dangerouslySetInnerHTML={{ __html: `
           if ('serviceWorker' in navigator) {

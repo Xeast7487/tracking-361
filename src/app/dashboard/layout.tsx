@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import Nav from '@/components/Nav'
+import FloatingTimer from '@/components/FloatingTimer'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 
@@ -28,6 +29,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <main className="max-w-6xl mx-auto px-4 pt-5 pb-28 sm:pt-8 sm:pb-8">
         {children}
       </main>
+      <FloatingTimer />
     </div>
   )
 }

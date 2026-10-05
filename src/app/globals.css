@@ -52,6 +52,20 @@
 }
 
 
+/* ─── Toast enter animation ─────────────────────────────── */
+@keyframes toast-in {
+  from { opacity: 0; transform: translateX(12px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(0)    scale(1); }
+}
+.toast-enter { animation: toast-in 0.2s ease-out; }
+
+/* ─── Floating timer pulse ───────────────────────────────── */
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.timer-dot { animation: timer-pulse 1.5s ease-in-out infinite; }
+
 /* ─── Tracking toast bounce ─────────────────────────────── */
 @keyframes bounce-x {
   0%, 100% { transform: translateX(0); }

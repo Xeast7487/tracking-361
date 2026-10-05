@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createClient } from '@supabase/supabase-js'
 import Nav from '@/components/Nav'
+import FloatingTimer from '@/components/FloatingTimer'
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createSupabaseServerClient()
@@ -26,6 +27,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
       <main className="max-w-6xl mx-auto px-4 pt-5 pb-28 sm:pt-8 sm:pb-8 overflow-x-auto">
         {children}
       </main>
+      <FloatingTimer />
     </div>
   )
 }

@@ -3,6 +3,7 @@
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { reviewLeaveRequestAction } from '@/app/actions'
+import { useToast } from '@/components/ToastProvider'
 
 const TYPE_LABELS: Record<string, string> = {
   vacances: 'Vacances', maladie: 'Maladie', personnel: 'Personnel', autre: 'Autre',
@@ -25,6 +26,7 @@ function fmtDate(d: string) {
 
 export default function LeaveReviewClient({ request: r, readonly }: { request: any; readonly?: boolean }) {
   const router = useRouter()
+  const { toast } = useToast()
   const [isPending, startTransition] = useTransition()
   const days = daysBetween(r.start_date, r.end_date)
   const employeeName = r.employee?.full_name ?? 'Inconnu'
@@ -32,6 +34,7 @@ export default function LeaveReviewClient({ request: r, readonly }: { request: a
   function review(status: 'approved' | 'denied') {
     startTransition(async () => {
       await reviewLeaveRequestAction(r.id, status)
+      toast(status === 'approved' ? 'Demande approuvée' : 'Demande refusée', status === 'approved' ? 'success' : 'info')
       router.refresh()
     })
   }

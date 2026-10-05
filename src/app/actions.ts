@@ -1133,6 +1133,19 @@ export async function updateEmployeeNotifyAction(userId: string, notify: boolean
   return { success: true }
 }
 
+export async function getActiveEntryAction() {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return null
+  const { data } = await supabase
+    .from('time_entries')
+    .select('id, started_at, paused_at, total_paused_ms, clients(name)')
+    .eq('user_id', user.id)
+    .is('ended_at', null)
+    .maybeSingle()
+  return data ?? null
+}
+
 // ── Congés ────────────────────────────────────────────────
 
 export async function submitLeaveRequestAction(formData: FormData) {

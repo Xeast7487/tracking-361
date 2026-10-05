@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useEffect } from 'react'
 import { submitLeaveRequestAction, fetchMyLeaveRequestsAction } from '@/app/actions'
-import { useEffect } from 'react'
+import { useToast } from '@/components/ToastProvider'
 
 const TYPE_LABELS: Record<string, string> = {
   vacances:  'Vacances',
@@ -31,10 +31,10 @@ function fmtDate(d: string) {
 }
 
 export default function CongesPage() {
+  const { toast } = useToast()
   const [requests, setRequests]   = useState<any[]>([])
   const [isPending, startTransition] = useTransition()
   const [error, setError]         = useState('')
-  const [success, setSuccess]     = useState('')
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
@@ -49,11 +49,10 @@ export default function CongesPage() {
     startTransition(async () => {
       const res = await submitLeaveRequestAction(fd)
       if (res?.error) { setError(res.error); return }
-      setSuccess('Demande envoyée ! Un admin va la réviser bientôt.')
+      toast('Demande envoyée ! Un admin va la réviser bientôt.')
       form.reset()
       const updated = await fetchMyLeaveRequestsAction()
       setRequests(updated)
-      setTimeout(() => setSuccess(''), 4000)
     })
   }
 
@@ -93,8 +92,7 @@ export default function CongesPage() {
             <label className="label">Notes (optionnel)</label>
             <input name="notes" type="text" placeholder="Précisions, contexte..." className="input" />
           </div>
-          {error   && <p className="text-red-400 text-sm sm:col-span-2">{error}</p>}
-          {success && <p className="text-emerald-400 text-sm sm:col-span-2">{success}</p>}
+          {error && <p className="text-red-400 text-sm sm:col-span-2">{error}</p>}
           <div className="sm:col-span-2 flex justify-end">
             <button type="submit" disabled={isPending}
               className="px-5 py-2 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition">
