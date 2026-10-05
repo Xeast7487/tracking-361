@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logoutAction } from '@/app/actions'
-import { useState, useTransition, useEffect, useRef } from 'react'
+import { useState, useTransition, useRef } from 'react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { translations } from '@/lib/translations'
 
@@ -41,66 +41,64 @@ type NavLink  = { type: 'link';  href: string;  label: string; icon: React.React
 type NavEntry = NavGroup | NavLink
 
 // ── Dropdown component ─────────────────────────────────────
-function Dropdown({ group, open, onToggle }: { group: NavGroup; open: boolean; onToggle: () => void }) {
+function Dropdown({ group }: { group: NavGroup }) {
   const pathname = usePathname()
+  const [open, setOpen] = useState(false)
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
   const isActive = group.items.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
-  const ref = useRef<HTMLDivElement>(null)
 
-  useEffect(() => {
-    if (!open) return
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) onToggle()
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [open, onToggle])
+  function handleEnter() {
+    if (closeTimer.current) clearTimeout(closeTimer.current)
+    setOpen(true)
+  }
+  function handleLeave() {
+    closeTimer.current = setTimeout(() => setOpen(false), 120)
+  }
 
   return (
-    <div ref={ref} className="relative">
+    <div onMouseEnter={handleEnter} onMouseLeave={handleLeave} className="relative">
       <button
-        onClick={onToggle}
         className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-          isActive
-            ? 'text-blue-300'
-            : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/60'
+          isActive || open ? 'text-blue-300' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/60'
         }`}
       >
-        {isActive && (
+        {(isActive || open) && (
           <>
             <span className="absolute inset-0 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/25" />
             <span className="absolute inset-0 rounded-lg bg-gradient-to-b from-blue-400/5 to-transparent" />
           </>
         )}
-        <span className={`relative transition-colors ${isActive ? 'text-blue-400' : ''}`}>{group.icon}</span>
+        <span className={`relative ${isActive || open ? 'text-blue-400' : ''}`}>{group.icon}</span>
         <span className="relative">{group.label}</span>
-        <span className={`relative transition-transform duration-200 ${open ? 'rotate-180' : ''} ${isActive ? 'text-blue-400' : 'text-slate-600'}`}>
+        <span className={`relative transition-transform duration-200 ${open ? 'rotate-180' : ''} ${isActive || open ? 'text-blue-400' : 'text-slate-600'}`}>
           <IconChevron />
         </span>
       </button>
 
-      {open && (
-        <div className="absolute top-full left-0 mt-1.5 w-48 rounded-xl bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/50 overflow-hidden z-50 py-1">
-          {group.items.map(item => {
-            const active = pathname === item.href || pathname.startsWith(item.href + '/')
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                onClick={onToggle}
-                className={`flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors ${
-                  active
-                    ? 'bg-blue-500/10 text-blue-300'
-                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
-                }`}
-              >
-                <span className={active ? 'text-blue-400' : 'text-slate-600'}>{item.icon}</span>
-                {item.label}
-                {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
-              </Link>
-            )
-          })}
-        </div>
-      )}
+      <div className={`absolute top-full left-0 mt-1.5 w-48 rounded-xl bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/50 overflow-hidden z-50 py-1 transition-all duration-150 ease-out origin-top ${
+        open
+          ? 'opacity-100 scale-100 translate-y-0 pointer-events-auto'
+          : 'opacity-0 scale-95 -translate-y-1 pointer-events-none'
+      }`}>
+        {group.items.map(item => {
+          const active = pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors ${
+                active
+                  ? 'bg-blue-500/10 text-blue-300'
+                  : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+              }`}
+            >
+              <span className={active ? 'text-blue-400' : 'text-slate-600'}>{item.icon}</span>
+              {item.label}
+              {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
+            </Link>
+          )
+        })}
+      </div>
     </div>
   )
 }
@@ -112,16 +110,11 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
   const { lang, setLang } = useLanguage()
   const t = translations[lang].nav
   const langLabel = translations[lang].langSwitch
-  const [openGroup, setOpenGroup] = useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const shortLabels = lang === 'fr'
     ? { dashboard: 'Pointer', logout: 'Quitter' }
     : { dashboard: 'Clock In', logout: 'Logout' }
-
-  function toggleGroup(label: string) {
-    setOpenGroup(prev => prev === label ? null : label)
-  }
 
   const adminNav: NavEntry[] = [
     { type: 'link',  href: '/dashboard', label: t.pointer, icon: <IconClock /> },
@@ -242,12 +235,7 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
                 )
               }
               return (
-                <Dropdown
-                  key={entry.label}
-                  group={entry}
-                  open={openGroup === entry.label}
-                  onToggle={() => toggleGroup(entry.label)}
-                />
+                <Dropdown key={entry.label} group={entry} />
               )
             })}
           </div>
