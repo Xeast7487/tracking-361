@@ -1,4 +1,5 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
+import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { fetchDossierEntriesAction, fetchDossierActivityAction, logDossierViewAction } from '@/app/actions'
@@ -92,6 +93,22 @@ export default async function AdminDossierEmployeePage({
 
   const hasFilters = searchParams.type || searchParams.search || searchParams.from || searchParams.to
 
+  // Onboarding checklist
+  const adminClient = createSupabaseAdminClient()
+  const [firstEntryRes, firstSummaryRes, leaveCountRes] = await Promise.all([
+    adminClient.from('time_entries').select('id').eq('user_id', params.userId).limit(1),
+    adminClient.from('daily_summaries').select('id').eq('user_id', params.userId).limit(1),
+    adminClient.from('leave_requests').select('id').eq('user_id', params.userId).limit(1),
+  ])
+  const hasNonConcurrence = allEntries.some((e: any) => e.type === 'non_concurrence')
+  const onboarding = [
+    { label: 'Compte actif',                done: employee.is_active },
+    { label: 'Clause de non-concurrence',   done: hasNonConcurrence },
+    { label: 'Premier pointage enregistré', done: (firstEntryRes.data?.length ?? 0) > 0 },
+    { label: 'Premier résumé soumis',       done: (firstSummaryRes.data?.length ?? 0) > 0 },
+  ]
+  const onboardingDone = onboarding.filter(o => o.done).length
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -138,6 +155,35 @@ export default async function AdminDossierEmployeePage({
             ))}
         </div>
       )}
+
+      {/* Onboarding checklist */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-xs font-semibold uppercase tracking-widest text-slate-500">Onboarding</p>
+          <span className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
+            onboardingDone === onboarding.length
+              ? 'bg-emerald-500/12 text-emerald-400 border-emerald-500/25'
+              : 'bg-amber-500/12 text-amber-400 border-amber-500/25'
+          }`}>
+            {onboardingDone}/{onboarding.length}
+          </span>
+        </div>
+        <div className="grid grid-cols-2 gap-2">
+          {onboarding.map(item => (
+            <div key={item.label} className="flex items-center gap-2.5">
+              <span className={`flex-shrink-0 w-4 h-4 rounded-full flex items-center justify-center ${
+                item.done ? 'bg-emerald-500/20 text-emerald-400' : 'bg-slate-800 text-slate-600'
+              }`}>
+                {item.done
+                  ? <svg width="9" height="9" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="2 6 5 9 10 3"/></svg>
+                  : <svg width="7" height="7" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2.5"><line x1="2" y1="6" x2="10" y2="6"/></svg>
+                }
+              </span>
+              <span className={`text-xs ${item.done ? 'text-slate-300' : 'text-slate-600'}`}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* Filters */}
       <DossierFiltersClient />

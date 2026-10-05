@@ -1132,3 +1132,63 @@ export async function updateEmployeeNotifyAction(userId: string, notify: boolean
   revalidatePath('/admin/parametres')
   return { success: true }
 }
+
+// ── Congés ────────────────────────────────────────────────
+
+export async function submitLeaveRequestAction(formData: FormData) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié.' }
+
+  const type       = formData.get('type') as string
+  const start_date = formData.get('start_date') as string
+  const end_date   = formData.get('end_date') as string
+  const notes      = (formData.get('notes') as string) || null
+
+  if (!type || !start_date || !end_date) return { error: 'Champs requis manquants.' }
+  if (end_date < start_date) return { error: 'La date de fin doit être après la date de début.' }
+
+  const { error } = await supabase.from('leave_requests').insert({
+    user_id: user.id, type, start_date, end_date, notes, status: 'pending',
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard/conges')
+  return { success: true }
+}
+
+export async function fetchMyLeaveRequestsAction() {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return []
+  const { data } = await supabase
+    .from('leave_requests')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
+export async function fetchAllLeaveRequestsAction() {
+  const caller = await requireAdmin()
+  if (!caller) return []
+  const admin = getAdminClient()
+  const { data } = await admin
+    .from('leave_requests')
+    .select('*, employee:profiles!leave_requests_user_id_fkey(full_name), reviewer:profiles!leave_requests_reviewed_by_fkey(full_name)')
+    .order('created_at', { ascending: false })
+  return data ?? []
+}
+
+export async function reviewLeaveRequestAction(requestId: string, status: 'approved' | 'denied') {
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+  const admin = getAdminClient()
+  const { error } = await admin.from('leave_requests').update({
+    status,
+    reviewed_by: caller.id,
+    reviewed_at: new Date().toISOString(),
+  }).eq('id', requestId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/conges')
+  return { success: true }
+}
