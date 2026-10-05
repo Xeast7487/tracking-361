@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { fetchAllLeaveRequestsAction } from '@/app/actions'
 import LeaveReviewClient from './LeaveReviewClient'
+import AdminLeaveFormClient from './AdminLeaveFormClient'
 
 export default async function AdminCongesPage() {
   const supabase = await createSupabaseServerClient()
@@ -20,7 +21,7 @@ export default async function AdminCongesPage() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white">Congés</h1>
-          <p className="text-slate-400 text-sm mt-1">Approuve ou refuse les demandes de l&apos;équipe.</p>
+          <p className="text-slate-400 text-sm mt-1">Soumets une demande ou approuve celles de l&apos;équipe.</p>
         </div>
         {pending.length > 0 && (
           <span className="bg-amber-500/15 text-amber-400 border border-amber-500/25 text-xs font-bold px-3 py-1.5 rounded-full">
@@ -28,6 +29,9 @@ export default async function AdminCongesPage() {
           </span>
         )}
       </div>
+
+      {/* Formulaire admin */}
+      <AdminLeaveFormClient />
 
       {pending.length > 0 && (
         <section>
