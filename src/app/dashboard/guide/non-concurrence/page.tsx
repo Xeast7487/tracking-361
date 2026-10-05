@@ -6,7 +6,7 @@ export default function NonConcurrencePage() {
   return (
     <div className="max-w-3xl mx-auto pb-12">
 
-      {/* Boutons nav — masqués à l'impression */}
+      {/* Boutons nav - masqués à l'impression */}
       <div className="flex items-center justify-between mb-8 print:hidden">
         <Link href="/dashboard/guide" className="text-sm text-slate-400 hover:text-slate-200 transition flex items-center gap-1.5">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
@@ -80,8 +80,8 @@ export default function NonConcurrencePage() {
         <section className="mb-6">
           <h2 className="text-sm font-sans font-bold uppercase tracking-wider mb-2">4. Type de travail visé</h2>
           <p className="text-sm leading-relaxed text-gray-700">
-            L&apos;Employé(e) s&apos;engage à ne pas offrir, directement ou indirectement — à titre d&apos;employé(e),
-            de travailleur(euse) autonome, de consultant(e), d&apos;associé(e), d&apos;actionnaire ou autrement — les
+            L&apos;Employé(e) s&apos;engage à ne pas offrir, directement ou indirectement - à titre d&apos;employé(e),
+            de travailleur(euse) autonome, de consultant(e), d&apos;associé(e), d&apos;actionnaire ou autrement - les
             services suivants ou tout service similaire à ceux offerts par l&apos;Employeur au moment de la cessation
             d&apos;emploi :
           </p>
@@ -183,7 +183,7 @@ export default function NonConcurrencePage() {
         </div>
       </div>
 
-      {/* Note légale — masquée à l'impression */}
+      {/* Note légale - masquée à l'impression */}
       <div className="mt-6 p-4 bg-amber-500/8 border border-amber-500/20 rounded-lg print:hidden">
         <p className="text-xs text-amber-400/80 leading-relaxed">
           <strong className="font-semibold">Note :</strong> Ce document constitue un modèle préparé selon les exigences
