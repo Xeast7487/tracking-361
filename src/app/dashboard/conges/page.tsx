@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition, useEffect } from 'react'
-import { submitLeaveRequestAction, fetchMyLeaveRequestsAction } from '@/app/actions'
-import { useToast } from '@/components/ToastProvider'
+import { submitLeaveRequestAction, fetchMyLeaveRequestsAction } from '../../actions'
+import { useToast } from '../../../components/ToastProvider'
 
 const TYPE_LABELS: Record<string, string> = {
   vacances:  'Vacances',
@@ -43,7 +43,7 @@ export default function CongesPage() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setError(''); setSuccess('')
+    setError('')
     const fd = new FormData(e.currentTarget)
     const form = e.currentTarget
     startTransition(async () => {

@@ -2,7 +2,7 @@
 
 import { useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { createDossierEntryAction } from '@/app/actions'
+import { createDossierEntryAction } from '../../../actions'
 
 const TYPE_LABELS: Record<string, string> = {
   rencontre:            'Rencontre',

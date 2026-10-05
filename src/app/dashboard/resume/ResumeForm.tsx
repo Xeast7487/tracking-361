@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useTransition, useRef, useEffect } from 'react'
-import { saveDailySummaryAction } from '@/app/actions'
-import SummaryDraftButton from '@/components/SummaryDraftButton'
+import { saveDailySummaryAction } from '../../actions'
+import SummaryDraftButton from '../../../components/SummaryDraftButton'
 
 interface Props {
   initialContent: string

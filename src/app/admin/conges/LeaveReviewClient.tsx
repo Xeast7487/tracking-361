@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { reviewLeaveRequestAction } from '@/app/actions'
-import { useToast } from '@/components/ToastProvider'
+import { reviewLeaveRequestAction } from '../../actions'
+import { useToast } from '../../../components/ToastProvider'
 
 const TYPE_LABELS: Record<string, string> = {
   vacances: 'Vacances', maladie: 'Maladie', personnel: 'Personnel', autre: 'Autre',

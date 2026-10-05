@@ -2,8 +2,8 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { submitLeaveRequestAction } from '@/app/actions'
-import { useToast } from '@/components/ToastProvider'
+import { submitLeaveRequestAction } from '../../actions'
+import { useToast } from '../../../components/ToastProvider'
 
 const TYPE_LABELS: Record<string, string> = {
   vacances:  'Vacances',
@@ -22,7 +22,7 @@ export default function AdminLeaveFormClient() {
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
-    setError(''); setSuccess('')
+    setError('')
     const fd = new FormData(e.currentTarget)
     const form = e.currentTarget
     startTransition(async () => {

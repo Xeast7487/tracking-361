@@ -1,7 +1,7 @@
 'use client'
 
 import { useTransition } from 'react'
-import { markClientPaidAction } from '@/app/actions'
+import { markClientPaidAction } from '../../actions'
 
 export interface BillingGroup {
   clientId: string

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { saveDiscordSettingAction, updateEmployeeNotifyAction } from '@/app/actions'
+import { saveDiscordSettingAction, updateEmployeeNotifyAction } from '../../actions'
 
 interface Employee {
   id: string

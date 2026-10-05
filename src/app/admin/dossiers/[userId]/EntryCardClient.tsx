@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { updateDossierEntryAction, deleteDossierEntryAction, deleteDossierAttachmentAction, uploadDossierAttachmentAction } from '@/app/actions'
+import { updateDossierEntryAction, deleteDossierEntryAction, deleteDossierAttachmentAction, uploadDossierAttachmentAction } from '../../../actions'
 
 const TYPE_LABELS: Record<string, string> = {
   rencontre:            'Rencontre',

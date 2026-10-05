@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import dynamic from 'next/dynamic'
 
-const CombatArena       = dynamic(() => import('@/components/CombatArena'),       { ssr: false })
-const WillJasmineCombat = dynamic(() => import('@/components/WillJasmineCombat'), { ssr: false })
+const CombatArena       = dynamic(() => import('../../../components/CombatArena'),       { ssr: false })
+const WillJasmineCombat = dynamic(() => import('../../../components/WillJasmineCombat'), { ssr: false })
 
 function CombatBlock({
   title,

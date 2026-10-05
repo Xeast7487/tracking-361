@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createUserAction, updateUserAction } from '@/app/actions'
-import { useLanguage } from '@/lib/LanguageContext'
-import { translations } from '@/lib/translations'
+import { createUserAction, updateUserAction } from '../../actions'
+import { useLanguage } from '../../../lib/LanguageContext'
+import { translations } from '../../../lib/translations'
 
 interface User {
   id: string

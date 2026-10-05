@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { addManualEntryAction, adminStartPunchAction } from '@/app/actions'
+import { addManualEntryAction, adminStartPunchAction } from '../../actions'
 
 interface Profile { id: string; full_name: string }
 interface Client  { id: string; name: string }

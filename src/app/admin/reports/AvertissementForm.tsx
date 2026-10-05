@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { createDossierEntryAction } from '@/app/actions'
+import { createDossierEntryAction } from '../../actions'
 
 interface Profile { id: string; full_name: string }
 
