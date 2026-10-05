@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logoutAction } from '@/app/actions'
-import { useTransition } from 'react'
+import { useState, useTransition, useEffect, useRef } from 'react'
 import { useLanguage } from '@/lib/LanguageContext'
 import { translations } from '@/lib/translations'
 
@@ -14,186 +14,188 @@ interface Props {
   isOwner?: boolean
 }
 
-function IconClock() {
+// ── Icons ──────────────────────────────────────────────────
+function IconClock()    { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> }
+function IconHistory()  { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><polyline points="12 7 12 12 15 15"/></svg> }
+function IconGrid()     { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg> }
+function IconUsers()    { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> }
+function IconFile()     { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg> }
+function IconBriefcase(){ return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg> }
+function IconTask()     { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> }
+function IconFolder()   { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> }
+function IconSword()    { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/><line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/></svg> }
+function IconBook()     { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> }
+function IconPen()      { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg> }
+function IconSettings() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> }
+function IconLogout()   { return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> }
+function IconCalendar() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> }
+function IconBarChart() { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg> }
+function IconChevron()  { return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg> }
+function IconMenu()     { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg> }
+function IconX()        { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> }
+
+// ── Types ──────────────────────────────────────────────────
+type NavItem  = { href: string; label: string; icon: React.ReactNode }
+type NavGroup = { type: 'group'; label: string; icon: React.ReactNode; items: NavItem[] }
+type NavLink  = { type: 'link';  href: string;  label: string; icon: React.ReactNode }
+type NavEntry = NavGroup | NavLink
+
+// ── Dropdown component ─────────────────────────────────────
+function Dropdown({ group, open, onToggle }: { group: NavGroup; open: boolean; onToggle: () => void }) {
+  const pathname = usePathname()
+  const isActive = group.items.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    function handleClick(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) onToggle()
+    }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [open, onToggle])
+
   return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-    </svg>
-  )
-}
-function IconHistory() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><polyline points="12 7 12 12 15 15"/>
-    </svg>
-  )
-}
-function IconGrid() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>
-    </svg>
-  )
-}
-function IconUsers() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/>
-      <path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-    </svg>
-  )
-}
-function IconFile() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-      <polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>
-    </svg>
-  )
-}
-function IconBriefcase() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="2" y="7" width="20" height="14" rx="2" ry="2"/>
-      <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/>
-    </svg>
-  )
-}
-function IconTask() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/>
-    </svg>
-  )
-}
-function IconFolder() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/>
-    </svg>
-  )
-}
-function IconSword() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="14.5 17.5 3 6 3 3 6 3 17.5 14.5"/><line x1="13" y1="19" x2="19" y2="13"/>
-      <line x1="16" y1="16" x2="20" y2="20"/><line x1="19" y1="21" x2="21" y2="19"/>
-    </svg>
-  )
-}
-function IconBook() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>
-    </svg>
-  )
-}
-function IconCalendar() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
-    </svg>
-  )
-}
-function IconBarChart() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/>
-    </svg>
-  )
-}
-function IconPen() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-    </svg>
-  )
-}
-function IconSettings() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="3"/>
-      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
-    </svg>
-  )
-}
-function IconLogout() {
-  return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-      <polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/>
-    </svg>
+    <div ref={ref} className="relative">
+      <button
+        onClick={onToggle}
+        className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+          isActive
+            ? 'text-blue-300'
+            : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/60'
+        }`}
+      >
+        {isActive && (
+          <>
+            <span className="absolute inset-0 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/25" />
+            <span className="absolute inset-0 rounded-lg bg-gradient-to-b from-blue-400/5 to-transparent" />
+          </>
+        )}
+        <span className={`relative transition-colors ${isActive ? 'text-blue-400' : ''}`}>{group.icon}</span>
+        <span className="relative">{group.label}</span>
+        <span className={`relative transition-transform duration-200 ${open ? 'rotate-180' : ''} ${isActive ? 'text-blue-400' : 'text-slate-600'}`}>
+          <IconChevron />
+        </span>
+      </button>
+
+      {open && (
+        <div className="absolute top-full left-0 mt-1.5 w-48 rounded-xl bg-slate-900 border border-slate-700/60 shadow-2xl shadow-black/50 overflow-hidden z-50 py-1">
+          {group.items.map(item => {
+            const active = pathname === item.href || pathname.startsWith(item.href + '/')
+            return (
+              <Link
+                key={item.href}
+                href={item.href}
+                onClick={onToggle}
+                className={`flex items-center gap-2.5 px-3.5 py-2.5 text-sm transition-colors ${
+                  active
+                    ? 'bg-blue-500/10 text-blue-300'
+                    : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                }`}
+              >
+                <span className={active ? 'text-blue-400' : 'text-slate-600'}>{item.icon}</span>
+                {item.label}
+                {active && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
+              </Link>
+            )
+          })}
+        </div>
+      )}
+    </div>
   )
 }
 
+// ── Main Nav ───────────────────────────────────────────────
 export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const { lang, setLang } = useLanguage()
   const t = translations[lang].nav
   const langLabel = translations[lang].langSwitch
+  const [openGroup, setOpenGroup] = useState<string | null>(null)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   const shortLabels = lang === 'fr'
-    ? { dashboard: 'Pointer', history: 'Historique', overview: 'Aperçu', logout: 'Quitter' }
-    : { dashboard: 'Clock In', history: 'History',   overview: 'Overview', logout: 'Logout' }
+    ? { dashboard: 'Pointer', logout: 'Quitter' }
+    : { dashboard: 'Clock In', logout: 'Logout' }
 
-  const navLinks = role === 'admin'
-    ? [
-        { href: '/dashboard',         label: t.pointer,      mobile: shortLabels.dashboard, icon: <IconClock /> },
-        { href: '/admin',             label: t.overview,     mobile: shortLabels.overview,  icon: <IconGrid /> },
-        { href: '/admin/users',       label: t.employees,    mobile: t.employees,           icon: <IconUsers /> },
-        { href: '/admin/reports',     label: t.reports,      mobile: t.reports,             icon: <IconFile /> },
-        { href: '/admin/clients',     label: t.clients,      mobile: t.clients,             icon: <IconBriefcase /> },
-        { href: '/admin/taches',      label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
-        { href: '/admin/dossiers',    label: 'Dossiers',     mobile: 'Dossiers',            icon: <IconFolder /> },
-        { href: '/admin/resumes',     label: 'Résumés',      mobile: 'Résumés',             icon: <IconPen /> },
-        { href: '/admin/conges',      label: 'Congés',       mobile: 'Congés',              icon: <IconCalendar /> },
-        { href: '/dashboard/guide',   label: 'Guide',        mobile: 'Guide',               icon: <IconBook /> },
-        { href: '/dashboard/combat',  label: 'Combat',       mobile: 'Combat',              icon: <IconSword /> },
-        ...(isOwner ? [{ href: '/admin/parametres', label: 'Paramètres', mobile: 'Params', icon: <IconSettings /> }] : []),
-      ]
-    : [
-        { href: '/dashboard',              label: t.dashboard,    mobile: shortLabels.dashboard, icon: <IconClock /> },
-        { href: '/dashboard/history',      label: t.history,      mobile: shortLabels.history,   icon: <IconHistory /> },
-        { href: '/dashboard/taches',       label: 'Tâches',       mobile: 'Tâches',              icon: <IconTask /> },
-        { href: '/dashboard/mon-dossier',  label: 'Mon dossier',  mobile: 'Dossier',             icon: <IconFolder /> },
-        { href: '/dashboard/resume',       label: 'Résumé',       mobile: 'Résumé',              icon: <IconPen /> },
-        { href: '/dashboard/conges',       label: 'Congés',       mobile: 'Congés',              icon: <IconCalendar /> },
-        { href: '/dashboard/stats',        label: 'Stats',        mobile: 'Stats',               icon: <IconBarChart /> },
-        { href: '/dashboard/guide',        label: 'Guide',        mobile: 'Guide',               icon: <IconBook /> },
-        { href: '/dashboard/combat',       label: 'Combat',       mobile: 'Combat',              icon: <IconSword /> },
-      ]
+  function toggleGroup(label: string) {
+    setOpenGroup(prev => prev === label ? null : label)
+  }
+
+  const adminNav: NavEntry[] = [
+    { type: 'link',  href: '/dashboard', label: t.pointer, icon: <IconClock /> },
+    { type: 'group', label: 'Équipe', icon: <IconUsers />, items: [
+      { href: '/admin',          label: 'Aperçu',    icon: <IconGrid /> },
+      { href: '/admin/users',    label: 'Employés',  icon: <IconUsers /> },
+      { href: '/admin/dossiers', label: 'Dossiers',  icon: <IconFolder /> },
+      { href: '/admin/resumes',  label: 'Résumés',   icon: <IconPen /> },
+      { href: '/admin/conges',   label: 'Congés',    icon: <IconCalendar /> },
+    ]},
+    { type: 'group', label: 'Projets', icon: <IconBriefcase />, items: [
+      { href: '/admin/taches',   label: 'Tâches',   icon: <IconTask /> },
+      { href: '/admin/clients',  label: 'Clients',  icon: <IconBriefcase /> },
+      { href: '/admin/reports',  label: 'Rapports', icon: <IconFile /> },
+    ]},
+    { type: 'group', label: 'Ressources', icon: <IconBook />, items: [
+      { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },
+      { href: '/dashboard/combat', label: 'Combat', icon: <IconSword /> },
+    ]},
+    ...(isOwner ? [{ type: 'link' as const, href: '/admin/parametres', label: 'Paramètres', icon: <IconSettings /> }] : []),
+  ]
+
+  const employeeNav: NavEntry[] = [
+    { type: 'link', href: '/dashboard', label: t.dashboard, icon: <IconClock /> },
+    { type: 'group', label: 'Temps', icon: <IconHistory />, items: [
+      { href: '/dashboard/history', label: 'Historique', icon: <IconHistory /> },
+      { href: '/dashboard/stats',   label: 'Stats',      icon: <IconBarChart /> },
+    ]},
+    { type: 'group', label: 'Mon espace', icon: <IconFolder />, items: [
+      { href: '/dashboard/taches',      label: 'Tâches',      icon: <IconTask /> },
+      { href: '/dashboard/mon-dossier', label: 'Mon dossier', icon: <IconFolder /> },
+      { href: '/dashboard/resume',      label: 'Résumé',      icon: <IconPen /> },
+      { href: '/dashboard/conges',      label: 'Congés',      icon: <IconCalendar /> },
+    ]},
+    { type: 'group', label: 'Ressources', icon: <IconBook />, items: [
+      { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },
+      { href: '/dashboard/combat', label: 'Combat', icon: <IconSword /> },
+    ]},
+  ]
+
+  const navEntries = role === 'admin' ? adminNav : employeeNav
 
   const initials = fullName.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+
+  // Mobile bottom nav items (direct links only, key ones)
+  const mobileBottomLinks: NavItem[] = role === 'admin'
+    ? [
+        { href: '/dashboard',      label: shortLabels.dashboard, icon: <IconClock /> },
+        { href: '/admin',          label: 'Aperçu',   icon: <IconGrid /> },
+        { href: '/admin/users',    label: 'Équipe',   icon: <IconUsers /> },
+        { href: '/admin/taches',   label: 'Tâches',   icon: <IconTask /> },
+      ]
+    : [
+        { href: '/dashboard',             label: shortLabels.dashboard, icon: <IconClock /> },
+        { href: '/dashboard/history',     label: 'Historique', icon: <IconHistory /> },
+        { href: '/dashboard/taches',      label: 'Tâches',     icon: <IconTask /> },
+        { href: '/dashboard/mon-dossier', label: 'Dossier',    icon: <IconFolder /> },
+      ]
 
   return (
     <>
       <style>{`
-        @keyframes spin-slow {
-          from { transform: rotate(0deg); }
-          to   { transform: rotate(360deg); }
-        }
-        .avatar-ring {
-          position: relative;
-        }
+        @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .avatar-ring { position: relative; }
         .avatar-ring::before {
-          content: '';
-          position: absolute;
-          inset: -2px;
-          border-radius: 9999px;
+          content: ''; position: absolute; inset: -2px; border-radius: 9999px;
           background: conic-gradient(from 0deg, #3b82f6, #6366f1, #8b5cf6, #3b82f6);
-          animation: spin-slow 3s linear infinite;
-          z-index: -1;
-          opacity: 0.7;
+          animation: spin-slow 3s linear infinite; z-index: -1; opacity: 0.7;
         }
       `}</style>
 
-      {/* ── Top navigation bar ────────────────────────────── */}
+      {/* ── Top navigation bar ─────────────────── */}
       <nav className="sticky top-0 z-50 bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/50"
            style={{ boxShadow: '0 1px 0 rgba(255,255,255,0.04), 0 4px 32px rgba(0,0,0,0.5)' }}>
-
-        {/* Top glow line */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-blue-500/80 to-transparent" />
         <div className="absolute top-0 left-1/4 right-1/4 h-px bg-gradient-to-r from-transparent via-indigo-400 to-transparent blur-sm" />
 
@@ -205,8 +207,7 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
               <div className="absolute inset-0 rounded-xl bg-blue-500/20 blur-md group-hover:bg-blue-500/35 transition-all duration-300" />
               <div className="relative w-8 h-8 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-lg">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5">
-                  <circle cx="12" cy="12" r="10"/>
-                  <polyline points="12 6 12 12 16 14"/>
+                  <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
                 </svg>
               </div>
             </div>
@@ -216,44 +217,45 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
             </div>
           </Link>
 
-          {/* Divider */}
           <div className="hidden md:block w-px h-5 bg-slate-800 flex-shrink-0" />
 
-          {/* Desktop nav links */}
+          {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-0.5 flex-1">
-            {navLinks.map(l => {
-              const isActive = pathname === l.href
+            {navEntries.map(entry => {
+              if (entry.type === 'link') {
+                const isActive = pathname === entry.href
+                return (
+                  <Link key={entry.href} href={entry.href}
+                    className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
+                      isActive ? 'text-blue-300' : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/60'
+                    }`}
+                  >
+                    {isActive && (
+                      <>
+                        <span className="absolute inset-0 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/25" />
+                        <span className="absolute inset-0 rounded-lg bg-gradient-to-b from-blue-400/5 to-transparent" />
+                      </>
+                    )}
+                    <span className={`relative ${isActive ? 'text-blue-400' : ''}`}>{entry.icon}</span>
+                    <span className="relative">{entry.label}</span>
+                  </Link>
+                )
+              }
               return (
-                <Link
-                  key={l.href}
-                  href={l.href}
-                  className={`relative flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-150 ${
-                    isActive
-                      ? 'text-blue-300'
-                      : 'text-slate-500 hover:text-slate-200 hover:bg-slate-800/60'
-                  }`}
-                >
-                  {isActive && (
-                    <>
-                      <span className="absolute inset-0 rounded-lg bg-blue-500/10 ring-1 ring-blue-500/25" />
-                      <span className="absolute inset-0 rounded-lg bg-gradient-to-b from-blue-400/5 to-transparent" />
-                    </>
-                  )}
-                  <span className={`relative transition-colors ${isActive ? 'text-blue-400' : ''}`}>
-                    {l.icon}
-                  </span>
-                  <span className="relative">{l.label}</span>
-                </Link>
+                <Dropdown
+                  key={entry.label}
+                  group={entry}
+                  open={openGroup === entry.label}
+                  onToggle={() => toggleGroup(entry.label)}
+                />
               )
             })}
           </div>
 
-          {/* Mobile spacer */}
           <div className="flex-1 md:hidden" />
 
           {/* Right section */}
           <div className="flex items-center gap-2 flex-shrink-0">
-
             {/* User info – desktop */}
             <div className="hidden md:flex items-center gap-2.5">
               <div className="w-px h-5 bg-slate-800" />
@@ -272,7 +274,7 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
               </div>
             </div>
 
-            {/* User avatar – mobile */}
+            {/* Avatar – mobile */}
             <div className="md:hidden avatar-ring relative z-0">
               <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-[10px] font-bold text-white">
                 {initials}
@@ -283,7 +285,6 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
             <button
               onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
               className="text-[11px] px-2 py-1 rounded-md font-bold tracking-widest uppercase text-slate-500 hover:text-slate-200 hover:bg-slate-800/70 border border-transparent hover:border-slate-700/50 transition-all"
-              title={lang === 'fr' ? 'Switch to English' : 'Passer en français'}
             >
               {langLabel}
             </button>
@@ -301,16 +302,14 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
         </div>
       </nav>
 
-      {/* ── Mobile bottom navigation bar ─────────────────── */}
+      {/* ── Mobile bottom nav ──────────────────── */}
       <nav className="fixed bottom-0 left-0 right-0 z-50 md:hidden bg-slate-950/98 backdrop-blur-xl border-t border-slate-800/60"
            style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)', boxShadow: '0 -8px 32px rgba(0,0,0,0.5)' }}>
         <div className="flex items-stretch">
-          {navLinks.map(l => {
-            const isActive = pathname === l.href
+          {mobileBottomLinks.map(item => {
+            const isActive = pathname === item.href || (item.href !== '/dashboard' && pathname.startsWith(item.href))
             return (
-              <Link
-                key={l.href}
-                href={l.href}
+              <Link key={item.href} href={item.href}
                 className={`flex-1 flex flex-col items-center justify-center gap-1 py-3 transition-colors min-w-0 relative ${
                   isActive ? 'text-blue-400' : 'text-slate-600 active:text-slate-300'
                 }`}
@@ -318,27 +317,111 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
                 {isActive && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[2px] bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full shadow-[0_0_6px_rgba(99,102,241,0.8)]" />
                 )}
-                {l.icon}
+                {item.icon}
                 <span className="text-[9px] font-semibold leading-none truncate px-0.5 max-w-full uppercase tracking-wide">
-                  {l.mobile}
+                  {item.label}
                 </span>
               </Link>
             )
           })}
 
-          {/* Logout button */}
+          {/* Menu button */}
           <button
-            onClick={() => startTransition(() => logoutAction())}
-            disabled={isPending}
-            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-600 active:text-red-400 transition-colors"
+            onClick={() => setMobileOpen(true)}
+            className="flex-1 flex flex-col items-center justify-center gap-1 py-3 text-slate-600 active:text-slate-300 transition-colors"
           >
-            <IconLogout />
-            <span className="text-[9px] font-semibold leading-none uppercase tracking-wide">
-              {isPending ? '...' : shortLabels.logout}
-            </span>
+            <IconMenu />
+            <span className="text-[9px] font-semibold leading-none uppercase tracking-wide">Menu</span>
           </button>
         </div>
       </nav>
+
+      {/* ── Mobile full-screen menu ────────────── */}
+      {mobileOpen && (
+        <div className="fixed inset-0 z-[60] md:hidden bg-slate-950/95 backdrop-blur-xl flex flex-col"
+             style={{ paddingBottom: 'env(safe-area-inset-bottom, 0px)' }}>
+          {/* Header */}
+          <div className="flex items-center justify-between px-5 h-[60px] border-b border-slate-800/60 flex-shrink-0">
+            <div className="flex items-center gap-2">
+              <div className="avatar-ring relative z-0">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-[11px] font-bold text-white">
+                  {initials}
+                </div>
+              </div>
+              <div className="flex flex-col leading-none gap-0.5">
+                <span className="text-sm font-semibold text-slate-200">{fullName}</span>
+                {role === 'admin' && <span className="text-[9px] font-semibold text-blue-400/80 uppercase tracking-wider">{t.admin}</span>}
+              </div>
+            </div>
+            <button onClick={() => setMobileOpen(false)} className="p-2 text-slate-400 hover:text-slate-200">
+              <IconX />
+            </button>
+          </div>
+
+          {/* Links */}
+          <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1">
+            {navEntries.map(entry => {
+              if (entry.type === 'link') {
+                const isActive = pathname === entry.href
+                return (
+                  <Link key={entry.href} href={entry.href}
+                    onClick={() => setMobileOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                      isActive ? 'bg-blue-500/10 text-blue-300 ring-1 ring-blue-500/25' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                    }`}
+                  >
+                    <span className={isActive ? 'text-blue-400' : 'text-slate-600'}>{entry.icon}</span>
+                    {entry.label}
+                    {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                  </Link>
+                )
+              }
+              // Group — render as section
+              const groupActive = entry.items.some(i => pathname === i.href || pathname.startsWith(i.href + '/'))
+              return (
+                <div key={entry.label}>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600 px-4 pt-3 pb-1.5">
+                    {entry.label}
+                  </p>
+                  {entry.items.map(item => {
+                    const isActive = pathname === item.href || pathname.startsWith(item.href + '/')
+                    return (
+                      <Link key={item.href} href={item.href}
+                        onClick={() => setMobileOpen(false)}
+                        className={`flex items-center gap-3 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors ${
+                          isActive ? 'bg-blue-500/10 text-blue-300' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                        }`}
+                      >
+                        <span className={isActive ? 'text-blue-400' : 'text-slate-600'}>{item.icon}</span>
+                        {item.label}
+                        {isActive && <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-400" />}
+                      </Link>
+                    )
+                  })}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Footer */}
+          <div className="flex-shrink-0 border-t border-slate-800/60 px-4 py-3 flex items-center gap-2">
+            <button
+              onClick={() => setLang(lang === 'fr' ? 'en' : 'fr')}
+              className="flex-1 text-[11px] py-2 rounded-lg font-bold tracking-widest uppercase text-slate-500 hover:text-slate-200 bg-slate-800/60 transition-all"
+            >
+              {langLabel}
+            </button>
+            <button
+              onClick={() => { setMobileOpen(false); startTransition(() => logoutAction()) }}
+              disabled={isPending}
+              className="flex-1 flex items-center justify-center gap-2 text-[11px] py-2 rounded-lg font-medium text-red-400/80 bg-red-500/8 border border-red-500/20 transition-all"
+            >
+              <IconLogout />
+              {isPending ? '...' : t.logout}
+            </button>
+          </div>
+        </div>
+      )}
     </>
   )
 }
