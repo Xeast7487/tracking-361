@@ -64,7 +64,7 @@ export default function NonConcurrencePage() {
           <h2 className="text-sm font-sans font-bold uppercase tracking-wider mb-2">2. Durée</h2>
           <p className="text-sm leading-relaxed text-gray-700">
             La présente clause entre en vigueur à la date de fin d&apos;emploi, quelle qu&apos;en soit la cause,
-            et demeure en vigueur pour une période de <strong>douze (12) mois</strong> suivant cette date.
+            et demeure en vigueur pour une période de <strong>six (6) mois</strong> suivant cette date.
           </p>
         </section>
 
@@ -72,7 +72,7 @@ export default function NonConcurrencePage() {
         <section className="mb-6">
           <h2 className="text-sm font-sans font-bold uppercase tracking-wider mb-2">3. Territoire</h2>
           <p className="text-sm leading-relaxed text-gray-700">
-            La présente clause s&apos;applique sur l&apos;ensemble du territoire de la <strong>province de Québec</strong>.
+            La présente clause s&apos;applique sur le territoire de la région de l&apos;<strong>Estrie</strong> (Québec).
           </p>
         </section>
 
@@ -100,7 +100,7 @@ export default function NonConcurrencePage() {
           <h2 className="text-sm font-sans font-bold uppercase tracking-wider mb-2">5. Clients visés</h2>
           <p className="text-sm leading-relaxed text-gray-700">
             Cette restriction s&apos;applique à l&apos;égard des clients actuels de l&apos;Employeur et des clients
-            potentiels avec lesquels l&apos;Employé(e) a eu des contacts directs dans les <strong>douze (12) mois</strong> précédant
+            potentiels avec lesquels l&apos;Employé(e) a eu des contacts directs dans les <strong>six (6) mois</strong> précédant
             la fin de son emploi.
           </p>
         </section>

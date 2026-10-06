@@ -100,8 +100,8 @@ Bravo et continuez sur cette lancée !`,
 Document original remis à la direction et archivé ci-joint.
 
 Résumé des conditions acceptées :
-- Durée : 12 mois suivant la fin d'emploi
-- Territoire : Province de Québec
+- Durée : 6 mois suivant la fin d'emploi
+- Territoire : Estrie (Québec)
 - Services visés : marketing numérique, développement web, stratégie de marque et services similaires`,
   },
   rencontre: {
