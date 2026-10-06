@@ -38,7 +38,7 @@ export default function CongesPage() {
   const today = new Date().toISOString().split('T')[0]
 
   useEffect(() => {
-    fetchMyLeaveRequestsAction().then(setRequests)
+    fetchMyLeaveRequestsAction().then(setRequests).catch(() => {})
   }, [])
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {

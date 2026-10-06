@@ -17,8 +17,8 @@ export default function FloatingTimer() {
   const [tick, setTick]   = useState(Date.now())
 
   useEffect(() => {
-    getActiveEntryAction().then(setEntry)
-    const poll = setInterval(() => getActiveEntryAction().then(setEntry), 60_000)
+    getActiveEntryAction().then(setEntry).catch(() => setEntry(null))
+    const poll = setInterval(() => getActiveEntryAction().then(setEntry).catch(() => setEntry(null)), 60_000)
     return () => clearInterval(poll)
   }, [])
 
