@@ -295,3 +295,10 @@ CREATE POLICY "auth_swydo_update" ON public.swydo_reports
 
 CREATE POLICY "admin_swydo_delete" ON public.swydo_reports
   FOR DELETE USING (public.get_my_role() = 'admin');
+
+-- Migration : colonnes additionnelles pour les nouveaux types de rapports
+ALTER TABLE public.swydo_reports
+  ADD COLUMN IF NOT EXISTS report_type   TEXT        NOT NULL DEFAULT 'swydo_campaign',
+  ADD COLUMN IF NOT EXISTS compared_to   TEXT        NOT NULL DEFAULT '',
+  ADD COLUMN IF NOT EXISTS facebook_page JSONB,
+  ADD COLUMN IF NOT EXISTS facebook_reels JSONB;
