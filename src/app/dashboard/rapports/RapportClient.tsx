@@ -41,7 +41,7 @@ type View = 'list' | 'new' | 'detail'
 
 // ── Helpers ───────────────────────────────────────────────
 function fmt(n: number | null | undefined) {
-  if (n === null || n === undefined) return '—'
+  if (n === null || n === undefined) return '-'
   return n.toLocaleString('fr-CA')
 }
 function fmtDate(iso: string) {
@@ -67,7 +67,7 @@ function ChangeBadge({ pct }: { pct: string | null }) {
 }
 
 function MetricCard({ label, value, changePct }: { label: string; value: string | number | null; changePct?: string | null }) {
-  const display = value === null || value === undefined ? '—' : typeof value === 'number' ? fmt(value) : value
+  const display = value === null || value === undefined ? '-' : typeof value === 'number' ? fmt(value) : value
   return (
     <div className="rapport-metric-card">
       <div className="rapport-metric-value">{display}</div>
@@ -217,8 +217,8 @@ function FacebookReelsSection({ fr }: { fr: FacebookReelsData }) {
                       <span style={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>{r.text}</span>
                     </td>
                     <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{fmt(r.reach)}</td>
-                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{r.avg_view_time ?? '—'}</td>
-                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{r.view_time ?? '—'}</td>
+                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{r.avg_view_time ?? '-'}</td>
+                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{r.view_time ?? '-'}</td>
                     <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 600, color: '#111827' }}>{fmt(r.likes)}</td>
                   </tr>
                 ))}
@@ -226,8 +226,8 @@ function FacebookReelsSection({ fr }: { fr: FacebookReelsData }) {
                   <tr style={{ borderTop: '2px solid #e5e7eb', background: '#f9fafb' }}>
                     <td style={{ padding: '10px 16px', fontWeight: 700, color: '#374151', fontSize: '12px' }}>TOTAL</td>
                     <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 800, color: '#111827' }}>{fmt(fr.reels_total.reach)}</td>
-                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 800, color: '#111827' }}>{fr.reels_total.avg_view_time ?? '—'}</td>
-                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 800, color: '#111827' }}>{fr.reels_total.video_view_time ?? '—'}</td>
+                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 800, color: '#111827' }}>{fr.reels_total.avg_view_time ?? '-'}</td>
+                    <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 800, color: '#111827' }}>{fr.reels_total.video_view_time ?? '-'}</td>
                     <td style={{ padding: '10px 16px', textAlign: 'right', fontWeight: 800, color: '#111827' }}>{fmt(fr.reels_total.likes)}</td>
                   </tr>
                 )}
