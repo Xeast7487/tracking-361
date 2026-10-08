@@ -126,9 +126,10 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
       { href: '/admin/conges',   label: 'Congés',    icon: <IconCalendar /> },
     ]},
     { type: 'group', label: 'Projets', icon: <IconBriefcase />, items: [
-      { href: '/admin/taches',   label: 'Tâches',   icon: <IconTask /> },
-      { href: '/admin/clients',  label: 'Clients',  icon: <IconBriefcase /> },
-      { href: '/admin/reports',  label: 'Rapports', icon: <IconFile /> },
+      { href: '/admin/taches',          label: 'Tâches',        icon: <IconTask /> },
+      { href: '/admin/clients',         label: 'Clients',       icon: <IconBriefcase /> },
+      { href: '/admin/reports',         label: 'Rapports',      icon: <IconFile /> },
+      { href: '/dashboard/rapports',    label: 'Rapports pub.', icon: <IconBarChart /> },
     ]},
     { type: 'group', label: 'Ressources', icon: <IconBook />, items: [
       { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },
@@ -144,10 +145,11 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
       { href: '/dashboard/stats',   label: 'Stats',      icon: <IconBarChart /> },
     ]},
     { type: 'group', label: 'Mon espace', icon: <IconFolder />, items: [
-      { href: '/dashboard/taches',      label: 'Tâches',      icon: <IconTask /> },
-      { href: '/dashboard/mon-dossier', label: 'Mon dossier', icon: <IconFolder /> },
-      { href: '/dashboard/resume',      label: 'Résumé',      icon: <IconPen /> },
-      { href: '/dashboard/conges',      label: 'Congés',      icon: <IconCalendar /> },
+      { href: '/dashboard/taches',      label: 'Tâches',        icon: <IconTask /> },
+      { href: '/dashboard/mon-dossier', label: 'Mon dossier',   icon: <IconFolder /> },
+      { href: '/dashboard/resume',      label: 'Résumé',        icon: <IconPen /> },
+      { href: '/dashboard/conges',      label: 'Congés',        icon: <IconCalendar /> },
+      { href: '/dashboard/rapports',    label: 'Rapports pub.', icon: <IconBarChart /> },
     ]},
     { type: 'group', label: 'Ressources', icon: <IconBook />, items: [
       { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },

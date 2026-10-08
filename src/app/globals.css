@@ -84,4 +84,9 @@
   table { font-size: 11px; }
   thead { background: #f3f4f6 !important; }
   th, td { border: 1px solid #e5e7eb !important; padding: 4px 8px !important; color: black !important; }
+  /* Rapport publicitaire print overrides */
+  .rapport-shell { box-shadow: none !important; max-width: 100% !important; }
+  .rapport-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rapport-google-header, .rapport-facebook-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .rapport-metric-card { page-break-inside: avoid; }
 }
