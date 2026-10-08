@@ -267,3 +267,31 @@ CREATE POLICY "own_summary_update" ON public.daily_summaries
 
 CREATE POLICY "admin_summaries_all" ON public.daily_summaries
   FOR ALL USING (public.get_my_role() = 'admin');
+
+-- ── Rapports publicitaires Swydo ─────────────────────────
+CREATE TABLE IF NOT EXISTS public.swydo_reports (
+  id         UUID        DEFAULT gen_random_uuid() PRIMARY KEY,
+  created_by UUID        NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  client     TEXT        NOT NULL DEFAULT '',
+  period     TEXT        NOT NULL DEFAULT '',
+  google     JSONB,
+  facebook   JSONB,
+  summary    TEXT        NOT NULL DEFAULT '',
+  comments   TEXT        NOT NULL DEFAULT ''
+);
+
+ALTER TABLE public.swydo_reports ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "auth_swydo_select" ON public.swydo_reports
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+CREATE POLICY "auth_swydo_insert" ON public.swydo_reports
+  FOR INSERT WITH CHECK (auth.uid() = created_by);
+
+CREATE POLICY "auth_swydo_update" ON public.swydo_reports
+  FOR UPDATE USING (auth.uid() = created_by OR public.get_my_role() = 'admin');
+
+CREATE POLICY "admin_swydo_delete" ON public.swydo_reports
+  FOR DELETE USING (public.get_my_role() = 'admin');

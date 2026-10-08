@@ -7,21 +7,22 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 export const maxDuration = 60
 
 export async function POST(req: NextRequest) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Non authentifié' }, { status: 401 })
 
-  const formData = await req.formData()
-  const file = formData.get('pdf') as File | null
-  if (!file) return NextResponse.json({ error: 'Fichier PDF requis' }, { status: 400 })
+    const formData = await req.formData()
+    const file = formData.get('pdf') as File | null
+    if (!file) return NextResponse.json({ error: 'Fichier PDF requis' }, { status: 400 })
 
-  const bytes = await file.arrayBuffer()
-  const base64 = Buffer.from(bytes).toString('base64')
+    const bytes = await file.arrayBuffer()
+    const base64 = Buffer.from(bytes).toString('base64')
 
-  const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6',
-    max_tokens: 2048,
-    system: `Tu es un assistant spécialisé dans l'analyse de rapports publicitaires Swydo pour l'Agence 361.
+    const response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-6',
+      max_tokens: 2048,
+      system: `Tu es un assistant spécialisé dans l'analyse de rapports publicitaires Swydo pour l'Agence 361.
 Extrait les données du rapport PDF et retourne UNIQUEMENT un objet JSON valide (aucun texte autour, aucun bloc markdown) avec cette structure:
 {
   "client": "nom du client",
@@ -49,28 +50,49 @@ Extrait les données du rapport PDF et retourne UNIQUEMENT un objet JSON valide 
 }
 Si une plateforme (google ou facebook) n'est pas dans le rapport, mets null pour sa valeur.
 Si un champ est absent, mets null.`,
-    messages: [{
-      role: 'user',
-      content: [
-        {
-          type: 'document',
-          source: { type: 'base64', media_type: 'application/pdf', data: base64 },
-        } as any,
-        { type: 'text', text: 'Analyse ce rapport Swydo et retourne le JSON structuré.' },
-      ],
-    }],
-  })
+      messages: [{
+        role: 'user',
+        content: [
+          {
+            type: 'document',
+            source: { type: 'base64', media_type: 'application/pdf', data: base64 },
+          } as any,
+          { type: 'text', text: 'Analyse ce rapport Swydo et retourne le JSON structuré.' },
+        ],
+      }],
+    })
 
-  const text = response.content[0].type === 'text' ? response.content[0].text : ''
-  const jsonMatch = text.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) {
-    return NextResponse.json({ error: "Impossible d'analyser le rapport" }, { status: 500 })
-  }
+    const text = response.content[0].type === 'text' ? response.content[0].text : ''
+    const jsonMatch = text.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) {
+      return NextResponse.json({ error: "Impossible d'analyser le rapport" }, { status: 500 })
+    }
 
-  try {
     const data = JSON.parse(jsonMatch[0])
-    return NextResponse.json({ ok: true, data })
-  } catch {
-    return NextResponse.json({ error: 'Erreur de parsing JSON' }, { status: 500 })
+
+    // Sauvegarde automatique
+    const { data: saved, error: dbError } = await supabase
+      .from('swydo_reports')
+      .insert({
+        created_by: user.id,
+        client: data.client ?? '',
+        period: data.period ?? '',
+        google: data.google ?? null,
+        facebook: data.facebook ?? null,
+        summary: data.summary ?? '',
+        comments: '',
+      })
+      .select('*')
+      .single()
+
+    if (dbError) {
+      console.error('[rapports/analyze] db error:', dbError)
+      return NextResponse.json({ error: 'Erreur de sauvegarde' }, { status: 500 })
+    }
+
+    return NextResponse.json({ ok: true, report: saved })
+  } catch (e: any) {
+    console.error('[rapports/analyze]', e)
+    return NextResponse.json({ error: e?.message ?? 'Erreur serveur' }, { status: 500 })
   }
 }
