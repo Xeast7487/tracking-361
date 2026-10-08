@@ -378,7 +378,7 @@ function NewRapport({ onSaved }: { onSaved: (r: Report) => void }) {
           </div>
           {files.length === 0 && (
             <>
-              <p className="font-semibold text-slate-200">Déposer un ou plusieurs rapports Swydo</p>
+              <p className="font-semibold text-slate-200">Déposer un ou plusieurs rapports publicitaires</p>
               <p className="text-sm text-slate-500">Campagne pub. + Page Facebook → rapport combiné · Cliquer ou glisser-déposer</p>
             </>
           )}
@@ -484,7 +484,7 @@ function HistoryList({ onOpen, onNew, refresh }: { onOpen: (r: Report) => void; 
       ) : reports.length === 0 ? (
         <div className="card flex flex-col items-center gap-3 py-14 text-center">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#475569" strokeWidth="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-          <div><p className="font-semibold text-slate-300">Aucun rapport pour l'instant</p><p className="text-slate-500 text-sm mt-1">Analyse ton premier rapport Swydo PDF pour commencer.</p></div>
+          <div><p className="font-semibold text-slate-300">Aucun rapport pour l'instant</p><p className="text-slate-500 text-sm mt-1">Analyse ton premier rapport PDF pour commencer.</p></div>
         </div>
       ) : (
         <div className="flex flex-col gap-2">
@@ -564,7 +564,7 @@ export default function RapportClient() {
             <button onClick={() => setView('list')} className="btn-ghost gap-2 -ml-1">
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6"/></svg>Retour
             </button>
-            <h2 className="text-base font-bold text-slate-200">Analyser un rapport Swydo</h2>
+            <h2 className="text-base font-bold text-slate-200">Analyser un rapport</h2>
           </div>
           <NewRapport onSaved={onSaved} />
         </div>
