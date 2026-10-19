@@ -33,6 +33,7 @@ function IconBarChart() { return <svg width="15" height="15" viewBox="0 0 24 24"
 function IconChevron()  { return <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg> }
 function IconMenu()     { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg> }
 function IconX()        { return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg> }
+function IconDollar()   { return <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> }
 
 // ── Types ──────────────────────────────────────────────────
 type NavItem  = { href: string; label: string; icon: React.ReactNode }
@@ -135,6 +136,9 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
       { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },
       { href: '/dashboard/combat', label: 'Combat', icon: <IconSword /> },
     ]},
+    ...(isOwner ? [{ type: 'group' as const, label: 'Finance', icon: <IconDollar />, items: [
+      { href: '/admin/comptabilite', label: 'Comptabilité', icon: <IconDollar /> },
+    ]}] : []),
     ...(isOwner ? [{ type: 'link' as const, href: '/admin/parametres', label: 'Paramètres', icon: <IconSettings /> }] : []),
   ]
 
