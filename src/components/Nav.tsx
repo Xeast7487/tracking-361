@@ -136,9 +136,9 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
       { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },
       { href: '/dashboard/combat', label: 'Combat', icon: <IconSword /> },
     ]},
-    ...(isOwner ? [{ type: 'group' as const, label: 'Finance', icon: <IconDollar />, items: [
+    { type: 'group', label: 'Finance', icon: <IconDollar />, items: [
       { href: '/admin/comptabilite', label: 'Comptabilité', icon: <IconDollar /> },
-    ]}] : []),
+    ]},
     ...(isOwner ? [{ type: 'link' as const, href: '/admin/parametres', label: 'Paramètres', icon: <IconSettings /> }] : []),
   ]
 
