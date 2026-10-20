@@ -3,9 +3,9 @@ import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 
 const SYSTEM_DATES = `Tu es un assistant comptable. Analyse les relevés bancaires reçus.
-Identifie uniquement la période couverte (date début et date fin).
-Réponds en une seule phrase courte et directe, ex: "Ces relevés couvrent du 1er au 31 octobre 2024."
-Ne dis rien d'autre.`
+Identifie la période couverte (date début et date fin).
+Réponds UNIQUEMENT avec ce JSON (rien d'autre, pas de markdown) :
+{"debut":"2024-10-01","fin":"2024-10-31","label":"Ces relevés couvrent du 1er au 31 octobre 2024."}`
 
 const SYSTEM_QA = `Tu es un assistant comptable pour Agence 361, une agence web québécoise. Tu reçois des relevés bancaires et possiblement un rapport de facturation.
 

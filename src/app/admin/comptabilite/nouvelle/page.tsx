@@ -289,6 +289,9 @@ function BatchMode() {
   const [invoiceDrop, setInvoiceDrop] = useState(false)
   const [phase, setPhase]             = useState<BatchPhase>('upload')
   const [period, setPeriod]           = useState('')
+  const [periodDebut, setPeriodDebut] = useState('')
+  const [periodFin, setPeriodFin]     = useState('')
+  const [overlaps, setOverlaps]       = useState<{ id: string; periode_label: string | null; created_at: string }[]>([])
   const [loading, setLoading]         = useState(false)
 
   // Q&A
@@ -347,8 +350,29 @@ function BatchMode() {
       const { done, value } = await reader.read()
       if (done) break
       acc += decoder.decode(value)
+      // Afficher le label pendant le streaming si déjà parsable
+      try { const p = JSON.parse(acc); if (p.label) setPeriod(p.label) } catch { setPeriod(acc) }
+    }
+
+    // Extraire les dates structurées
+    let debut = '', fin = ''
+    try {
+      const parsed = JSON.parse(acc)
+      setPeriod(parsed.label ?? acc)
+      debut = parsed.debut ?? ''
+      fin   = parsed.fin   ?? ''
+      setPeriodDebut(debut)
+      setPeriodFin(fin)
+    } catch {
       setPeriod(acc)
     }
+
+    // Vérifier les chevauchements avec lots existants
+    if (debut && fin) {
+      const chk = await fetch(`/api/compta/check-overlap?debut=${debut}&fin=${fin}`)
+      if (chk.ok) setOverlaps(await chk.json())
+    }
+
     setLoading(false)
     setPhase('invoice')
   }
@@ -431,7 +455,12 @@ function BatchMode() {
     setSaving(true)
     await fetch('/api/compta/sauvegarder', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entrees: entries, periodeLabel: period || undefined }),
+      body: JSON.stringify({
+        entrees,
+        periodeLabel: period   || undefined,
+        periodeDebut: periodDebut || undefined,
+        periodeFin:   periodFin   || undefined,
+      }),
     })
     setSaving(false)
     setSaved(true)
@@ -512,6 +541,34 @@ function BatchMode() {
           </div>
         </div>
       </div>
+
+      {overlaps.length > 0 && (
+        <div className="card border border-amber-500/40 bg-amber-500/5 space-y-2">
+          <div className="flex items-center gap-2">
+            <svg className="text-amber-400 flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <p className="text-amber-400 font-medium text-sm">Chevauchement détecté</p>
+          </div>
+          <p className="text-amber-200/70 text-xs leading-relaxed">
+            Cette période chevauche {overlaps.length > 1 ? 'des rapports déjà générés' : 'un rapport déjà généré'} — risque de doublons :
+          </p>
+          <ul className="space-y-1">
+            {overlaps.map(o => (
+              <li key={o.id} className="text-xs text-slate-400 flex items-start gap-1.5">
+                <span className="text-amber-500 flex-shrink-0">·</span>
+                <span>
+                  {o.periode_label ?? 'Période inconnue'}
+                  <span className="text-slate-600 ml-1.5">
+                    ({new Date(o.created_at).toLocaleDateString('fr-CA', { day: '2-digit', month: 'short', year: 'numeric' })})
+                  </span>
+                </span>
+              </li>
+            ))}
+          </ul>
+          <p className="text-xs text-slate-500">Tu peux quand même continuer si tu sais ce que tu fais.</p>
+        </div>
+      )}
 
       <p className="text-slate-300 text-sm font-medium">Upload ton rapport de facturation pour cette période</p>
 
