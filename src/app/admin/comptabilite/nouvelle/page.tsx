@@ -31,6 +31,9 @@ interface BatchFile {
   documentId?: string
   entree?: EntreeData
   errorMsg?: string
+  chatMessages: Message[]
+  chatOpen: boolean
+  chatLoading: boolean
 }
 
 const CATEGORIES: Record<string, string> = {
@@ -280,6 +283,30 @@ function SingleMode() {
   )
 }
 
+// ─── Inline chat input (keeps its own state to avoid re-render issues) ───────
+function ChatInput({ fileId, loading, onSend }: { fileId: string; loading: boolean; onSend: (id: string, msg: string) => void }) {
+  const [val, setVal] = useState('')
+  const submit = () => { if (!val.trim() || loading) return; onSend(fileId, val); setVal('') }
+  return (
+    <form onSubmit={e => { e.preventDefault(); submit() }} className="flex gap-2 mt-1">
+      <input
+        type="text"
+        value={val}
+        onChange={e => setVal(e.target.value)}
+        placeholder="Corrige ou précise une information…"
+        className="input flex-1 text-xs py-2"
+        disabled={loading}
+      />
+      <button type="submit" disabled={!val.trim() || loading} className="btn-primary text-xs px-3 py-2 min-h-0">
+        {loading
+          ? <svg className="animate-spin" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+          : <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+        }
+      </button>
+    </form>
+  )
+}
+
 // ─── Batch mode (multiple files) ─────────────────────────────────────────────
 function BatchMode() {
   const router = useRouter()
@@ -303,7 +330,7 @@ function BatchMode() {
     const newFiles: BatchFile[] = []
     for (const f of Array.from(fileList)) {
       const data = await readFile(f)
-      newFiles.push({ id: crypto.randomUUID(), name: f.name, fileType: f.type, data, status: 'pending' })
+      newFiles.push({ id: crypto.randomUUID(), name: f.name, fileType: f.type, data, status: 'pending', chatMessages: [], chatOpen: false, chatLoading: false })
     }
     setFiles(prev => [...prev, ...newFiles])
   }, [])
@@ -360,6 +387,62 @@ function BatchMode() {
     setFiles(prev => prev.map(f =>
       f.id === fileId && f.entree ? { ...f, entree: { ...f.entree, [field]: value } } : f
     ))
+  }
+
+  const toggleChat = (fileId: string) => {
+    setFiles(prev => prev.map(f => f.id === fileId ? { ...f, chatOpen: !f.chatOpen } : f))
+  }
+
+  const sendChat = async (fileId: string, content: string) => {
+    if (!content.trim()) return
+    const file = files.find(f => f.id === fileId)
+    if (!file || file.chatLoading) return
+
+    const entryContext = file.entree
+      ? `Entrée actuellement extraite :\n${JSON.stringify(file.entree, null, 2)}\n\n${content}`
+      : content
+    const isFirst = file.chatMessages.length === 0
+    const newMessages: Message[] = [...file.chatMessages, { role: 'user', content: isFirst ? entryContext : content }]
+
+    setFiles(prev => prev.map(f => f.id === fileId ? {
+      ...f, chatMessages: newMessages, chatLoading: true,
+    } : f))
+
+    const body: Record<string, unknown> = { messages: newMessages }
+    if (file.documentId) body.documentId = file.documentId
+
+    const res = await fetch('/api/compta/analyse', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    if (!res.ok) { setFiles(prev => prev.map(f => f.id === fileId ? { ...f, chatLoading: false } : f)); return }
+
+    const reader = res.body!.getReader()
+    const decoder = new TextDecoder()
+    let accumulated = ''
+
+    setFiles(prev => prev.map(f => f.id === fileId ? {
+      ...f, chatMessages: [...newMessages, { role: 'assistant', content: '' }],
+    } : f))
+
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      accumulated += decoder.decode(value)
+      setFiles(prev => prev.map(f => {
+        if (f.id !== fileId) return f
+        const msgs = [...f.chatMessages]
+        msgs[msgs.length - 1] = { role: 'assistant', content: accumulated }
+        return { ...f, chatMessages: msgs }
+      }))
+    }
+
+    const newEntree = parseEntree(accumulated)
+    setFiles(prev => prev.map(f => f.id !== fileId ? f : {
+      ...f,
+      chatLoading: false,
+      entree: newEntree ?? f.entree,
+    }))
   }
 
   const confirmAll = async () => {
@@ -479,7 +562,7 @@ function BatchMode() {
         <div key={f.id} className="card space-y-4">
           <div className="flex items-center gap-2">
             <svg className="text-green-400 flex-shrink-0" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12"/></svg>
-            <p className="text-sm text-slate-300 font-medium truncate">{f.name}</p>
+            <p className="text-sm text-slate-300 font-medium truncate flex-1">{f.name}</p>
           </div>
           {f.entree && (
             <div className="grid grid-cols-2 gap-3">
@@ -505,6 +588,55 @@ function BatchMode() {
                 <input type="number" step="0.01" value={f.entree.montant_total} onChange={e => updateEntree(f.id, 'montant_total', parseFloat(e.target.value) || 0)} className="input" /></div>
             </div>
           )}
+
+          {/* Per-document chat */}
+          <div className="border-t border-slate-700/60 pt-3">
+            <button
+              onClick={() => toggleChat(f.id)}
+              className="flex items-center gap-2 text-xs text-slate-400 hover:text-slate-200 transition-colors"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+              </svg>
+              {f.chatOpen ? 'Fermer le chat' : 'Préciser avec Claude'}
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className={`transition-transform ${f.chatOpen ? 'rotate-180' : ''}`}>
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+
+            {f.chatOpen && (
+              <div className="mt-3 space-y-2">
+                {f.chatMessages.length === 0 && (
+                  <p className="text-xs text-slate-500 italic">Ex : "La TPS est 0, achat inter-entreprise" · "Le total est 245.50$, recalcule les taxes"</p>
+                )}
+                {f.chatMessages.map((m, i) => {
+                  const text = cleanMessage(m.content)
+                  const isLast = i === f.chatMessages.length - 1
+                  const displayText = i % 2 === 0 && i === 0
+                    ? text.replace(/^Entrée actuellement extraite[\s\S]*?\n\n/, '')
+                    : text
+                  return (
+                    <div key={i} className={`flex gap-2 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
+                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${m.role === 'assistant' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
+                        {m.role === 'assistant' ? 'IA' : 'M'}
+                      </div>
+                      <div className={`rounded-xl px-3 py-2 text-xs max-w-[85%] whitespace-pre-wrap leading-relaxed ${m.role === 'assistant' ? 'bg-slate-800 border border-slate-700 text-slate-100' : 'bg-blue-600/80 text-white'}`}>
+                        {displayText || (f.chatLoading && isLast
+                          ? <span className="inline-flex gap-1">
+                              <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+                              <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+                              <span className="w-1 h-1 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                            </span>
+                          : null
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+                <ChatInput fileId={f.id} loading={f.chatLoading} onSend={sendChat} />
+              </div>
+            )}
+          </div>
         </div>
       ))}
 
