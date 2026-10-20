@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import Nav from '@/components/Nav'
 import FloatingTimer from '@/components/FloatingTimer'
+import TrollWrapper from '@/components/TrollWrapper'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 
@@ -15,11 +16,11 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('full_name, role, is_web_dept')
+    .select('full_name, role, is_web_dept, troll_mode')
     .eq('id', user.id)
     .single()
 
-  return (
+  const content = (
     <div className="min-h-screen">
       <Nav
         fullName={profile?.full_name ?? defaultName}
@@ -32,4 +33,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
       <FloatingTimer />
     </div>
   )
+
+  return profile?.troll_mode ? <TrollWrapper>{content}</TrollWrapper> : content
 }
