@@ -1,11 +1,16 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 export default function TrollWrapper({ children }: { children: React.ReactNode }) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const [active, setActive] = useState(true)
 
   useEffect(() => {
+    // Durée aléatoire entre 30 et 45 secondes
+    const duration = 30000 + Math.random() * 15000
+    const killTroll = setTimeout(() => setActive(false), duration)
+
     // ── Texte qui se mélange ──────────────────────────────────────────────────
     const scrambleChar = (c: string) => {
       const pool = 'abcdefghijklmnopqrstuvwxyz'
@@ -36,7 +41,6 @@ export default function TrollWrapper({ children }: { children: React.ReactNode }
       return nodes
     }
 
-    // Scramble aléatoire toutes les 8-14 secondes
     const triggerScramble = () => {
       if (!containerRef.current) return
       const nodes = getTextNodes(containerRef.current)
@@ -45,15 +49,20 @@ export default function TrollWrapper({ children }: { children: React.ReactNode }
       scrambleNode(target)
     }
 
-    let timeout: ReturnType<typeof setTimeout>
+    let scrambleTimeout: ReturnType<typeof setTimeout>
     const schedule = () => {
-      timeout = setTimeout(() => { triggerScramble(); schedule() }, 8000 + Math.random() * 6000)
+      scrambleTimeout = setTimeout(() => { triggerScramble(); schedule() }, 8000 + Math.random() * 6000)
     }
-    // Premier scramble après 3s pour que ça frappe vite
     const first = setTimeout(() => { triggerScramble(); schedule() }, 3000)
 
-    return () => { clearTimeout(first); clearTimeout(timeout) }
+    return () => {
+      clearTimeout(killTroll)
+      clearTimeout(first)
+      clearTimeout(scrambleTimeout)
+    }
   }, [])
+
+  if (!active) return <>{children}</>
 
   return (
     <div
@@ -62,6 +71,7 @@ export default function TrollWrapper({ children }: { children: React.ReactNode }
         transform: 'rotate(180deg)',
         transformOrigin: 'center center',
         minHeight: '100vh',
+        transition: 'transform 1.2s ease-in-out',
       }}
     >
       {children}
