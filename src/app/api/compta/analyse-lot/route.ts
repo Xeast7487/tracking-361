@@ -38,15 +38,17 @@ RÈGLES :
 export const maxDuration = 60
 export const dynamic = 'force-dynamic'
 
+const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
+
 export async function POST(req: NextRequest) {
   try {
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return new Response('Non authentifié', { status: 401 })
+    if (!user) return new Response('Non authentifié', { status: 401, headers: NO_CACHE })
 
     const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-    if (profile?.role !== 'admin') return new Response('Accès refusé', { status: 403 })
+    if (profile?.role !== 'admin') return new Response('Accès refusé', { status: 403, headers: NO_CACHE })
 
     const body = await req.json() as {
       messages: { role: 'user' | 'assistant'; content: string }[]
@@ -97,10 +99,12 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    return new Response(readable, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+    return new Response(readable, {
+      headers: { 'Content-Type': 'text/plain; charset=utf-8', ...NO_CACHE },
+    })
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     console.error('[analyse-lot]', msg)
-    return new Response(`Erreur: ${msg}`, { status: 500 })
+    return new Response(`ERREUR: ${msg}`, { status: 500, headers: NO_CACHE })
   }
 }
