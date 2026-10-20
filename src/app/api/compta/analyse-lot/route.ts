@@ -63,11 +63,18 @@ export async function POST(req: NextRequest) {
 
     const anthropicMessages: AnthropicMsg[] = messages.map((m, i) => {
       if (i === 0 && files?.length) {
+        const SUPPORTED_IMAGES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const
+        type ImgMime = typeof SUPPORTED_IMAGES[number]
         const docBlocks = files.map(f => {
-          const isPdf = f.type === 'application/pdf'
-          return isPdf
-            ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: f.data }, title: f.name }
-            : { type: 'image' as const, source: { type: 'base64' as const, media_type: f.type as 'image/jpeg' | 'image/png' | 'image/webp', data: f.data } }
+          if (f.type === 'application/pdf') {
+            return { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: f.data }, title: f.name }
+          } else if ((SUPPORTED_IMAGES as readonly string[]).includes(f.type)) {
+            return { type: 'image' as const, source: { type: 'base64' as const, media_type: f.type as ImgMime, data: f.data } }
+          } else {
+            // CSV, texte ou autre format non supporté → décoder en texte
+            const text = Buffer.from(f.data, 'base64').toString('utf-8')
+            return { type: 'text' as const, text: `=== Fichier : ${f.name} ===\n${text}` }
+          }
         })
         return {
           role: 'user' as const,
@@ -94,7 +101,9 @@ export async function POST(req: NextRequest) {
           }
           controller.close()
         } catch (streamErr) {
-          controller.error(streamErr)
+          const msg = streamErr instanceof Error ? streamErr.message : String(streamErr)
+          controller.enqueue(new TextEncoder().encode(`\nERREUR: ${msg}`))
+          controller.close()
         }
       },
     })
