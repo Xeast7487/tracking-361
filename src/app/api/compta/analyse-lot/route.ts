@@ -2,8 +2,6 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import Anthropic from '@anthropic-ai/sdk'
 import { NextRequest } from 'next/server'
 
-const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
 const SYSTEM_DATES = `Tu es un assistant comptable. Analyse les relevés bancaires reçus.
 Identifie uniquement la période couverte (date début et date fin).
 Réponds en une seule phrase courte et directe, ex: "Ces relevés couvrent du 1er au 31 octobre 2024."
@@ -38,9 +36,11 @@ RÈGLES :
 - Parle en français québécois, sois direct et concis`
 
 export const maxDuration = 60
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: NextRequest) {
   try {
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
     const supabase = await createSupabaseServerClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return new Response('Non authentifié', { status: 401 })
