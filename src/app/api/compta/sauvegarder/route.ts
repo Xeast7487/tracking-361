@@ -10,8 +10,9 @@ export async function POST(req: NextRequest) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return new Response('Accès refusé', { status: 403 })
 
-  const { documentId, entrees } = await req.json() as {
+  const { documentId, periodeLabel, entrees } = await req.json() as {
     documentId?: string
+    periodeLabel?: string
     entrees: {
       date_transaction: string
       description: string
@@ -27,11 +28,22 @@ export async function POST(req: NextRequest) {
 
   const adminClient = createSupabaseAdminClient()
 
+  let lotId: string | null = null
+  if (periodeLabel) {
+    const { data: lot } = await adminClient
+      .from('compta_lots')
+      .insert({ user_id: user.id, periode_label: periodeLabel, nb_entrees: entrees.length })
+      .select('id')
+      .single()
+    lotId = lot?.id ?? null
+  }
+
   const toInsert = entrees.map(e => ({
     ...e,
     user_id:     user.id,
     document_id: documentId ?? null,
-    source:      documentId ? 'ia' : 'manuel',
+    lot_id:      lotId,
+    source:      documentId ? 'ia' : lotId ? 'lot' : 'manuel',
   }))
 
   const { error } = await adminClient.from('compta_entrees').insert(toInsert)

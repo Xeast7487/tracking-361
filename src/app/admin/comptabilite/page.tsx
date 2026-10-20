@@ -17,6 +17,13 @@ interface Entree {
   created_at: string
 }
 
+interface Lot {
+  id: string
+  periode_label: string | null
+  nb_entrees: number
+  created_at: string
+}
+
 const CATEGORIE_LABELS: Record<string, string> = {
   revenu:             'Revenu',
   depense_materiel:   'Matériel',
@@ -39,14 +46,22 @@ export default async function ComptabilitePage() {
   if (profile?.role !== 'admin') redirect('/admin')
 
   const year = new Date().getFullYear()
-  const { data: rawEntrees } = await supabase
-    .from('compta_entrees')
-    .select('*')
-    .gte('date_transaction', `${year}-01-01`)
-    .lte('date_transaction', `${year}-12-31`)
-    .order('date_transaction', { ascending: false })
+  const [{ data: rawEntrees }, { data: rawLots }] = await Promise.all([
+    supabase
+      .from('compta_entrees')
+      .select('*')
+      .gte('date_transaction', `${year}-01-01`)
+      .lte('date_transaction', `${year}-12-31`)
+      .order('date_transaction', { ascending: false }),
+    supabase
+      .from('compta_lots')
+      .select('id, periode_label, nb_entrees, created_at')
+      .order('created_at', { ascending: false })
+      .limit(10),
+  ])
 
   const entrees: Entree[] = (rawEntrees ?? []) as Entree[]
+  const lots: Lot[] = (rawLots ?? []) as Lot[]
 
   // Totals
   const revenus   = entrees.filter(e => e.type === 'revenu')
@@ -151,6 +166,28 @@ export default async function ComptabilitePage() {
           Estimation indicative — consulter un comptable pour les montants exacts à remettre.
         </p>
       </div>
+
+      {/* Lots d'analyse IA */}
+      {lots.length > 0 && (
+        <div className="card space-y-3">
+          <h2 className="font-semibold text-slate-200 text-sm">Lots analysés</h2>
+          <div className="space-y-2">
+            {lots.map(lot => (
+              <div key={lot.id} className="flex items-start justify-between gap-4 py-2 border-t border-slate-700/60 first:border-0 first:pt-0">
+                <div className="min-w-0">
+                  <p className="text-sm text-slate-200 leading-snug">{lot.periode_label ?? 'Période inconnue'}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">
+                    {lot.nb_entrees} entrée{lot.nb_entrees !== 1 ? 's' : ''}
+                  </p>
+                </div>
+                <p className="text-xs text-slate-500 whitespace-nowrap flex-shrink-0">
+                  {new Date(lot.created_at).toLocaleDateString('fr-CA', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Entries by month */}
       {months.length === 0 ? (

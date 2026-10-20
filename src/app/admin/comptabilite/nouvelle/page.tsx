@@ -431,7 +431,7 @@ function BatchMode() {
     setSaving(true)
     await fetch('/api/compta/sauvegarder', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ entrees: entries }),
+      body: JSON.stringify({ entrees: entries, periodeLabel: period || undefined }),
     })
     setSaving(false)
     setSaved(true)
