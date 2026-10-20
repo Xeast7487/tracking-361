@@ -4,16 +4,19 @@ import { NextRequest } from 'next/server'
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
 
-const SYSTEM = `Tu es un assistant comptable pour Agence 361, une agence web québécoise. L'utilisateur t'envoie plusieurs documents comptables d'un même mois.
+const SYSTEM_DATES = `Tu es un assistant comptable. Analyse les relevés bancaires reçus.
+Identifie uniquement la période couverte (date début et date fin).
+Réponds en une seule phrase courte et directe, ex: "Ces relevés couvrent du 1er au 31 octobre 2024."
+Ne dis rien d'autre.`
 
-TON RÔLE :
-1. Analyse tous les documents reçus
-2. Si tu as besoin d'un rapport de facturation (liste des factures émises aux clients) pour vérifier ou croiser des montants de revenus, demande-le explicitement
-3. Pour chaque élément que tu ne comprends pas ou qui est ambigu, pose une question PRÉCISE en mentionnant le document et le montant exact. Ex : "Dans le relevé Desjardins du 12 oct, il y a un débit de 234,50$ chez 'AMZN*1234'. Est-ce du matériel ou du logiciel ?"
-4. Quand tu as assez d'informations pour produire les entrées, fais-le
+const SYSTEM_QA = `Tu es un assistant comptable pour Agence 361, une agence web québécoise. Tu reçois des relevés bancaires et possiblement un rapport de facturation.
+
+DÉROULEMENT :
+1. Analyse tous les documents
+2. Pour les éléments ambigus, pose tes questions UNE PAR UNE — une seule question par message, attends la réponse avant de poser la suivante
+3. Dès que tu as assez d'info pour une entrée, produis-la immédiatement avec les balises <entree>
 
 FORMAT DES ENTRÉES :
-Quand tu as assez d'informations pour une entrée, inclus-la entre balises :
 <entree>
 {
   "date_transaction": "2024-01-15",
@@ -28,9 +31,9 @@ Quand tu as assez d'informations pour une entrée, inclus-la entre balises :
 </entree>
 
 RÈGLES :
-- Mets plusieurs balises <entree> si tu as plusieurs entrées à produire
-- Une entrée par transaction (ne regroupe pas plusieurs factures en une)
-- Si les taxes ne sont pas visibles, calcule-les (TPS 5%, TVQ 9.975%) selon le contexte
+- Une seule question à la fois, jamais une liste de questions
+- Une entrée par transaction
+- Si les taxes ne sont pas visibles, calcule-les (TPS 5%, TVQ 9.975%)
 - Les achats B2B avec numéro TPS : taxes remboursables
 - Parle en français québécois, sois direct et concis`
 
@@ -45,11 +48,12 @@ export async function POST(req: NextRequest) {
   const body = await req.json() as {
     messages: { role: 'user' | 'assistant'; content: string }[]
     files?: { data: string; name: string; type: string }[]
+    mode?: 'dates' | 'qa'
   }
 
-  const { messages, files } = body
+  const { messages, files, mode } = body
+  const system = mode === 'dates' ? SYSTEM_DATES : SYSTEM_QA
 
-  // Build Anthropic messages — attach all files to the first user message
   type AnthropicMsg = Parameters<typeof anthropic.messages.stream>[0]['messages'][number]
 
   const anthropicMessages: AnthropicMsg[] = messages.map((m, i) => {
@@ -62,10 +66,7 @@ export async function POST(req: NextRequest) {
       })
       return {
         role: 'user' as const,
-        content: [
-          ...docBlocks,
-          { type: 'text' as const, text: m.content },
-        ],
+        content: [...docBlocks, { type: 'text' as const, text: m.content }],
       }
     }
     return { role: m.role, content: m.content }
@@ -73,8 +74,8 @@ export async function POST(req: NextRequest) {
 
   const stream = anthropic.messages.stream({
     model:      'claude-sonnet-4-6',
-    max_tokens: 2048,
-    system:     SYSTEM,
+    max_tokens: mode === 'dates' ? 128 : 2048,
+    system,
     messages:   anthropicMessages,
   })
 
