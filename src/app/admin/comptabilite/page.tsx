@@ -24,10 +24,17 @@ export default async function ComptabilitePage() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/admin')
 
-  const { data: rawLots } = await supabase
-    .from('compta_lots')
-    .select('id, periode_label, periode_debut, periode_fin, nb_entrees, created_at, compta_entrees(type, montant_ht)')
-    .order('created_at', { ascending: false }) as { data: LotRaw[] | null }
+  const [{ data: rawLots }, { data: rawOrphans }] = await Promise.all([
+    supabase
+      .from('compta_lots')
+      .select('id, periode_label, periode_debut, periode_fin, nb_entrees, created_at, compta_entrees(type, montant_ht)')
+      .order('created_at', { ascending: false }) as Promise<{ data: LotRaw[] | null }>,
+    supabase
+      .from('compta_entrees')
+      .select('type, montant_ht, created_at')
+      .is('lot_id', null)
+      .order('created_at', { ascending: false }),
+  ])
 
   const lots = (rawLots ?? []).map(lot => {
     const entrees = lot.compta_entrees ?? []
@@ -47,6 +54,10 @@ export default async function ComptabilitePage() {
   }
   const years = Object.keys(byYear).map(Number).sort((a, b) => b - a)
 
+  const orphans = rawOrphans ?? []
+  const orphanRevenus  = orphans.filter(e => e.type === 'revenu') .reduce((s, e) => s + Number(e.montant_ht), 0)
+  const orphanDepenses = orphans.filter(e => e.type === 'depense').reduce((s, e) => s + Number(e.montant_ht), 0)
+
   return (
     <div className="space-y-8 max-w-2xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -59,7 +70,29 @@ export default async function ComptabilitePage() {
         </Link>
       </div>
 
-      {lots.length === 0 ? (
+      {/* Entrées sans lot (sauvegardées avant la notion de rapport) */}
+      {orphans.length > 0 && (
+        <Link href="/admin/comptabilite/orphelins" className="card flex items-center gap-4 hover:bg-slate-700/60 transition-colors cursor-pointer group border border-slate-600/50">
+          <div className="w-10 h-10 rounded-xl bg-slate-700 flex items-center justify-center flex-shrink-0">
+            <svg className="text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-slate-200 text-sm font-medium">Entrées sans rapport</p>
+            <p className="text-slate-500 text-xs mt-0.5">{orphans.length} entrée{orphans.length !== 1 ? 's' : ''} sauvegardées avant la mise à jour</p>
+          </div>
+          <div className="text-right flex-shrink-0 hidden sm:block">
+            {orphanRevenus  > 0 && <p className="text-green-400 text-sm font-medium">+{fmt(orphanRevenus)}</p>}
+            {orphanDepenses > 0 && <p className="text-red-400 text-sm">-{fmt(orphanDepenses)}</p>}
+          </div>
+          <svg className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <polyline points="9 18 15 12 9 6"/>
+          </svg>
+        </Link>
+      )}
+
+      {lots.length === 0 && orphans.length === 0 ? (
         <div className="card text-center py-14 text-slate-500">
           <svg className="mx-auto mb-4 text-slate-600" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
             <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
@@ -67,7 +100,7 @@ export default async function ComptabilitePage() {
           <p className="text-sm">Aucun rapport pour l&apos;instant.</p>
           <Link href="/admin/comptabilite/nouvelle" className="btn-primary mt-4 inline-flex">Créer le premier rapport</Link>
         </div>
-      ) : (
+      ) : lots.length > 0 ? (
         <div className="space-y-8">
           {years.map(year => (
             <div key={year} className="space-y-2">
@@ -115,7 +148,7 @@ export default async function ComptabilitePage() {
             </div>
           ))}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
