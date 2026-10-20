@@ -29,6 +29,8 @@ Quand tu analyses un document :
 
 Important : si les taxes ne sont pas visibles sur le document, calcule-les en fonction du type de transaction (les achats B2B avec numéro de TPS sont remboursables, les achats personnels non). Parle en français québécois naturel et sois concis.`
 
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()

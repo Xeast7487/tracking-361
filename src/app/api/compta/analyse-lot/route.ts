@@ -37,58 +37,70 @@ RÈGLES :
 - Les achats B2B avec numéro TPS : taxes remboursables
 - Parle en français québécois, sois direct et concis`
 
+export const maxDuration = 60
+
 export async function POST(req: NextRequest) {
-  const supabase = await createSupabaseServerClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return new Response('Non authentifié', { status: 401 })
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return new Response('Non authentifié', { status: 401 })
 
-  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (profile?.role !== 'admin') return new Response('Accès refusé', { status: 403 })
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') return new Response('Accès refusé', { status: 403 })
 
-  const body = await req.json() as {
-    messages: { role: 'user' | 'assistant'; content: string }[]
-    files?: { data: string; name: string; type: string }[]
-    mode?: 'dates' | 'qa'
-  }
-
-  const { messages, files, mode } = body
-  const system = mode === 'dates' ? SYSTEM_DATES : SYSTEM_QA
-
-  type AnthropicMsg = Parameters<typeof anthropic.messages.stream>[0]['messages'][number]
-
-  const anthropicMessages: AnthropicMsg[] = messages.map((m, i) => {
-    if (i === 0 && files?.length) {
-      const docBlocks = files.map(f => {
-        const isPdf = f.type === 'application/pdf'
-        return isPdf
-          ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: f.data }, title: f.name }
-          : { type: 'image' as const, source: { type: 'base64' as const, media_type: f.type as 'image/jpeg' | 'image/png' | 'image/webp', data: f.data } }
-      })
-      return {
-        role: 'user' as const,
-        content: [...docBlocks, { type: 'text' as const, text: m.content }],
-      }
+    const body = await req.json() as {
+      messages: { role: 'user' | 'assistant'; content: string }[]
+      files?: { data: string; name: string; type: string }[]
+      mode?: 'dates' | 'qa'
     }
-    return { role: m.role, content: m.content }
-  })
 
-  const stream = anthropic.messages.stream({
-    model:      'claude-sonnet-4-6',
-    max_tokens: mode === 'dates' ? 128 : 2048,
-    system,
-    messages:   anthropicMessages,
-  })
+    const { messages, files, mode } = body
+    const system = mode === 'dates' ? SYSTEM_DATES : SYSTEM_QA
 
-  const readable = new ReadableStream({
-    async start(controller) {
-      for await (const chunk of stream) {
-        if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
-          controller.enqueue(new TextEncoder().encode(chunk.delta.text))
+    type AnthropicMsg = Parameters<typeof anthropic.messages.stream>[0]['messages'][number]
+
+    const anthropicMessages: AnthropicMsg[] = messages.map((m, i) => {
+      if (i === 0 && files?.length) {
+        const docBlocks = files.map(f => {
+          const isPdf = f.type === 'application/pdf'
+          return isPdf
+            ? { type: 'document' as const, source: { type: 'base64' as const, media_type: 'application/pdf' as const, data: f.data }, title: f.name }
+            : { type: 'image' as const, source: { type: 'base64' as const, media_type: f.type as 'image/jpeg' | 'image/png' | 'image/webp', data: f.data } }
+        })
+        return {
+          role: 'user' as const,
+          content: [...docBlocks, { type: 'text' as const, text: m.content }],
         }
       }
-      controller.close()
-    },
-  })
+      return { role: m.role, content: m.content }
+    })
 
-  return new Response(readable, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+    const stream = anthropic.messages.stream({
+      model:      'claude-sonnet-4-6',
+      max_tokens: mode === 'dates' ? 128 : 2048,
+      system,
+      messages:   anthropicMessages,
+    })
+
+    const readable = new ReadableStream({
+      async start(controller) {
+        try {
+          for await (const chunk of stream) {
+            if (chunk.type === 'content_block_delta' && chunk.delta.type === 'text_delta') {
+              controller.enqueue(new TextEncoder().encode(chunk.delta.text))
+            }
+          }
+          controller.close()
+        } catch (streamErr) {
+          controller.error(streamErr)
+        }
+      },
+    })
+
+    return new Response(readable, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
+    console.error('[analyse-lot]', msg)
+    return new Response(`Erreur: ${msg}`, { status: 500 })
+  }
 }
