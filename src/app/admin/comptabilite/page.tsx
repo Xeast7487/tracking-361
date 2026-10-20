@@ -56,8 +56,9 @@ export default async function ComptabilitePage() {
     supabase
       .from('compta_lots')
       .select('id, periode_label, nb_entrees, created_at')
-      .order('created_at', { ascending: false })
-      .limit(10),
+      .gte('created_at', `${year}-01-01`)
+      .lte('created_at', `${year}-12-31T23:59:59`)
+      .order('created_at', { ascending: false }),
   ])
 
   const entrees: Entree[] = (rawEntrees ?? []) as Entree[]
