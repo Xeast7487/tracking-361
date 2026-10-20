@@ -297,7 +297,7 @@ function parseEntrees(text: string): EntreeData[] {
 }
 
 // ─── Batch mode — conversation unifiée ───────────────────────────────────────
-interface LotFile { name: string; fileType: string; data: string }
+interface LotFile { name: string; type: string; data: string }
 
 function BatchMode() {
   const router = useRouter()
@@ -326,7 +326,7 @@ function BatchMode() {
     const newFiles: LotFile[] = []
     for (const f of Array.from(fileList)) {
       const data = await readFile(f)
-      newFiles.push({ name: f.name, fileType: f.type, data })
+      newFiles.push({ name: f.name, type: f.type, data })
     }
     setFiles(prev => [...prev, ...newFiles])
   }, [])
