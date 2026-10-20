@@ -209,24 +209,31 @@ function SingleMode() {
           {messages.map((m, i) => {
             const text = cleanMessage(m.content)
             const isLast = i === messages.length - 1
+            const isStreaming = loading && isLast && m.role === 'assistant'
             return (
               <div key={i} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
                 <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${m.role === 'assistant' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
                   {m.role === 'assistant' ? 'IA' : 'M'}
                 </div>
                 <div className={`rounded-2xl px-4 py-3 text-sm max-w-[85%] whitespace-pre-wrap leading-relaxed ${m.role === 'assistant' ? 'bg-slate-800 border border-slate-700 text-slate-100' : 'bg-blue-600 text-white rounded-tr-sm'}`}>
-                  {text || (loading && isLast
-                    ? <span className="inline-flex gap-1">
+                  {!text && isStreaming
+                    ? <span className="inline-flex gap-1 items-center">
                         <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                         <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                         <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                       </span>
-                    : null
-                  )}
+                    : <>{text}{isStreaming && <span className="inline-block w-0.5 h-[1em] bg-slate-400 ml-0.5 align-middle animate-pulse" />}</>
+                  }
                 </div>
               </div>
             )
           })}
+          {loading && (
+            <div className="flex items-center gap-2 pl-10 text-xs text-slate-500">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
+              {messages[messages.length - 1]?.content === '' ? 'Claude réfléchit…' : 'Claude écrit…'}
+            </div>
+          )}
           <div ref={chatEndRef} />
         </div>
       )}
@@ -331,7 +338,7 @@ function BatchMode() {
 
   const startChat = async () => {
     if (!files.length) return
-    const firstMsg = `Voici ${files.length} document${files.length > 1 ? 's' : ''} comptable${files.length > 1 ? 's' : ''} du même mois. Analyse-les tous et dis-moi ce que tu ne comprends pas ou ce qui est ambigu — en précisant quel document et quel montant. Pose toutes tes questions en une seule fois.`
+    const firstMsg = `Voici ${files.length} document${files.length > 1 ? 's' : ''} comptable${files.length > 1 ? 's' : ''} du même mois. Analyse-les tous et dis-moi ce que tu ne comprends pas ou ce qui est ambigu — en précisant quel document et quel montant.`
     setPhase('chat')
     await sendMessage(firstMsg, true)
   }
@@ -481,24 +488,31 @@ function BatchMode() {
         {messages.map((m, i) => {
           const text = cleanMessage(m.content)
           const isLast = i === messages.length - 1
+          const isStreaming = loading && isLast && m.role === 'assistant'
           return (
             <div key={i} className={`flex gap-3 ${m.role === 'user' ? 'flex-row-reverse' : ''}`}>
               <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0 mt-0.5 ${m.role === 'assistant' ? 'bg-blue-600 text-white' : 'bg-slate-700 text-slate-300'}`}>
                 {m.role === 'assistant' ? 'IA' : 'M'}
               </div>
               <div className={`rounded-2xl px-4 py-3 text-sm max-w-[85%] whitespace-pre-wrap leading-relaxed ${m.role === 'assistant' ? 'bg-slate-800 border border-slate-700 text-slate-100' : 'bg-blue-600 text-white rounded-tr-sm'}`}>
-                {text || (loading && isLast
-                  ? <span className="inline-flex gap-1">
+                {!text && isStreaming
+                  ? <span className="inline-flex gap-1 items-center">
                       <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
                       <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
                       <span className="w-1.5 h-1.5 bg-slate-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
                     </span>
-                  : null
-                )}
+                  : <>{text}{isStreaming && <span className="inline-block w-0.5 h-[1em] bg-slate-400 ml-0.5 align-middle animate-pulse" />}</>
+                }
               </div>
             </div>
           )
         })}
+        {loading && (
+          <div className="flex items-center gap-2 pl-10 text-xs text-slate-500">
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse flex-shrink-0" />
+            {messages[messages.length - 1]?.content === '' ? 'Claude réfléchit…' : 'Claude écrit…'}
+          </div>
+        )}
         <div ref={chatEndRef} />
       </div>
 
