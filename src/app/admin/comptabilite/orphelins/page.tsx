@@ -82,18 +82,26 @@ export default async function OrphelinsPage({ searchParams }: { searchParams: { 
 
   return (
     <div className="space-y-6 max-w-2xl">
-      <div className="flex items-start gap-3">
-        <Link href="/admin/comptabilite" className="text-slate-400 hover:text-slate-200 transition-colors mt-1">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
-          </svg>
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-white">Entrées sans rapport</h1>
-          <p className="text-slate-500 text-sm mt-0.5">
-            {entrees.length} entrée{entrees.length !== 1 ? 's' : ''} sauvegardées avant la mise à jour
-          </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-start gap-3">
+          <Link href="/admin/comptabilite" className="text-slate-400 hover:text-slate-200 transition-colors mt-1">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/>
+            </svg>
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-white">Entrées sans rapport</h1>
+            <p className="text-slate-500 text-sm mt-0.5">
+              {entrees.length} entrée{entrees.length !== 1 ? 's' : ''} sauvegardées avant la mise à jour
+            </p>
+          </div>
         </div>
+        <Link href="/admin/comptabilite/orphelins/imprimer" className="btn-secondary flex-shrink-0 gap-2 text-sm">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"/><rect x="6" y="14" width="12" height="8"/>
+          </svg>
+          Exporter PDF
+        </Link>
       </div>
 
       {/* Pastilles cliquables */}
