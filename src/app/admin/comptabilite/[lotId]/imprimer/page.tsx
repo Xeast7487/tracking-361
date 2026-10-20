@@ -74,7 +74,7 @@ export default async function ImprimerLotPage({ params }: { params: { lotId: str
         }
         body { background: #f3f4f6; font-family: system-ui, -apple-system, sans-serif; }
         .compta-shell { background: white; max-width: 860px; margin: 32px auto; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.18); color: #111; }
-        .compta-header { background: #162822; color: white; padding: 30px 36px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        .compta-header { background: #243d3d; color: white; padding: 30px 36px; display: flex; align-items: flex-start; justify-content: space-between; gap: 24px; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         .compta-header-logo { font-size: 12px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.6; }
         .compta-header-title { font-size: 24px; font-weight: 800; margin-top: 5px; letter-spacing: -0.4px; }
         .compta-header-right { text-align: right; }
