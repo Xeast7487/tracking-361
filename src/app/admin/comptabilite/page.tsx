@@ -24,11 +24,11 @@ export default async function ComptabilitePage() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/admin')
 
-  const [{ data: rawLots }, { data: rawOrphans }] = await Promise.all([
+  const [lotsResult, orphansResult] = await Promise.all([
     supabase
       .from('compta_lots')
       .select('id, periode_label, periode_debut, periode_fin, nb_entrees, created_at, compta_entrees(type, montant_ht)')
-      .order('created_at', { ascending: false }) as Promise<{ data: LotRaw[] | null }>,
+      .order('created_at', { ascending: false }),
     supabase
       .from('compta_entrees')
       .select('type, montant_ht, created_at')
@@ -36,7 +36,9 @@ export default async function ComptabilitePage() {
       .order('created_at', { ascending: false }),
   ])
 
-  const lots = (rawLots ?? []).map(lot => {
+  const rawOrphans = orphansResult.data ?? []
+
+  const lots = ((lotsResult.data ?? []) as unknown as LotRaw[]).map(lot => {
     const entrees = lot.compta_entrees ?? []
     return {
       ...lot,
