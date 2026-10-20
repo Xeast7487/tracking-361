@@ -2,35 +2,14 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 
-interface Entree {
-  id: string
-  date_transaction: string
-  description: string
-  categorie: string
-  type: string
-  montant_ht: number
-  tps: number
-  tvq: number
-  montant_total: number
-  source: string
-  notes: string | null
-  created_at: string
-}
-
-interface Lot {
+interface LotRaw {
   id: string
   periode_label: string | null
-  nb_entrees: number
-  created_at: string
-}
-
-const CATEGORIE_LABELS: Record<string, string> = {
-  revenu:             'Revenu',
-  depense_materiel:   'Matériel',
-  depense_logiciel:   'Logiciel',
-  salaire:            'Salaire',
-  sous_traitance:     'Sous-traitance',
-  autre:              'Autre',
+  periode_debut: string | null
+  periode_fin:   string | null
+  nb_entrees:    number
+  created_at:    string
+  compta_entrees: { type: string; montant_ht: number }[]
 }
 
 function fmt(n: number) {
@@ -45,200 +24,96 @@ export default async function ComptabilitePage() {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/admin')
 
-  const year = new Date().getFullYear()
-  const [{ data: rawEntrees }, { data: rawLots }] = await Promise.all([
-    supabase
-      .from('compta_entrees')
-      .select('*')
-      .gte('date_transaction', `${year}-01-01`)
-      .lte('date_transaction', `${year}-12-31`)
-      .order('date_transaction', { ascending: false }),
-    supabase
-      .from('compta_lots')
-      .select('id, periode_label, nb_entrees, created_at')
-      .gte('created_at', `${year}-01-01`)
-      .lte('created_at', `${year}-12-31T23:59:59`)
-      .order('created_at', { ascending: false }),
-  ])
+  const { data: rawLots } = await supabase
+    .from('compta_lots')
+    .select('id, periode_label, periode_debut, periode_fin, nb_entrees, created_at, compta_entrees(type, montant_ht)')
+    .order('created_at', { ascending: false }) as { data: LotRaw[] | null }
 
-  const entrees: Entree[] = (rawEntrees ?? []) as Entree[]
-  const lots: Lot[] = (rawLots ?? []) as Lot[]
+  const lots = (rawLots ?? []).map(lot => {
+    const entrees = lot.compta_entrees ?? []
+    return {
+      ...lot,
+      totalRevenus:  entrees.filter(e => e.type === 'revenu') .reduce((s, e) => s + Number(e.montant_ht), 0),
+      totalDepenses: entrees.filter(e => e.type === 'depense').reduce((s, e) => s + Number(e.montant_ht), 0),
+    }
+  })
 
-  // Totals
-  const revenus   = entrees.filter(e => e.type === 'revenu')
-  const depenses  = entrees.filter(e => e.type === 'depense')
-
-  const totalRevenuHT  = revenus.reduce((s, e)  => s + Number(e.montant_ht),  0)
-  const totalDepenseHT = depenses.reduce((s, e) => s + Number(e.montant_ht),  0)
-  const beneficeNet    = totalRevenuHT - totalDepenseHT
-
-  const tpsCollected   = revenus.reduce((s, e)  => s + Number(e.tps), 0)
-  const tvqCollected   = revenus.reduce((s, e)  => s + Number(e.tvq), 0)
-  const tpsITC         = depenses.reduce((s, e) => s + Number(e.tps), 0)
-  const tvqITC         = depenses.reduce((s, e) => s + Number(e.tvq), 0)
-  const netTPS         = tpsCollected - tpsITC
-  const netTVQ         = tvqCollected - tvqITC
-  const provisionImpot = Math.max(0, beneficeNet * 0.25)
-  const totalSalaires  = entrees
-    .filter(e => e.categorie === 'salaire')
-    .reduce((s, e) => s + Number(e.montant_ht), 0)
-
-  // Group entries by month
-  const byMonth: Record<string, Entree[]> = {}
-  for (const e of entrees) {
-    const month = e.date_transaction.slice(0, 7)
-    if (!byMonth[month]) byMonth[month] = []
-    byMonth[month].push(e)
+  // Regrouper par année
+  const byYear: Record<number, typeof lots> = {}
+  for (const lot of lots) {
+    const year = new Date(lot.created_at).getFullYear()
+    if (!byYear[year]) byYear[year] = []
+    byYear[year].push(lot)
   }
-
-  const months = Object.keys(byMonth).sort((a, b) => b.localeCompare(a))
-
-  function monthLabel(ym: string) {
-    const [y, m] = ym.split('-')
-    return new Date(Number(y), Number(m) - 1, 1).toLocaleDateString('fr-CA', { month: 'long', year: 'numeric' })
-  }
+  const years = Object.keys(byYear).map(Number).sort((a, b) => b - a)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 max-w-2xl">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h1 className="text-2xl font-bold text-white">Comptabilité {year}</h1>
+        <h1 className="text-2xl font-bold text-white">Comptabilité</h1>
         <Link href="/admin/comptabilite/nouvelle" className="btn-primary">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Nouvelle entrée
+          Nouveau rapport
         </Link>
       </div>
 
-      {/* Summary cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card">
-          <p className="text-xs text-slate-500 mb-1">Revenus HT</p>
-          <p className="text-xl font-bold text-green-400">{fmt(totalRevenuHT)}</p>
-          <p className="text-xs text-slate-600 mt-1">{revenus.length} entrée{revenus.length !== 1 ? 's' : ''}</p>
-        </div>
-        <div className="card">
-          <p className="text-xs text-slate-500 mb-1">Dépenses HT</p>
-          <p className="text-xl font-bold text-red-400">{fmt(totalDepenseHT)}</p>
-          <p className="text-xs text-slate-600 mt-1">{depenses.length} entrée{depenses.length !== 1 ? 's' : ''}</p>
-        </div>
-        <div className="card">
-          <p className="text-xs text-slate-500 mb-1">Bénéfice net</p>
-          <p className={`text-xl font-bold ${beneficeNet >= 0 ? 'text-white' : 'text-red-400'}`}>{fmt(beneficeNet)}</p>
-          <p className="text-xs text-slate-600 mt-1">avant impôts</p>
-        </div>
-        <div className="card">
-          <p className="text-xs text-slate-500 mb-1">Masse salariale</p>
-          <p className="text-xl font-bold text-slate-200">{fmt(totalSalaires)}</p>
-          <p className="text-xs text-slate-600 mt-1">HT (DAS à verser)</p>
-        </div>
-      </div>
-
-      {/* Tax provisions */}
-      <div className="card space-y-4">
-        <h2 className="font-semibold text-slate-200">Provisions fiscales — {year}</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="rounded-lg bg-slate-900/60 border border-slate-700/60 p-4">
-            <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">TPS nette</p>
-            <p className={`text-2xl font-bold ${netTPS > 0 ? 'text-amber-400' : 'text-green-400'}`}>{fmt(netTPS)}</p>
-            <div className="mt-2 space-y-1 text-xs text-slate-500">
-              <p>Perçue : {fmt(tpsCollected)}</p>
-              <p>CTI : -{fmt(tpsITC)}</p>
-            </div>
-          </div>
-          <div className="rounded-lg bg-slate-900/60 border border-slate-700/60 p-4">
-            <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">TVQ nette</p>
-            <p className={`text-2xl font-bold ${netTVQ > 0 ? 'text-amber-400' : 'text-green-400'}`}>{fmt(netTVQ)}</p>
-            <div className="mt-2 space-y-1 text-xs text-slate-500">
-              <p>Perçue : {fmt(tvqCollected)}</p>
-              <p>CTI : -{fmt(tvqITC)}</p>
-            </div>
-          </div>
-          <div className="rounded-lg bg-slate-900/60 border border-slate-700/60 p-4">
-            <p className="text-xs text-slate-500 mb-2 font-medium uppercase tracking-wide">Provision impôts</p>
-            <p className="text-2xl font-bold text-blue-400">{fmt(provisionImpot)}</p>
-            <p className="mt-2 text-xs text-slate-500">25 % du bénéfice net estimé</p>
-            {totalSalaires > 0 && (
-              <p className="mt-1 text-xs text-slate-600">+ DAS sur {fmt(totalSalaires)} de salaires</p>
-            )}
-          </div>
-        </div>
-        <p className="text-xs text-slate-600">
-          Estimation indicative — consulter un comptable pour les montants exacts à remettre.
-        </p>
-      </div>
-
-      {/* Lots d'analyse IA */}
-      {lots.length > 0 && (
-        <div className="card space-y-3">
-          <h2 className="font-semibold text-slate-200 text-sm">Lots analysés</h2>
-          <div className="space-y-2">
-            {lots.map(lot => (
-              <div key={lot.id} className="flex items-start justify-between gap-4 py-2 border-t border-slate-700/60 first:border-0 first:pt-0">
-                <div className="min-w-0">
-                  <p className="text-sm text-slate-200 leading-snug">{lot.periode_label ?? 'Période inconnue'}</p>
-                  <p className="text-xs text-slate-500 mt-0.5">
-                    {lot.nb_entrees} entrée{lot.nb_entrees !== 1 ? 's' : ''}
-                  </p>
-                </div>
-                <p className="text-xs text-slate-500 whitespace-nowrap flex-shrink-0">
-                  {new Date(lot.created_at).toLocaleDateString('fr-CA', { day: '2-digit', month: 'short', year: 'numeric' })}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Entries by month */}
-      {months.length === 0 ? (
-        <div className="card text-center py-12 text-slate-500">
-          <p className="text-sm">Aucune entrée pour {year}.</p>
-          <Link href="/admin/comptabilite/nouvelle" className="btn-primary mt-4 inline-flex">Ajouter la première entrée</Link>
+      {lots.length === 0 ? (
+        <div className="card text-center py-14 text-slate-500">
+          <svg className="mx-auto mb-4 text-slate-600" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+          </svg>
+          <p className="text-sm">Aucun rapport pour l&apos;instant.</p>
+          <Link href="/admin/comptabilite/nouvelle" className="btn-primary mt-4 inline-flex">Créer le premier rapport</Link>
         </div>
       ) : (
-        <div className="space-y-6">
-          {months.map(month => {
-            const mEntrees = byMonth[month]
-            const mRev = mEntrees.filter(e => e.type === 'revenu').reduce((s, e) => s + Number(e.montant_ht), 0)
-            const mDep = mEntrees.filter(e => e.type === 'depense').reduce((s, e) => s + Number(e.montant_ht), 0)
-            return (
-              <div key={month}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-semibold text-slate-300 capitalize">{monthLabel(month)}</h3>
-                  <div className="flex gap-4 text-xs">
-                    <span className="text-green-400">+{fmt(mRev)}</span>
-                    <span className="text-red-400">-{fmt(mDep)}</span>
+        <div className="space-y-8">
+          {years.map(year => (
+            <div key={year} className="space-y-2">
+              <h2 className="text-sm font-semibold text-slate-400 uppercase tracking-wide">{year}</h2>
+              {byYear[year].map(lot => (
+                <Link
+                  key={lot.id}
+                  href={`/admin/comptabilite/${lot.id}`}
+                  className="card flex items-center gap-4 hover:bg-slate-700/60 transition-colors cursor-pointer group"
+                >
+                  {/* Icône */}
+                  <div className="w-10 h-10 rounded-xl bg-blue-600/15 flex items-center justify-center flex-shrink-0">
+                    <svg className="text-blue-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
                   </div>
-                </div>
-                <div className="card p-0 overflow-hidden">
-                  <table className="w-full text-sm">
-                    <tbody>
-                      {mEntrees.map((e, i) => (
-                        <tr key={e.id} className={`${i !== 0 ? 'border-t border-slate-700/60' : ''} hover:bg-slate-700/30 transition-colors`}>
-                          <td className="px-4 py-3 text-slate-400 whitespace-nowrap w-24">
-                            {new Date(e.date_transaction + 'T12:00:00').toLocaleDateString('fr-CA', { day: '2-digit', month: 'short' })}
-                          </td>
-                          <td className="px-4 py-3 text-slate-200 max-w-0 truncate">{e.description}</td>
-                          <td className="px-4 py-3 whitespace-nowrap hidden sm:table-cell">
-                            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-700 text-slate-400">
-                              {CATEGORIE_LABELS[e.categorie] ?? e.categorie}
-                            </span>
-                          </td>
-                          <td className={`px-4 py-3 text-right whitespace-nowrap font-medium ${e.type === 'revenu' ? 'text-green-400' : 'text-red-400'}`}>
-                            {e.type === 'revenu' ? '+' : '-'}{fmt(Number(e.montant_ht))}
-                          </td>
-                          <td className="px-4 py-3 text-right text-slate-500 text-xs whitespace-nowrap hidden md:table-cell">
-                            {e.source === 'ia' ? '🤖' : '✍️'}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            )
-          })}
+
+                  {/* Info principale */}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-white text-sm font-medium leading-snug truncate">
+                      {lot.periode_label ?? 'Période inconnue'}
+                    </p>
+                    <p className="text-slate-500 text-xs mt-0.5">
+                      {lot.nb_entrees} entrée{lot.nb_entrees !== 1 ? 's' : ''} · créé le{' '}
+                      {new Date(lot.created_at).toLocaleDateString('fr-CA', { day: '2-digit', month: 'short', year: 'numeric' })}
+                    </p>
+                  </div>
+
+                  {/* Totaux */}
+                  <div className="text-right flex-shrink-0 hidden sm:block">
+                    {lot.totalRevenus > 0 && (
+                      <p className="text-green-400 text-sm font-medium">+{fmt(lot.totalRevenus)}</p>
+                    )}
+                    {lot.totalDepenses > 0 && (
+                      <p className="text-red-400 text-sm">-{fmt(lot.totalDepenses)}</p>
+                    )}
+                  </div>
+
+                  {/* Flèche */}
+                  <svg className="text-slate-600 group-hover:text-slate-400 transition-colors flex-shrink-0" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                </Link>
+              ))}
+            </div>
+          ))}
         </div>
       )}
     </div>
