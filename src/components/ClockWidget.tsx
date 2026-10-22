@@ -55,8 +55,10 @@ export default function ClockWidget({
   const [showNewProject, setShowNewProject] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
 
-  const [showStopForm, setShowStopForm] = useState(false)
-  const [stopNotes,    setStopNotes]    = useState('')
+  const [showStopForm,   setShowStopForm]   = useState(false)
+  const [stopTravail,    setStopTravail]    = useState('')
+  const [stopAvancement, setStopAvancement] = useState('')
+  const [stopPctRestant, setStopPctRestant] = useState('')
   const [toast, setToast] = useState<{ type: ToastType; id: number } | null>(null)
 
   const showToast = (type: ToastType) => setToast({ type, id: Date.now() })
@@ -114,12 +116,24 @@ export default function ClockWidget({
 
   const handleClockOut = () => {
     if (!initial) return
+    if (!stopTravail.trim() || !stopAvancement.trim() || stopPctRestant === '') {
+      setError('Veuillez remplir tous les champs du rapport avant de terminer.')
+      return
+    }
+    const pct = parseInt(stopPctRestant)
+    if (isNaN(pct) || pct < 0 || pct > 100) {
+      setError('Le % restant doit être entre 0 et 100.')
+      return
+    }
+    const notes = `Travail : ${stopTravail.trim()}\nAvancement : ${stopAvancement.trim()}\n% restant : ${pct}%`
     startTransition(async () => {
-      const res = await clockOutAction(initial.id, stopNotes)
+      const res = await clockOutAction(initial.id, notes)
       if (res?.error) { setError(res.error); return }
       if (res.clientBillInfo) setBillingNotif(res.clientBillInfo)
       setShowStopForm(false)
-      setStopNotes('')
+      setStopTravail('')
+      setStopAvancement('')
+      setStopPctRestant('')
       showToast('stop')
     })
   }
@@ -189,23 +203,67 @@ export default function ClockWidget({
                 </div>
               )
             })()}
+
+            <div className="bg-amber-900/20 border border-amber-700/40 rounded-lg px-3 py-2">
+              <p className="text-xs font-semibold text-amber-400 uppercase tracking-wider">⚠️ Rapport obligatoire</p>
+              <p className="text-xs text-slate-400 mt-0.5">Les 3 champs doivent être remplis pour terminer.</p>
+            </div>
+
             <div>
-              <label className="label">{t.addNotes}</label>
+              <label className="label">Sur quoi as-tu travaillé ? <span className="text-red-400">*</span></label>
               <textarea
                 autoFocus
-                value={stopNotes}
-                onChange={e => setStopNotes(e.target.value)}
-                rows={3}
-                placeholder={t.stopNotesPlaceholder}
+                value={stopTravail}
+                onChange={e => setStopTravail(e.target.value)}
+                rows={2}
+                placeholder="Ex : Refonte page d'accueil, corrections CSS nav…"
                 className="input resize-none"
               />
             </div>
+
+            <div>
+              <label className="label">Comment ça a avancé ? <span className="text-red-400">*</span></label>
+              <textarea
+                value={stopAvancement}
+                onChange={e => setStopAvancement(e.target.value)}
+                rows={2}
+                placeholder="Ex : Header terminé, footer en cours, en attente des assets…"
+                className="input resize-none"
+              />
+            </div>
+
+            <div>
+              <label className="label">% restant à faire <span className="text-red-400">*</span></label>
+              <div className="flex items-center gap-3">
+                <input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={stopPctRestant}
+                  onChange={e => setStopPctRestant(e.target.value)}
+                  placeholder="Ex : 40"
+                  className="input w-28"
+                />
+                <span className="text-slate-400 text-sm">%</span>
+                {stopPctRestant !== '' && !isNaN(parseInt(stopPctRestant)) && (
+                  <span className="text-xs text-slate-500">
+                    ({100 - Math.min(100, Math.max(0, parseInt(stopPctRestant)))}% complété)
+                  </span>
+                )}
+              </div>
+            </div>
+
             <div className="flex gap-2">
-              <button onClick={() => { setShowStopForm(false); setStopNotes('') }} disabled={isPending}
+              <button
+                onClick={() => { setShowStopForm(false); setStopTravail(''); setStopAvancement(''); setStopPctRestant(''); setError('') }}
+                disabled={isPending}
                 className="btn-secondary flex-1 py-3 text-base">
                 {t.cancelStop}
               </button>
-              <button onClick={handleClockOut} disabled={isPending} className="btn-danger flex-1 py-3 text-base">
+              <button
+                onClick={handleClockOut}
+                disabled={isPending || !stopTravail.trim() || !stopAvancement.trim() || stopPctRestant === ''}
+                className="btn-danger flex-1 py-3 text-base disabled:opacity-40 disabled:cursor-not-allowed">
                 {isPending ? t.stopping : t.confirmStop}
               </button>
             </div>
