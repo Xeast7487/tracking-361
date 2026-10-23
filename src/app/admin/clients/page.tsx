@@ -7,7 +7,7 @@ export default async function AdminClientsPage() {
   const [{ data: clients }, { data: entries }] = await Promise.all([
     supabase
       .from('clients')
-      .select('id, name, is_web_client, projects(id, name)')
+      .select('id, name, projects(id, name)')
       .order('name'),
     supabase
       .from('time_entries')

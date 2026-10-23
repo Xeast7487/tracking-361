@@ -9,10 +9,8 @@ import {
   renameClientAction,
   renameProjectAction,
 } from '@/app/actions'
-import WebClientToggle from '@/components/WebClientToggle'
-
 type Project = { id: string; name: string }
-type Client  = { id: string; name: string; is_web_client: boolean | null; projects: Project[] }
+type Client  = { id: string; name: string; projects: Project[] }
 
 /* ── Icônes ──────────────────────────────────────────────────────────────── */
 const IconPlus = () => (
@@ -94,7 +92,7 @@ function ClientDropdown({
             <p className="text-white font-medium text-sm truncate">{selected.name}</p>
             <p className="text-xs text-slate-500 mt-0.5">
               {selected.projects.length} projet{selected.projects.length !== 1 ? 's' : ''}
-              {selected.is_web_client ? ' · Web' : ''}
+              {''}
             </p>
           </div>
         ) : (
@@ -139,7 +137,6 @@ function ClientDropdown({
                     </p>
                     <p className="text-xs text-slate-500 mt-0.5">
                       {client.projects.length} projet{client.projects.length !== 1 ? 's' : ''}
-                      {client.is_web_client ? ' · Web' : ''}
                     </p>
                   </div>
                   {selected?.id === client.id && (
@@ -295,7 +292,7 @@ export default function ClientsManager({
     startTransition(async () => {
       const res = await createClientAction(newClientName.trim())
       if (res.error) return
-      const newClient: Client = { id: res.data.id, name: res.data.name, is_web_client: false, projects: [] }
+      const newClient: Client = { id: res.data.id, name: res.data.name, projects: [] }
       setClients(prev => [...prev, newClient].sort((a, b) => a.name.localeCompare(b.name, 'fr')))
       setNewClientName('')
       setShowAddClient(false)
@@ -450,11 +447,6 @@ export default function ClientsManager({
               />
             </div>
 
-            <div className="flex items-center gap-3 pt-3 border-t border-slate-700/60">
-              <span className="text-sm text-slate-400">Client web</span>
-              <WebClientToggle clientId={selected.id} isWebClient={!!selected.is_web_client} />
-              <span className="text-xs text-slate-600">{selected.is_web_client ? 'Oui' : 'Non'}</span>
-            </div>
           </div>
 
           {/* Projets */}
