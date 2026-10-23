@@ -338,6 +338,34 @@ export async function deleteClientAction(clientId: string) {
   return { success: true }
 }
 
+// ── Admin : renommage d'un client ────────────────────────
+
+export async function renameClientAction(clientId: string, name: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('clients').update({ name: name.trim() }).eq('id', clientId)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  revalidatePath('/admin/clients')
+  return { success: true }
+}
+
+// ── Admin : renommage d'un projet ─────────────────────────
+
+export async function renameProjectAction(projectId: string, name: string) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('projects').update({ name: name.trim() }).eq('id', projectId)
+  if (error) return { error: error.message }
+  revalidatePath('/dashboard')
+  revalidatePath('/admin/clients')
+  return { success: true }
+}
+
 // ── Admin : suppression d'un projet ──────────────────────
 
 export async function deleteProjectAction(projectId: string) {
