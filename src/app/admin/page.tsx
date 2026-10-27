@@ -9,7 +9,6 @@ import PushNotificationToggle from '@/components/PushNotificationToggle'
 
 export default async function AdminOverviewPage() {
   const supabase = await createSupabaseServerClient()
-  const today = todayISO()
   const weekStart = weekStartISO()
 
   const lang = await getLang()
