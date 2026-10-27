@@ -52,7 +52,7 @@ RÈGLES :
 - Parle en français québécois, sois direct et concis`
 }
 
-export const maxDuration = 60
+export const maxDuration = 300
 export const dynamic = 'force-dynamic'
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     const stream = anthropic.messages.stream({
       model:      'claude-sonnet-4-6',
-      max_tokens: mode === 'dates' ? 128 : 2048,
+      max_tokens: mode === 'dates' ? 128 : 8096,
       system,
       messages:   anthropicMessages,
     })
