@@ -28,13 +28,6 @@ export default async function RootLayout({ children }: { children: React.ReactNo
             {children}
           </ToastProvider>
         </LanguageProvider>
-        <script dangerouslySetInnerHTML={{ __html: `
-          if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-              navigator.serviceWorker.register('/sw.js').catch(function() {});
-            });
-          }
-        `}} />
       </body>
     </html>
   )

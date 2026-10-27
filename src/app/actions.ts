@@ -5,7 +5,6 @@ import { redirect } from 'next/navigation'
 import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
-import webpush from 'web-push'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 
 // ── Auth ──────────────────────────────────────────────────
@@ -152,7 +151,7 @@ export async function pauseEntryAction(entryId: string) {
   if (!user) return { error: 'Non authentifié' }
 
   const { error } = await supabase.from('time_entries')
-    .update({ paused_at: new Date().toISOString(), long_break_notified_at: null })
+    .update({ paused_at: new Date().toISOString() })
     .eq('id', entryId)
     .eq('user_id', user.id)
     .is('paused_at', null)
@@ -760,42 +759,6 @@ export async function fetchAllTasksAdminAction() {
 
 export type DossierEntryType = 'rencontre' | 'performance' | 'disciplinaire' | 'avertissement' | 'avertissement_ecrit' | 'avertissement_verbal' | 'felicitation' | 'note'
 
-async function sendDossierPushToEmployee(employeeId: string, title: string) {
-  try {
-    webpush.setVapidDetails(
-      'mailto:admin@agence361.com',
-      process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY!,
-      process.env.VAPID_PRIVATE_KEY!
-    )
-    const admin = createSupabaseAdminClient()
-    const { data: subs } = await admin
-      .from('push_subscriptions')
-      .select('endpoint, p256dh, auth_key')
-      .eq('user_id', employeeId)
-    if (!subs || subs.length === 0) return
-    const payload = JSON.stringify({
-      title: '📁 Nouveau document à votre dossier',
-      body: title,
-      url: '/dashboard/mon-dossier',
-      tag: 'dossier-entry',
-    })
-    const failed: string[] = []
-    await Promise.all(subs.map(async (sub: any) => {
-      try {
-        await webpush.sendNotification(
-          { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth_key } },
-          payload
-        )
-      } catch (err: any) {
-        if (err.statusCode === 410 || err.statusCode === 404) failed.push(sub.endpoint)
-      }
-    }))
-    if (failed.length > 0) {
-      await admin.from('push_subscriptions').delete().in('endpoint', failed)
-    }
-  } catch {}
-}
-
 export async function createDossierEntryAction(formData: FormData) {
   const supabase = await createSupabaseServerClient()
   const caller   = await requireAdmin()
@@ -839,10 +802,6 @@ export async function createDossierEntryAction(formData: FormData) {
   await admin.from('dossier_activity_log').insert({
     employee_id, entry_id: newEntry?.id ?? null, action: 'create', actor_id: caller.id,
   })
-
-  if (!is_confidential) {
-    sendDossierPushToEmployee(employee_id, title)
-  }
 
   revalidatePath(`/admin/dossiers/${employee_id}`)
   return { success: true }

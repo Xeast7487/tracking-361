@@ -5,7 +5,6 @@ import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 import AdminClockOutButton from '@/components/AdminClockOutButton'
 import AdminClockInButton from '@/components/AdminClockInButton'
-import PushNotificationToggle from '@/components/PushNotificationToggle'
 
 export default async function AdminOverviewPage() {
   const supabase = await createSupabaseServerClient()
@@ -35,21 +34,6 @@ export default async function AdminOverviewPage() {
   const employeeCount  = employees.length
   const clients        = (clientsRes.data  ?? []) as { id: string; name: string }[]
   const projects       = (projectsRes.data ?? []) as { id: string; client_id: string | null; name: string }[]
-
-  const BREAK_THRESHOLD_MS = 45 * 60 * 1_000
-  const now = Date.now()
-  const longBreakSessions = activeSessions.filter((s: any) =>
-    s.paused_at && now - new Date(s.paused_at).getTime() >= BREAK_THRESHOLD_MS
-  )
-
-  function formatPauseDuration(pausedAt: string): string {
-    const ms = now - new Date(pausedAt).getTime()
-    const totalMin = Math.floor(ms / 60_000)
-    const h = Math.floor(totalMin / 60)
-    const m = totalMin % 60
-    if (h > 0) return `${h}h ${m.toString().padStart(2, '0')}m`
-    return `${m} min`
-  }
 
   const weekMs = weekEntries.reduce((acc, e) =>
     acc + (new Date(e.ended_at!).getTime() - new Date(e.started_at).getTime()), 0)
@@ -122,32 +106,6 @@ export default async function AdminOverviewPage() {
         ))}
       </div>
 
-      {/* Long break alert */}
-      {longBreakSessions.length > 0 && (
-        <div className="rounded-xl border border-orange-500/40 bg-orange-500/10 p-4 flex gap-3 items-start">
-          <div className="flex-shrink-0 mt-0.5">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-orange-400">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-orange-300 font-semibold text-sm mb-1">{t.longBreakTitle}</p>
-            <p className="text-orange-400/80 text-xs mb-3">{t.longBreakDesc(longBreakSessions.length)}</p>
-            <div className="flex flex-col gap-1.5">
-              {longBreakSessions.map((s: any) => (
-                <div key={s.id} className="flex items-center gap-2 text-xs text-orange-300">
-                  <span className="w-1.5 h-1.5 rounded-full bg-orange-400 flex-shrink-0" />
-                  <span className="font-medium">{s.profiles?.full_name}</span>
-                  <span className="text-orange-400/60">·</span>
-                  <span className="text-orange-400/80">{t.onBreakFor} {formatPauseDuration(s.paused_at)}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Active sessions */}
       <div>
         <div className="flex items-center justify-between mb-3">
@@ -162,31 +120,19 @@ export default async function AdminOverviewPage() {
           <div className="grid gap-3">
             {activeSessions.map((s: any) => {
               const isPaused = !!s.paused_at
-              const isLongBreak = isPaused && now - new Date(s.paused_at).getTime() >= BREAK_THRESHOLD_MS
               return (
-                <div
-                  key={s.id}
-                  className={`card flex items-center gap-4 ${isLongBreak ? 'border border-orange-500/30' : ''}`}
-                >
+                <div key={s.id} className="card flex items-center gap-4">
                   <span
                     className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                      isLongBreak
-                        ? 'bg-orange-400 animate-pulse'
-                        : isPaused
-                        ? 'bg-amber-400'
-                        : 'bg-green-400 animate-pulse'
+                      isPaused ? 'bg-amber-400' : 'bg-green-400 animate-pulse'
                     }`}
                   />
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       <p className="font-semibold text-white text-sm">{s.profiles?.full_name}</p>
                       {isPaused && (
-                        <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium ${
-                          isLongBreak
-                            ? 'bg-orange-500/20 text-orange-300'
-                            : 'bg-amber-500/20 text-amber-300'
-                        }`}>
-                          {isLongBreak ? `${t.onBreak} · ${formatPauseDuration(s.paused_at)}` : t.onBreak}
+                        <span className="text-xs px-1.5 py-0.5 rounded-full font-medium bg-amber-500/20 text-amber-300">
+                          {t.onBreak}
                         </span>
                       )}
                     </div>
@@ -207,7 +153,6 @@ export default async function AdminOverviewPage() {
       <div className="flex items-center gap-3 flex-wrap">
         <Link href="/admin/reports" className="btn-primary">{t.viewReports}</Link>
         <Link href="/admin/users"   className="btn-secondary">{t.manageEmployees}</Link>
-        <PushNotificationToggle />
       </div>
     </div>
   )
