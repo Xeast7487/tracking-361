@@ -123,7 +123,6 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
       { href: '/admin',          label: 'Aperçu',    icon: <IconGrid /> },
       { href: '/admin/users',    label: 'Employés',  icon: <IconUsers /> },
       { href: '/admin/dossiers', label: 'Dossiers',  icon: <IconFolder /> },
-      { href: '/admin/resumes',  label: 'Résumés',   icon: <IconPen /> },
       { href: '/admin/conges',   label: 'Congés',    icon: <IconCalendar /> },
     ]},
     { type: 'group', label: 'Projets', icon: <IconBriefcase />, items: [
@@ -151,7 +150,6 @@ export default function Nav({ fullName, role, isWebDept, isOwner }: Props) {
     { type: 'group', label: 'Mon espace', icon: <IconFolder />, items: [
       { href: '/dashboard/taches',      label: 'Tâches',        icon: <IconTask /> },
       { href: '/dashboard/mon-dossier', label: 'Mon dossier',   icon: <IconFolder /> },
-      { href: '/dashboard/resume',      label: 'Résumé',        icon: <IconPen /> },
       { href: '/dashboard/conges',      label: 'Congés',        icon: <IconCalendar /> },
       { href: '/dashboard/rapports',    label: 'Rapports pub.', icon: <IconBarChart /> },
     ]},

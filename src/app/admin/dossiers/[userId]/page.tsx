@@ -95,9 +95,8 @@ export default async function AdminDossierEmployeePage({
 
   // Onboarding checklist
   const adminClient = createSupabaseAdminClient()
-  const [firstEntryRes, firstSummaryRes, leaveCountRes] = await Promise.all([
+  const [firstEntryRes, leaveCountRes] = await Promise.all([
     adminClient.from('time_entries').select('id').eq('user_id', params.userId).limit(1),
-    adminClient.from('daily_summaries').select('id').eq('user_id', params.userId).limit(1),
     adminClient.from('leave_requests').select('id').eq('user_id', params.userId).limit(1),
   ])
   const hasNonConcurrence = allEntries.some((e: any) => e.type === 'non_concurrence')
@@ -105,7 +104,6 @@ export default async function AdminDossierEmployeePage({
     { label: 'Compte actif',                done: employee.is_active },
     { label: 'Clause de non-concurrence',   done: hasNonConcurrence },
     { label: 'Premier pointage enregistré', done: (firstEntryRes.data?.length ?? 0) > 0 },
-    { label: 'Premier résumé soumis',       done: (firstSummaryRes.data?.length ?? 0) > 0 },
   ]
   const onboardingDone = onboarding.filter(o => o.done).length
 

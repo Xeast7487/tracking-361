@@ -27,22 +27,16 @@ export async function POST(req: NextRequest) {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
   const fromDate = thirtyDaysAgo.toLocaleDateString('sv-SE', { timeZone: 'America/Toronto' })
 
-  const [entriesRes, summariesRes] = await Promise.all([
+  const [entriesRes] = await Promise.all([
     supabase
       .from('time_entries')
       .select('user_id, started_at, ended_at, total_paused_ms, notes, is_billable, clients(name), projects(name), profiles(full_name)')
       .gte('started_at', `${fromDate}T00:00:00`)
       .not('ended_at', 'is', null)
       .order('started_at', { ascending: false }),
-    supabase
-      .from('daily_summaries')
-      .select('summary_date, content, user_id, profiles(full_name)')
-      .gte('summary_date', fromDate)
-      .order('summary_date', { ascending: false }),
   ])
 
   const entries = (entriesRes.data ?? []) as any[]
-  const summaries = (summariesRes.data ?? []) as any[]
 
   // Group time entries by date → employee
   const byDate: Record<string, Record<string, { hours: number; projects: Record<string, number> }>> = {}
@@ -73,21 +67,14 @@ export async function POST(req: NextRequest) {
       return `📅 ${date}\n${lines.join('\n')}`
     }).join('\n\n')
 
-  const summaryContext = summaries.map((s: any) =>
-    `[${s.summary_date}] ${(s.profiles as any)?.full_name ?? 'Inconnu'} :\n${s.content}`
-  ).join('\n\n---\n\n')
-
   const system = `Tu es l'assistant de l'Agence 361. Tu parles directement au gestionnaire, en français, de façon naturelle et concise — comme si tu lui faisais un point verbal rapide.
 
-Quand on te demande où on en est avec un client ou un projet, réponds simplement : ce qu'on a fait, quand, combien d'heures, et ce que les employés ont dit dans leurs résumés. Donne les dates. Pas de mise en forme complexe, pas de titres, pas de listes à puces si ce n'est pas nécessaire — juste du texte clair.
+Quand on te demande où on en est avec un client ou un projet, réponds simplement : ce qu'on a fait, quand, combien d'heures. Donne les dates. Pas de mise en forme complexe, pas de titres, pas de listes à puces si ce n'est pas nécessaire — juste du texte clair.
 
 Voici les données de l'équipe des 30 derniers jours.
 
 HEURES PAR JOUR
-${timeContext || 'Aucune entrée.'}
-
-RÉSUMÉS DES EMPLOYÉS
-${summaryContext || 'Aucun résumé.'}`
+${timeContext || 'Aucune entrée.'}`
 
   const stream = anthropic.messages.stream({
     model: 'claude-sonnet-4-6',
