@@ -548,6 +548,41 @@ export async function toggleWebProjectStepAction(clientId: string, field: string
   return { success: true }
 }
 
+// ── Admin : punch in manuel ───────────────────────────────
+
+export async function adminClockInAction(
+  userId: string,
+  clientId: string,
+  projectId: string,
+  notes: string,
+  isBillable: boolean,
+  startedAtISO: string,
+) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { data: existing } = await supabase
+    .from('time_entries')
+    .select('id')
+    .eq('user_id', userId)
+    .is('ended_at', null)
+    .maybeSingle()
+  if (existing) return { error: 'Cet employé a déjà une session en cours.' }
+
+  const { error } = await supabase.from('time_entries').insert({
+    user_id:    userId,
+    client_id:  clientId  || null,
+    project_id: projectId || null,
+    notes:      notes     || null,
+    is_billable: isBillable,
+    started_at: startedAtISO,
+  })
+  if (error) return { error: error.message }
+  revalidatePath('/admin')
+  return { success: true }
+}
+
 // ── Admin : punch out forcé ───────────────────────────────
 
 export async function adminClockOutAction(entryId: string) {

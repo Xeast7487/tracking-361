@@ -4,6 +4,7 @@ import { todayISO, weekStartISO } from '@/lib/utils'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 import AdminClockOutButton from '@/components/AdminClockOutButton'
+import AdminClockInButton from '@/components/AdminClockInButton'
 import PushNotificationToggle from '@/components/PushNotificationToggle'
 
 export default async function AdminOverviewPage() {
@@ -15,7 +16,7 @@ export default async function AdminOverviewPage() {
   const t = translations[lang].adminOverview
   const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
 
-  const [activeRes, weekRes, profilesRes, punchedTodayRes, summariesTodayRes] = await Promise.all([
+  const [activeRes, weekRes, profilesRes, punchedTodayRes, summariesTodayRes, clientsRes, projectsRes] = await Promise.all([
     supabase.from('time_entries')
       .select('id, started_at, paused_at, profiles(full_name), clients(name), projects(name)')
       .is('ended_at', null)
@@ -24,7 +25,7 @@ export default async function AdminOverviewPage() {
       .select('started_at, ended_at, is_billable')
       .gte('started_at', `${weekStart}T00:00:00`)
       .not('ended_at', 'is', null),
-    supabase.from('profiles').select('id').eq('is_active', true),
+    supabase.from('profiles').select('id, full_name').eq('is_active', true).order('full_name'),
     supabase.from('time_entries')
       .select('user_id, profiles(full_name)')
       .gte('started_at', `${today}T00:00:00`)
@@ -32,11 +33,16 @@ export default async function AdminOverviewPage() {
     supabase.from('daily_summaries')
       .select('user_id')
       .eq('summary_date', today),
+    supabase.from('clients').select('id, name').order('name'),
+    supabase.from('projects').select('id, client_id, name').order('name'),
   ])
 
   const activeSessions = (activeRes.data ?? []) as any[]
   const weekEntries    = weekRes.data ?? []
-  const employeeCount  = profilesRes.data?.length ?? 0
+  const employees      = (profilesRes.data ?? []) as { id: string; full_name: string }[]
+  const employeeCount  = employees.length
+  const clients        = (clientsRes.data  ?? []) as { id: string; name: string }[]
+  const projects       = (projectsRes.data ?? []) as { id: string; client_id: string | null; name: string }[]
 
   const punchedTodayIds = new Set((punchedTodayRes.data ?? []).map((e: any) => e.user_id))
   const summaryTodayIds = new Set((summariesTodayRes.data ?? []).map((s: any) => s.user_id))
@@ -162,9 +168,12 @@ export default async function AdminOverviewPage() {
 
       {/* Active sessions */}
       <div>
-        <h2 className="font-semibold text-slate-300 mb-3">
-          {t.currentSessions} {activeSessions.length > 0 && `(${activeSessions.length})`}
-        </h2>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="font-semibold text-slate-300">
+            {t.currentSessions} {activeSessions.length > 0 && `(${activeSessions.length})`}
+          </h2>
+          <AdminClockInButton employees={employees} clients={clients} projects={projects} />
+        </div>
         {activeSessions.length === 0 ? (
           <div className="card text-slate-500 text-sm text-center py-8">{t.noActiveSessions}</div>
         ) : (
