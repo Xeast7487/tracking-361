@@ -36,14 +36,30 @@ export default async function ImprimerLotPage({ params }: { params: { lotId: str
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') redirect('/admin')
 
-  const [{ data: lot }, { data: rawEntrees }] = await Promise.all([
+  const [{ data: lot }, { data: rawEntrees }, { data: rawAttachments }] = await Promise.all([
     supabase.from('compta_lots').select('*').eq('id', params.lotId).single(),
     supabase.from('compta_entrees').select('*').eq('lot_id', params.lotId).order('date_transaction', { ascending: true }),
+    supabase.from('compta_lot_attachments').select('id, nom_fichier, storage_path, type_fichier').eq('lot_id', params.lotId).order('created_at'),
   ])
 
   if (!lot) notFound()
 
   const entrees: Entree[] = (rawEntrees ?? []) as Entree[]
+
+  // Générer des URLs signées pour les pièces jointes
+  const attachments: { name: string; url: string; isImage: boolean }[] = []
+  for (const att of (rawAttachments ?? []) as { id: string; nom_fichier: string; storage_path: string; type_fichier: string | null }[]) {
+    const { data: signed } = await supabase.storage
+      .from('compta-documents')
+      .createSignedUrl(att.storage_path, 3600)
+    if (signed?.signedUrl) {
+      attachments.push({
+        name: att.nom_fichier,
+        url: signed.signedUrl,
+        isImage: (att.type_fichier ?? '').startsWith('image/'),
+      })
+    }
+  }
 
   const revenus  = entrees.filter(e => e.type === 'revenu')
   const depenses = entrees.filter(e => e.type === 'depense')
@@ -215,6 +231,30 @@ export default async function ImprimerLotPage({ params }: { params: { lotId: str
             </table>
           </div>
         </div>
+
+        {/* Pièces jointes */}
+        {attachments.length > 0 && (
+          <div className="compta-section" style={{ pageBreakBefore: 'always' }}>
+            <div className="compta-section-title">Pièces jointes ({attachments.length})</div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginTop: '12px' }}>
+              {attachments.map((att, i) => (
+                <div key={i}>
+                  <div style={{ fontSize: '11px', color: '#64748b', marginBottom: '6px', fontWeight: 600 }}>
+                    📎 {att.name}
+                  </div>
+                  {att.isImage ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={att.url} alt={att.name} style={{ maxWidth: '100%', maxHeight: '600px', objectFit: 'contain', border: '1px solid #e2e8f0', borderRadius: '4px' }} />
+                  ) : (
+                    <a href={att.url} target="_blank" rel="noreferrer" style={{ fontSize: '12px', color: '#3b82f6' }}>
+                      Ouvrir le PDF
+                    </a>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="compta-footer">

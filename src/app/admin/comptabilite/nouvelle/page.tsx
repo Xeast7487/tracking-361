@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback } from 'react'
+import { useState, useRef, useCallback, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -276,12 +276,27 @@ function SingleMode() {
 
 // ─── Batch mode — workflow en étapes ─────────────────────────────────────────
 type BatchPhase = 'upload' | 'identifying' | 'invoice' | 'qa'
+type MemoryEntry = { service: string; description: string }
+type NewFile = LotFile & { msgIndex: number }
+
+function parseSouvenirs(text: string): MemoryEntry[] {
+  const matches = [...text.matchAll(/<souvenir service="([^"]+)">([\s\S]*?)<\/souvenir>/g)]
+  return matches.map(m => ({ service: m[1].trim(), description: m[2].trim() }))
+}
+
+function cleanMessageFull(text: string) {
+  return text
+    .replace(/<entree>[\s\S]*?<\/entree>/g, '')
+    .replace(/<souvenir[^>]*>[\s\S]*?<\/souvenir>/g, '')
+    .trim()
+}
 
 function BatchMode() {
   const router          = useRouter()
   const bankInputRef    = useRef<HTMLInputElement>(null)
   const invoiceInputRef = useRef<HTMLInputElement>(null)
   const answerInputRef  = useRef<HTMLInputElement>(null)
+  const receiptInputRef = useRef<HTMLInputElement>(null)
 
   const [bankFiles, setBankFiles]     = useState<LotFile[]>([])
   const [invoiceFile, setInvoiceFile] = useState<LotFile | null>(null)
@@ -294,16 +309,37 @@ function BatchMode() {
   const [overlaps, setOverlaps]       = useState<{ id: string; periode_label: string | null; created_at: string }[]>([])
   const [loading, setLoading]         = useState(false)
 
+  // Mémoire services
+  const [memory, setMemory]           = useState<MemoryEntry[]>([])
+
   // Q&A
   const [qaFiles, setQaFiles]           = useState<LotFile[]>([])
+  const [newFiles, setNewFiles]         = useState<NewFile[]>([])
+  const [pendingAttachments, setPending] = useState<LotFile[]>([])
   const [messages, setMessages]         = useState<Message[]>([])
   const [currentMsg, setCurrentMsg]     = useState('')
-  const [answeredQAs, setAnsweredQAs]   = useState<{ q: string; a: string }[]>([])
+  const [answeredQAs, setAnsweredQAs]   = useState<{ q: string; a: string; files?: string[] }[]>([])
   const [answer, setAnswer]             = useState('')
   const [showHistory, setShowHistory]   = useState(false)
   const [entries, setEntries]           = useState<EntreeData[]>([])
   const [saving, setSaving]             = useState(false)
   const [saved, setSaved]               = useState(false)
+
+  useEffect(() => {
+    fetch('/api/compta/memory').then(r => r.json()).then(setMemory).catch(() => {})
+  }, [])
+
+  async function saveMemoryEntry(entry: MemoryEntry) {
+    await fetch('/api/compta/memory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(entry),
+    })
+    setMemory(prev => {
+      const next = prev.filter(m => m.service !== entry.service)
+      return [...next, entry].sort((a, b) => a.service.localeCompare(b.service))
+    })
+  }
 
   const readFile = (f: File): Promise<string> => new Promise((resolve, reject) => {
     const reader = new FileReader()
@@ -381,6 +417,7 @@ function BatchMode() {
   const startQA = async (useInvoice = true) => {
     const allFiles = (useInvoice && invoiceFile) ? [...bankFiles, invoiceFile] : bankFiles
     setQaFiles(allFiles)
+    setNewFiles([])
     setPhase('qa')
     setLoading(true)
     setCurrentMsg('')
@@ -392,14 +429,14 @@ function BatchMode() {
     const res = await fetch('/api/compta/analyse-lot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'qa', messages: initMessages, files: allFiles }),
+      body: JSON.stringify({ mode: 'qa', messages: initMessages, files: allFiles, memory }),
     })
     if (!res.ok) { setLoading(false); return }
 
-    await streamAndUpdate(res, initMessages)
+    await streamAndUpdate(res, initMessages, [])
   }
 
-  const streamAndUpdate = async (res: Response, prevMessages: Message[]) => {
+  const streamAndUpdate = async (res: Response, prevMessages: Message[], currentNewFiles: NewFile[]) => {
     const reader  = res.body!.getReader()
     const decoder = new TextDecoder()
     let acc = ''
@@ -407,7 +444,7 @@ function BatchMode() {
       const { done, value } = await reader.read()
       if (done) break
       acc += decoder.decode(value)
-      setCurrentMsg(cleanMessage(acc))
+      setCurrentMsg(cleanMessageFull(acc))
       const detected = parseEntrees(acc)
       if (detected.length) {
         setEntries(prev => {
@@ -419,30 +456,59 @@ function BatchMode() {
     }
     setLoading(false)
     setMessages(prev => [...prev, { role: 'assistant', content: acc }])
+
+    // Auto-save nouveaux souvenirs
+    const souvenirs = parseSouvenirs(acc)
+    for (const s of souvenirs) {
+      saveMemoryEntry(s)
+    }
+
     setTimeout(() => answerInputRef.current?.focus(), 50)
+  }
+
+  const handleReceiptFile = async (f: File) => {
+    const reader = new FileReader()
+    const data = await new Promise<string>(resolve => {
+      reader.onload = e => resolve((e.target!.result as string).split(',')[1])
+      reader.readAsDataURL(f)
+    })
+    setPending(prev => [...prev, { name: f.name, type: f.type, data }])
   }
 
   // Répondre à une question
   const sendAnswer = async () => {
-    if (!answer.trim() || loading) return
+    if ((!answer.trim() && pendingAttachments.length === 0) || loading) return
 
-    setAnsweredQAs(prev => [...prev, { q: currentMsg, a: answer }])
+    const msgIndex = messages.length
+    const attachedNow: NewFile[] = pendingAttachments.map(f => ({ ...f, msgIndex }))
+    const updatedNewFiles = [...newFiles, ...attachedNow]
+
+    setAnsweredQAs(prev => [...prev, {
+      q: currentMsg,
+      a: answer || '(facture jointe)',
+      files: pendingAttachments.map(f => f.name),
+    }])
     setCurrentMsg('')
+    setPending([])
 
-    const userMsg: Message = { role: 'user', content: answer }
-    const newMessages = [...messages, userMsg]
-    setMessages(newMessages)
+    const userContent = answer || (pendingAttachments.length > 0
+      ? `Voici la facture : ${pendingAttachments.map(f => f.name).join(', ')}`
+      : '')
+    const userMsg: Message = { role: 'user', content: userContent }
+    const updatedMessages = [...messages, userMsg]
+    setMessages(updatedMessages)
+    setNewFiles(updatedNewFiles)
     setAnswer('')
     setLoading(true)
 
     const res = await fetch('/api/compta/analyse-lot', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ mode: 'qa', messages: newMessages, files: qaFiles }),
+      body: JSON.stringify({ mode: 'qa', messages: updatedMessages, files: qaFiles, newFiles: updatedNewFiles, memory }),
     })
     if (!res.ok) { setLoading(false); return }
 
-    await streamAndUpdate(res, newMessages)
+    await streamAndUpdate(res, updatedMessages, updatedNewFiles)
   }
 
   const updateEntry = (idx: number, field: keyof EntreeData, value: string | number) =>
@@ -457,9 +523,10 @@ function BatchMode() {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         entrees: entries,
-        periodeLabel: period   || undefined,
+        periodeLabel: period     || undefined,
         periodeDebut: periodDebut || undefined,
         periodeFin:   periodFin   || undefined,
+        receipts: newFiles.map(f => ({ name: f.name, type: f.type, data: f.data })),
       }),
     })
     setSaving(false)
@@ -645,10 +712,28 @@ function BatchMode() {
                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-green-400 flex-shrink-0 mt-0.5"><polyline points="20 6 9 17 4 12"/></svg>
                     {qa.a}
                   </p>
+                  {qa.files && qa.files.length > 0 && (
+                    <div className="flex flex-wrap gap-1 pl-3.5">
+                      {qa.files.map((fn, fi) => (
+                        <span key={fi} className="text-[10px] bg-slate-700/60 text-slate-500 px-1.5 py-0.5 rounded">📎 {fn}</span>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Mémoire acquise */}
+      {memory.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {memory.map(m => (
+            <span key={m.service} className="inline-flex items-center gap-1 text-[10px] bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 px-2 py-0.5 rounded-full">
+              🧠 {m.service}
+            </span>
+          ))}
         </div>
       )}
 
@@ -679,20 +764,52 @@ function BatchMode() {
 
       {/* Champ réponse */}
       {!loading && phase === 'qa' && (
-        <form onSubmit={e => { e.preventDefault(); sendAnswer() }} className="flex gap-2">
-          <input
-            ref={answerInputRef}
-            type="text"
-            value={answer}
-            onChange={e => setAnswer(e.target.value)}
-            placeholder={currentMsg ? 'Ta réponse…' : 'Ajouter une précision…'}
-            className="input flex-1"
-            autoFocus
-          />
-          <button type="submit" disabled={!answer.trim()} className="btn-primary">
-            Répondre
-          </button>
-        </form>
+        <div className="space-y-2">
+          {pendingAttachments.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {pendingAttachments.map((f, i) => (
+                <span key={i} className="inline-flex items-center gap-1.5 text-xs bg-blue-500/10 border border-blue-500/25 text-blue-300 px-2.5 py-1 rounded-full">
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+                  {f.name}
+                  <button type="button" onClick={() => setPending(prev => prev.filter((_, idx) => idx !== i))} className="text-blue-400/60 hover:text-blue-300">
+                    <svg width="8" height="8" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+          <form onSubmit={e => { e.preventDefault(); sendAnswer() }} className="flex gap-2">
+            <input
+              ref={answerInputRef}
+              type="text"
+              value={answer}
+              onChange={e => setAnswer(e.target.value)}
+              placeholder={currentMsg ? 'Ta réponse…' : 'Ajouter une précision…'}
+              className="input flex-1"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={() => receiptInputRef.current?.click()}
+              title="Joindre une facture"
+              className="px-3 py-2 rounded-lg bg-slate-700 hover:bg-slate-600 text-slate-300 hover:text-white transition-colors flex-shrink-0"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+              </svg>
+            </button>
+            <input
+              ref={receiptInputRef}
+              type="file"
+              accept=".pdf,image/*"
+              className="hidden"
+              onChange={e => { if (e.target.files?.[0]) handleReceiptFile(e.target.files[0]); e.target.value = '' }}
+            />
+            <button type="submit" disabled={!answer.trim() && pendingAttachments.length === 0} className="btn-primary">
+              Répondre
+            </button>
+          </form>
+        </div>
       )}
 
       {/* Entrées détectées */}

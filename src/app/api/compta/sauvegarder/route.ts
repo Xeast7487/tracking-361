@@ -10,11 +10,12 @@ export async function POST(req: NextRequest) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (profile?.role !== 'admin') return new Response('Accès refusé', { status: 403 })
 
-  const { documentId, periodeLabel, periodeDebut, periodeFin, entrees } = await req.json() as {
+  const { documentId, periodeLabel, periodeDebut, periodeFin, entrees, receipts } = await req.json() as {
     documentId?: string
     periodeLabel?: string
     periodeDebut?: string
     periodeFin?: string
+    receipts?: { name: string; type: string; data: string }[]
     entrees: {
       date_transaction: string
       description: string
@@ -59,6 +60,24 @@ export async function POST(req: NextRequest) {
 
   if (documentId) {
     await adminClient.from('compta_documents').update({ statut: 'confirme' }).eq('id', documentId)
+  }
+
+  // Stocker les pièces jointes uploadées pendant le Q&A
+  if (lotId && receipts && receipts.length > 0) {
+    for (const receipt of receipts) {
+      const ext  = receipt.name.split('.').pop() ?? 'bin'
+      const path = `${user.id}/receipts/${lotId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+      const buf  = Buffer.from(receipt.data, 'base64')
+      const { error: upErr } = await adminClient.storage
+        .from('compta-documents')
+        .upload(path, buf, { contentType: receipt.type, upsert: false })
+      if (!upErr) {
+        await adminClient.from('compta_lot_attachments').insert({
+          lot_id: lotId, user_id: user.id,
+          nom_fichier: receipt.name, storage_path: path, type_fichier: receipt.type,
+        })
+      }
+    }
   }
 
   return new Response('OK')
