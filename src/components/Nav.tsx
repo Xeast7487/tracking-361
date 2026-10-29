@@ -118,24 +118,18 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
   const adminNav: NavEntry[] = [
     { type: 'link',  href: '/dashboard', label: t.pointer, icon: <IconClock /> },
     { type: 'group', label: 'Équipe', icon: <IconUsers />, items: [
-      { href: '/admin',          label: 'Aperçu',    icon: <IconGrid /> },
-      { href: '/admin/users',    label: 'Employés',  icon: <IconUsers /> },
-      { href: '/admin/dossiers', label: 'Dossiers',  icon: <IconFolder /> },
-      { href: '/admin/conges',   label: 'Congés',    icon: <IconCalendar /> },
+      { href: '/admin',          label: 'Aperçu',   icon: <IconGrid /> },
+      { href: '/admin/users',    label: 'Employés', icon: <IconUsers /> },
+      { href: '/admin/dossiers', label: 'Dossiers', icon: <IconFolder /> },
+      { href: '/admin/conges',   label: 'Congés',   icon: <IconCalendar /> },
     ]},
     { type: 'group', label: 'Projets', icon: <IconBriefcase />, items: [
-      { href: '/admin/taches',          label: 'Tâches',        icon: <IconTask /> },
-      { href: '/admin/clients',         label: 'Clients',       icon: <IconBriefcase /> },
-      { href: '/admin/reports',         label: 'Rapports',      icon: <IconFile /> },
-      { href: '/dashboard/rapports',    label: 'Rapports pub.', icon: <IconBarChart /> },
+      { href: '/admin/taches',       label: 'Tâches',     icon: <IconTask /> },
+      { href: '/admin/clients',      label: 'Clients',    icon: <IconBriefcase /> },
+      { href: '/admin/reports',      label: 'Heures',     icon: <IconFile /> },
+      { href: '/dashboard/rapports', label: 'Publicité',  icon: <IconBarChart /> },
     ]},
-    { type: 'group', label: 'Ressources', icon: <IconBook />, items: [
-      { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },
-      { href: '/dashboard/combat', label: 'Combat', icon: <IconSword /> },
-    ]},
-    { type: 'group', label: 'Finance', icon: <IconDollar />, items: [
-      { href: '/admin/comptabilite', label: 'Comptabilité', icon: <IconDollar /> },
-    ]},
+    { type: 'link', href: '/admin/comptabilite', label: 'Comptabilité', icon: <IconDollar /> },
   ]
 
   const employeeNav: NavEntry[] = [
@@ -145,14 +139,12 @@ export default function Nav({ fullName, role, isWebDept }: Props) {
       { href: '/dashboard/stats',   label: 'Stats',      icon: <IconBarChart /> },
     ]},
     { type: 'group', label: 'Mon espace', icon: <IconFolder />, items: [
-      { href: '/dashboard/taches',      label: 'Tâches',        icon: <IconTask /> },
-      { href: '/dashboard/mon-dossier', label: 'Mon dossier',   icon: <IconFolder /> },
-      { href: '/dashboard/conges',      label: 'Congés',        icon: <IconCalendar /> },
-      { href: '/dashboard/rapports',    label: 'Rapports pub.', icon: <IconBarChart /> },
-    ]},
-    { type: 'group', label: 'Ressources', icon: <IconBook />, items: [
-      { href: '/dashboard/guide',  label: 'Guide',  icon: <IconBook /> },
-      { href: '/dashboard/combat', label: 'Combat', icon: <IconSword /> },
+      { href: '/dashboard/taches',      label: 'Tâches',      icon: <IconTask /> },
+      { href: '/dashboard/mon-dossier', label: 'Mon dossier', icon: <IconFolder /> },
+      { href: '/dashboard/conges',      label: 'Congés',      icon: <IconCalendar /> },
+      { href: '/dashboard/rapports',    label: 'Publicité',   icon: <IconBarChart /> },
+      { href: '/dashboard/guide',       label: 'Guide',       icon: <IconBook /> },
+      { href: '/dashboard/combat',      label: 'Combat',      icon: <IconSword /> },
     ]},
   ]
 
