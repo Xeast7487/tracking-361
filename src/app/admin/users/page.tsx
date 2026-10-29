@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import UserForm from './UserForm'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
+import { startImpersonationAction } from '@/app/actions'
 
 export default async function UsersPage() {
   const supabase = await createSupabaseServerClient()
@@ -92,8 +93,15 @@ export default async function UsersPage() {
                       {u.is_active ? t.statusActive : t.statusDisabled}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="px-4 py-3 flex items-center gap-2">
                     <UserForm mode="edit" user={u} />
+                    {u.role === 'employee' && u.is_active && (
+                      <form action={startImpersonationAction.bind(null, u.id)}>
+                        <button type="submit" title="Voir en tant que" className="text-xs px-2 py-1 rounded-lg bg-slate-700 hover:bg-amber-500/20 hover:text-amber-400 text-slate-400 border border-transparent hover:border-amber-500/30 transition-all">
+                          👁️
+                        </button>
+                      </form>
+                    )}
                   </td>
                 </tr>
               ))}

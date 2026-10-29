@@ -1,5 +1,6 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
+import { getViewingUserId } from '@/lib/getViewingUser'
 
 function getDateRanges() {
   const now = new Date()
@@ -60,6 +61,8 @@ export default async function StatsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { viewingId } = await getViewingUserId(user.id)
+
   const r = getDateRanges()
 
   // Last 8 weeks for bar chart
@@ -71,19 +74,19 @@ export default async function StatsPage() {
 
   const [weekRes, prevWeekRes, monthRes, prevMonthRes, chartRes] = await Promise.all([
     supabase.from('time_entries').select('started_at, ended_at, total_paused_ms, is_billable, client_id, clients(name)')
-      .eq('user_id', user.id).not('ended_at', 'is', null)
+      .eq('user_id', viewingId).not('ended_at', 'is', null)
       .gte('started_at', `${r.weekStart}T00:00:00`).lte('started_at', `${r.todayStr}T23:59:59`),
     supabase.from('time_entries').select('started_at, ended_at, total_paused_ms')
-      .eq('user_id', user.id).not('ended_at', 'is', null)
+      .eq('user_id', viewingId).not('ended_at', 'is', null)
       .gte('started_at', `${r.prevWeekStart}T00:00:00`).lte('started_at', `${r.prevWeekEnd}T23:59:59`),
     supabase.from('time_entries').select('started_at, ended_at, total_paused_ms, is_billable, client_id, clients(name)')
-      .eq('user_id', user.id).not('ended_at', 'is', null)
+      .eq('user_id', viewingId).not('ended_at', 'is', null)
       .gte('started_at', `${r.monthStart}T00:00:00`).lte('started_at', `${r.todayStr}T23:59:59`),
     supabase.from('time_entries').select('started_at, ended_at, total_paused_ms')
-      .eq('user_id', user.id).not('ended_at', 'is', null)
+      .eq('user_id', viewingId).not('ended_at', 'is', null)
       .gte('started_at', `${r.prevMonthStart}T00:00:00`).lte('started_at', `${r.prevMonthEnd}T23:59:59`),
     supabase.from('time_entries').select('started_at, ended_at, total_paused_ms')
-      .eq('user_id', user.id).not('ended_at', 'is', null)
+      .eq('user_id', viewingId).not('ended_at', 'is', null)
       .gte('started_at', `${chartWeekStarts[0]}T00:00:00`).lte('started_at', `${r.todayStr}T23:59:59`),
   ])
 

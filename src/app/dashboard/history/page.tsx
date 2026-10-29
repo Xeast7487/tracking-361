@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import EntryList from '@/components/EntryList'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
+import { getViewingUserId } from '@/lib/getViewingUser'
 
 interface Props {
   searchParams: { from?: string; to?: string; client_id?: string; project_id?: string }
@@ -12,6 +13,8 @@ export default async function HistoryPage({ searchParams }: Props) {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { viewingId } = await getViewingUserId(user.id)
 
   const lang = await getLang()
   const t = translations[lang].history
@@ -31,7 +34,7 @@ export default async function HistoryPage({ searchParams }: Props) {
   let query = supabase
     .from('time_entries')
     .select('id, started_at, ended_at, notes, is_billable, total_paused_ms, client_id, project_id, clients(name), projects(name)')
-    .eq('user_id', user.id)
+    .eq('user_id', viewingId)
     .gte('started_at', `${from}T00:00:00`)
     .lte('started_at', `${to}T23:59:59`)
     .order('started_at', { ascending: false })

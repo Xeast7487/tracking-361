@@ -1173,3 +1173,24 @@ export async function reviewLeaveRequestAction(requestId: string, status: 'appro
   revalidatePath('/admin/conges')
   return { success: true }
 }
+
+// ── Impersonation ──────────────────────────────────────────────────────────────
+
+export async function startImpersonationAction(targetUserId: string) {
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+  const cookieStore = await cookies()
+  cookieStore.set('x_impersonate_uid', targetUserId, {
+    httpOnly: true,
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60, // 1h
+  })
+  redirect('/dashboard')
+}
+
+export async function stopImpersonationAction() {
+  const cookieStore = await cookies()
+  cookieStore.delete('x_impersonate_uid')
+  redirect('/admin/users')
+}

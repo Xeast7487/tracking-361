@@ -7,11 +7,14 @@ import { fetchPendingTaskNotificationsAction } from '@/app/actions'
 import { todayISO } from '@/lib/utils'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
+import { getViewingUserId } from '@/lib/getViewingUser'
 
 export default async function DashboardPage() {
   const supabase = await createSupabaseServerClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
+
+  const { viewingId } = await getViewingUserId(user.id)
 
   const lang = await getLang()
   const t = translations[lang].dashboard
@@ -19,17 +22,17 @@ export default async function DashboardPage() {
   const locale = lang === 'en' ? 'en-CA' : 'fr-CA'
 
   const [profileRes, activeRes, clientsRes, projectsRes, todayRes, rawPendingNotifs] = await Promise.all([
-    supabase.from('profiles').select('full_name').eq('id', user.id).single(),
+    supabase.from('profiles').select('full_name').eq('id', viewingId).single(),
     supabase.from('time_entries')
       .select('id, started_at, notes, is_billable, charge_client, client_hourly_rate, paused_at, total_paused_ms, clients(name), projects(name)')
-      .eq('user_id', user.id)
+      .eq('user_id', viewingId)
       .is('ended_at', null)
       .maybeSingle(),
     supabase.from('clients').select('id, name').order('name'),
     supabase.from('projects').select('id, client_id, name').order('name'),
     supabase.from('time_entries')
       .select('id, started_at, ended_at, notes, is_billable, charge_client, client_hourly_rate, total_paused_ms, client_id, project_id, clients(name), projects(name)')
-      .eq('user_id', user.id)
+      .eq('user_id', viewingId)
       .gte('started_at', `${today}T00:00:00`)
       .order('started_at', { ascending: false }),
     fetchPendingTaskNotificationsAction(),

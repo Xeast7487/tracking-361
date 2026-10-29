@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import { fetchDossierEntriesAction, signDossierEntryAction } from '@/app/actions'
+import { getViewingUserId } from '@/lib/getViewingUser'
 import { MonDossierFilters } from './MonDossierFilters'
 
 const TYPE_LABELS: Record<string, string> = {
@@ -45,8 +46,10 @@ export default async function MonDossierPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
+  const { viewingId } = await getViewingUserId(user.id)
+
   const filters = { type: searchParams.type, search: searchParams.search }
-  const entries = await fetchDossierEntriesAction(user.id, filters)
+  const entries = await fetchDossierEntriesAction(viewingId, filters)
 
   const signedCount   = entries.filter((e: any) => e.signed_at).length
   const unsignedCount = entries.filter((e: any) => !e.signed_at).length
