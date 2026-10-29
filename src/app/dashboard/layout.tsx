@@ -15,13 +15,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const lang = await getLang()
   const defaultName = translations[lang].dashboard.defaultName
 
+  const { isImpersonating, viewingName, viewingId } = await getViewingUserId(user.id)
+
+  // Quand on impersonne, utiliser le profil de l'employé visé pour le nav
+  const profileId = isImpersonating ? viewingId : user.id
   const { data: profile } = await supabase
     .from('profiles')
     .select('full_name, role, is_web_dept')
-    .eq('id', user.id)
+    .eq('id', profileId)
     .single()
-
-  const { isImpersonating, viewingName } = await getViewingUserId(user.id)
 
   return (
     <div className="min-h-screen">
@@ -39,7 +41,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
       )}
       <Nav
         fullName={profile?.full_name ?? defaultName}
-        role={profile?.role as 'employee' | 'admin'}
+        role={(isImpersonating ? 'employee' : profile?.role) as 'employee' | 'admin'}
         isWebDept={profile?.is_web_dept ?? false}
       />
       <main className="max-w-6xl mx-auto px-4 pt-5 pb-28 sm:pt-8 sm:pb-8">
