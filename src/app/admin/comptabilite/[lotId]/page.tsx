@@ -141,8 +141,8 @@ export default async function LotPage({
         </Link>
       </div>
 
-      {/* Taxes */}
-      <div className="card grid grid-cols-3 gap-4">
+      {/* Taxes & provisions */}
+      <div className="card grid grid-cols-2 lg:grid-cols-4 gap-4">
         <div>
           <p className="text-xs text-slate-500 mb-1">TPS nette</p>
           <p className={`text-lg font-bold ${netTPS > 0 ? 'text-amber-400' : 'text-green-400'}`}>{fmt(netTPS)}</p>
@@ -157,6 +157,13 @@ export default async function LotPage({
           <p className="text-xs text-slate-500 mb-1">Provision impôts</p>
           <p className="text-lg font-bold text-blue-400">{fmt(Math.max(0, beneficeNet * 0.25))}</p>
           <p className="text-xs text-slate-600 mt-0.5">~25 % bénéfice net</p>
+        </div>
+        <div className={totalSalaires > 0 ? 'rounded-lg bg-violet-500/10 border border-violet-500/20 p-3 -m-1' : ''}>
+          <p className="text-xs text-slate-500 mb-1">À mettre de côté</p>
+          <p className={`text-lg font-bold ${totalSalaires > 0 ? 'text-violet-400' : 'text-slate-600'}`}>
+            {fmt(totalSalaires * 0.20)}
+          </p>
+          <p className="text-xs text-slate-600 mt-0.5">20 % masse salariale</p>
         </div>
       </div>
 
