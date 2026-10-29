@@ -1176,9 +1176,9 @@ export async function reviewLeaveRequestAction(requestId: string, status: 'appro
 
 // ── Impersonation ──────────────────────────────────────────────────────────────
 
-export async function startImpersonationAction(targetUserId: string) {
+export async function startImpersonationAction(targetUserId: string): Promise<void> {
   const caller = await requireAdmin()
-  if (!caller) return { error: 'Accès refusé.' }
+  if (!caller) redirect('/admin/users')
   const cookieStore = await cookies()
   cookieStore.set('x_impersonate_uid', targetUserId, {
     httpOnly: true,
