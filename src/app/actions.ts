@@ -297,7 +297,7 @@ export async function updateEntryAction(
 
   const { error } = await supabase
     .from('time_entries')
-    .update(data)
+    .update({ ...data, total_paused_ms: 0, paused_at: null })
     .eq('id', entryId)
 
   if (error) return { error: error.message }
