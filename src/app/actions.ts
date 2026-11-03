@@ -223,12 +223,14 @@ export async function createUserAction(formData: FormData) {
   })
   if (authErr) return { error: authErr.message }
 
-  await admin.from('profiles').update({
+  await admin.from('profiles').upsert({
+    id: authData.user.id,
     full_name: fullName,
     role,
     hourly_rate: rateStr ? parseFloat(rateStr) : null,
     is_web_dept: isWebDept,
-  }).eq('id', authData.user.id)
+    is_active: true,
+  })
 
   revalidatePath('/admin/users')
   return { success: true }
