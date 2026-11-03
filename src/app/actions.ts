@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
+import { getViewingUserId } from '@/lib/getViewingUser'
 
 // ── Auth ──────────────────────────────────────────────────
 
@@ -84,16 +85,19 @@ export async function clockInAction(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { data: existing } = await supabase
+  const { viewingId, isImpersonating } = await getViewingUserId(user.id)
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  const { data: existing } = await db
     .from('time_entries')
     .select('id')
-    .eq('user_id', user.id)
+    .eq('user_id', viewingId)
     .is('ended_at', null)
     .maybeSingle()
   if (existing) return { error: 'Une session est déjà en cours.' }
 
-  const { error } = await supabase.from('time_entries').insert({
-    user_id: user.id,
+  const { error } = await db.from('time_entries').insert({
+    user_id: viewingId,
     client_id: clientId,
     project_id: projectId,
     notes: notes || null,
@@ -112,10 +116,13 @@ export async function clockOutAction(entryId: string, notes?: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { data: entry } = await supabase.from('time_entries')
+  const { viewingId, isImpersonating } = await getViewingUserId(user.id)
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  const { data: entry } = await db.from('time_entries')
     .select('paused_at, total_paused_ms, started_at, charge_client, client_hourly_rate, projects(name)')
     .eq('id', entryId)
-    .eq('user_id', user.id)
+    .eq('user_id', viewingId)
     .single()
 
   const now = new Date()
@@ -124,10 +131,10 @@ export async function clockOutAction(entryId: string, notes?: string) {
     totalPausedMs += now.getTime() - new Date(entry.paused_at).getTime()
   }
 
-  const { error } = await supabase.from('time_entries')
+  const { error } = await db.from('time_entries')
     .update({ ended_at: now.toISOString(), paused_at: null, total_paused_ms: totalPausedMs, ...(notes !== undefined && { notes: notes || null }) })
     .eq('id', entryId)
-    .eq('user_id', user.id)
+    .eq('user_id', viewingId)
   if (error) return { error: error.message }
 
   let clientBillInfo: { hours: number; amount: number; projectName: string } | undefined
@@ -150,10 +157,13 @@ export async function pauseEntryAction(entryId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { error } = await supabase.from('time_entries')
+  const { viewingId, isImpersonating } = await getViewingUserId(user.id)
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  const { error } = await db.from('time_entries')
     .update({ paused_at: new Date().toISOString() })
     .eq('id', entryId)
-    .eq('user_id', user.id)
+    .eq('user_id', viewingId)
     .is('paused_at', null)
   if (error) return { error: error.message }
   revalidatePath('/dashboard')
@@ -165,20 +175,23 @@ export async function resumeEntryAction(entryId: string) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return { error: 'Non authentifié' }
 
-  const { data: entry } = await supabase.from('time_entries')
+  const { viewingId, isImpersonating } = await getViewingUserId(user.id)
+  const db = isImpersonating ? getAdminClient() : supabase
+
+  const { data: entry } = await db.from('time_entries')
     .select('paused_at, total_paused_ms')
     .eq('id', entryId)
-    .eq('user_id', user.id)
+    .eq('user_id', viewingId)
     .single()
   if (!entry?.paused_at) return { error: 'La session n\'est pas en pause.' }
 
   const additionalMs = Date.now() - new Date(entry.paused_at).getTime()
   const newTotal = (entry.total_paused_ms ?? 0) + additionalMs
 
-  const { error } = await supabase.from('time_entries')
+  const { error } = await db.from('time_entries')
     .update({ paused_at: null, total_paused_ms: newTotal })
     .eq('id', entryId)
-    .eq('user_id', user.id)
+    .eq('user_id', viewingId)
   if (error) return { error: error.message }
   revalidatePath('/dashboard')
   return { success: true }
