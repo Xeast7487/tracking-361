@@ -8,8 +8,9 @@ import {
   deleteProjectAction,
   renameClientAction,
   renameProjectAction,
+  updateProjectBudgetAction,
 } from '@/app/actions'
-type Project = { id: string; name: string }
+type Project = { id: string; name: string; hour_budget: number | null }
 type Client  = { id: string; name: string; projects: Project[] }
 
 /* ── Icônes ──────────────────────────────────────────────────────────────── */
@@ -264,19 +265,93 @@ function DeleteButton({
   )
 }
 
+/* ── Budget inline edit ──────────────────────────────────────────────────── */
+function BudgetInlineEdit({
+  budget,
+  onSave,
+  disabled,
+}: {
+  budget: number | null
+  onSave: (v: number | null) => Promise<void>
+  disabled: boolean
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft]     = useState(budget != null ? String(budget) : '')
+
+  async function save() {
+    const val = draft.trim() === '' ? null : parseFloat(draft)
+    if (val !== null && isNaN(val)) { setEditing(false); setDraft(budget != null ? String(budget) : ''); return }
+    await onSave(val)
+    setEditing(false)
+  }
+
+  if (editing) {
+    return (
+      <div className="flex items-center gap-1">
+        <input
+          autoFocus
+          type="number"
+          min="0"
+          step="0.5"
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') save(); if (e.key === 'Escape') { setEditing(false); setDraft(budget != null ? String(budget) : '') } }}
+          placeholder="h"
+          className="w-20 bg-slate-700 border border-blue-500 rounded-lg px-2 py-1 text-xs text-white focus:outline-none text-right"
+        />
+        <button onClick={save} className="text-green-400 hover:text-green-300 p-1 rounded transition-colors"><IconCheck /></button>
+        <button onClick={() => { setEditing(false); setDraft(budget != null ? String(budget) : '') }} className="text-slate-500 hover:text-slate-300 p-1 rounded transition-colors"><IconX /></button>
+      </div>
+    )
+  }
+
+  return (
+    <button
+      onClick={() => !disabled && setEditing(true)}
+      disabled={disabled}
+      title="Modifier le budget d'heures"
+      className="text-xs text-slate-500 hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-700/50 transition-colors whitespace-nowrap"
+    >
+      {budget != null ? `${budget}h budget` : '+ budget'}
+    </button>
+  )
+}
+
+/* ── Budget indicator ────────────────────────────────────────────────────── */
+function BudgetBar({ used, budget }: { used: number; budget: number }) {
+  const pct = Math.min((used / budget) * 100, 100)
+  const color = pct >= 100 ? 'bg-red-500' : pct >= 80 ? 'bg-yellow-400' : 'bg-green-500'
+  const textColor = pct >= 100 ? 'text-red-400' : pct >= 80 ? 'text-yellow-400' : 'text-green-400'
+  const usedH = used.toFixed(1)
+  const budgetH = budget % 1 === 0 ? budget.toString() : budget.toFixed(1)
+  return (
+    <div className="flex items-center gap-2 mt-1">
+      <div className="flex-1 h-1.5 bg-slate-700 rounded-full overflow-hidden">
+        <div className={`h-full rounded-full transition-all ${color}`} style={{ width: `${pct}%` }} />
+      </div>
+      <span className={`text-xs font-medium tabular-nums whitespace-nowrap ${textColor}`}>
+        {usedH}h / {budgetH}h
+      </span>
+    </div>
+  )
+}
+
 /* ── Composant principal ─────────────────────────────────────────────────── */
 export default function ClientsManager({
   initialClients,
   totalHours,
+  hoursByProject,
 }: {
   initialClients: Client[]
   totalHours: number
+  hoursByProject: Record<string, number>
 }) {
   const [clients, setClients]             = useState<Client[]>(initialClients)
   const [selectedId, setSelectedId]       = useState<string | null>(initialClients[0]?.id ?? null)
   const [newClientName, setNewClientName] = useState('')
   const [showAddClient, setShowAddClient] = useState(false)
   const [newProjectName, setNewProjectName] = useState('')
+  const [newProjectBudget, setNewProjectBudget] = useState('')
   const [showAddProject, setShowAddProject] = useState(false)
   const [isPending, startTransition]      = useTransition()
   const addProjectRef                     = useRef<HTMLInputElement>(null)
@@ -322,15 +397,26 @@ export default function ClientsManager({
   async function handleAddProject(e: React.FormEvent) {
     e.preventDefault()
     if (!selectedId || !newProjectName.trim()) return
-    const res = await createProjectAction(selectedId, newProjectName.trim())
+    const budget = newProjectBudget ? parseFloat(newProjectBudget) : null
+    const res = await createProjectAction(selectedId, newProjectName.trim(), budget)
     if (res.error) return
     setClients(prev => prev.map(c =>
       c.id === selectedId
-        ? { ...c, projects: [...c.projects, { id: res.data.id, name: res.data.name }] }
+        ? { ...c, projects: [...c.projects, { id: res.data.id, name: res.data.name, hour_budget: budget }] }
         : c
     ))
     setNewProjectName('')
+    setNewProjectBudget('')
     setShowAddProject(false)
+  }
+
+  async function handleUpdateBudget(projectId: string, budget: number | null) {
+    const res = await updateProjectBudgetAction(projectId, budget)
+    if (res?.error) return
+    setClients(prev => prev.map(c => ({
+      ...c,
+      projects: c.projects.map(p => p.id === projectId ? { ...p, hour_budget: budget } : p),
+    })))
   }
 
   async function handleRenameProject(projectId: string, name: string) {
@@ -469,28 +555,39 @@ export default function ClientsManager({
 
             {/* Formulaire nouveau projet */}
             {showAddProject && (
-              <form onSubmit={handleAddProject} className="flex gap-2">
-                <input
-                  ref={addProjectRef}
-                  value={newProjectName}
-                  onChange={e => setNewProjectName(e.target.value)}
-                  placeholder="Nom du projet..."
-                  className="flex-1 bg-slate-800 border border-blue-500/50 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
-                />
-                <button
-                  type="submit"
-                  disabled={isPending || !newProjectName.trim()}
-                  className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
-                >
-                  Créer
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setShowAddProject(false); setNewProjectName('') }}
-                  className="text-slate-500 hover:text-slate-300 p-2 rounded-lg transition-colors"
-                >
-                  <IconX />
-                </button>
+              <form onSubmit={handleAddProject} className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    ref={addProjectRef}
+                    value={newProjectName}
+                    onChange={e => setNewProjectName(e.target.value)}
+                    placeholder="Nom du projet..."
+                    className="flex-1 bg-slate-800 border border-blue-500/50 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.5"
+                    value={newProjectBudget}
+                    onChange={e => setNewProjectBudget(e.target.value)}
+                    placeholder="Budget (h)"
+                    className="w-28 bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isPending || !newProjectName.trim()}
+                    className="bg-blue-600 hover:bg-blue-500 disabled:opacity-40 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+                  >
+                    Créer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setShowAddProject(false); setNewProjectName(''); setNewProjectBudget('') }}
+                    className="text-slate-500 hover:text-slate-300 p-2 rounded-lg transition-colors"
+                  >
+                    <IconX />
+                  </button>
+                </div>
               </form>
             )}
 
@@ -501,23 +598,38 @@ export default function ClientsManager({
               </p>
             ) : (
               <div className="divide-y divide-slate-700/50">
-                {selected.projects.map(project => (
-                  <div key={project.id} className="flex items-center justify-between gap-3 py-2.5 group">
-                    <InlineEdit
-                      value={project.name}
-                      onSave={v => handleRenameProject(project.id, v)}
-                      disabled={isPending}
-                      className="text-sm text-slate-300"
-                    />
-                    <div className="flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <DeleteButton
-                        onConfirm={() => handleDeleteProject(project.id)}
-                        disabled={isPending}
-                        size="sm"
-                      />
+                {selected.projects.map(project => {
+                  const used = hoursByProject[project.id] ?? 0
+                  return (
+                    <div key={project.id} className="py-2.5 group">
+                      <div className="flex items-center justify-between gap-3">
+                        <InlineEdit
+                          value={project.name}
+                          onSave={v => handleRenameProject(project.id, v)}
+                          disabled={isPending}
+                          className="text-sm text-slate-300"
+                        />
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <BudgetInlineEdit
+                            budget={project.hour_budget}
+                            onSave={v => handleUpdateBudget(project.id, v)}
+                            disabled={isPending}
+                          />
+                          <div className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <DeleteButton
+                              onConfirm={() => handleDeleteProject(project.id)}
+                              disabled={isPending}
+                              size="sm"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {project.hour_budget != null && project.hour_budget > 0 && (
+                        <BudgetBar used={used} budget={project.hour_budget} />
+                      )}
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>

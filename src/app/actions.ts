@@ -58,16 +58,27 @@ export async function createClientAction(name: string) {
 
 // ── Projets ───────────────────────────────────────────────
 
-export async function createProjectAction(clientId: string, name: string) {
+export async function createProjectAction(clientId: string, name: string, hourBudget?: number | null) {
   const supabase = await createSupabaseServerClient()
   const { data, error } = await supabase
     .from('projects')
-    .insert({ client_id: clientId, name: name.trim() })
+    .insert({ client_id: clientId, name: name.trim(), hour_budget: hourBudget ?? null })
     .select()
     .single()
   if (error) return { error: error.message }
   revalidatePath('/dashboard')
   return { data }
+}
+
+export async function updateProjectBudgetAction(projectId: string, hourBudget: number | null) {
+  const supabase = await createSupabaseServerClient()
+  const caller   = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { error } = await supabase.from('projects').update({ hour_budget: hourBudget }).eq('id', projectId)
+  if (error) return { error: error.message }
+  revalidatePath('/admin/clients')
+  return { success: true }
 }
 
 // ── Entrées de temps ──────────────────────────────────────
