@@ -31,9 +31,10 @@ interface Props {
   showEmployee?: boolean
   isAdmin?: boolean
   allowEdit?: boolean
+  allowAdjustment?: boolean
 }
 
-export default function EntryList({ entries, showEmployee = false, isAdmin = false, allowEdit = false }: Props) {
+export default function EntryList({ entries, showEmployee = false, isAdmin = false, allowEdit = false, allowAdjustment = false }: Props) {
   const { lang } = useLanguage()
   const t = translations[lang].entries
   const [paidPending, startPaidTransition] = useTransition()
@@ -150,7 +151,7 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                     }}
                   />
                 )}
-                {allowEdit && e.ended_at && (
+                {(allowEdit || allowAdjustment) && e.ended_at && (
                   <button
                     onClick={() => setAdjustmentEntry(e)}
                     title="Demander un ajustement"
