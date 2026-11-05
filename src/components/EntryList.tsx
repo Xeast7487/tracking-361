@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useTransition } from 'react'
 import { formatDate, formatTime, formatDuration } from '@/lib/utils'
 import DeleteEntryButton from './DeleteEntryButton'
 import EditEntryModal from './EditEntryModal'
-import AdjustmentRequestModal from './AdjustmentRequestModal'
 import { useLanguage } from '@/lib/LanguageContext'
 import { translations } from '@/lib/translations'
 import { toggleEntryPaidAction } from '@/app/actions'
@@ -38,7 +37,6 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
   const { lang } = useLanguage()
   const t = translations[lang].entries
   const [paidPending, startPaidTransition] = useTransition()
-  const [adjustmentEntry, setAdjustmentEntry] = useState<TimeEntry | null>(null)
 
   const showPaidColumn = isAdmin && entries.some(e => e.charge_client)
 
@@ -151,17 +149,6 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                     }}
                   />
                 )}
-                {(allowEdit || allowAdjustment) && e.ended_at && (
-                  <button
-                    onClick={() => setAdjustmentEntry(e)}
-                    title="Demander un ajustement"
-                    className="p-1.5 text-slate-500 hover:text-yellow-400 rounded transition-colors"
-                  >
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                    </svg>
-                  </button>
-                )}
                 {isAdmin && <DeleteEntryButton entryId={e.id} />}
               </div>
             )}
@@ -254,17 +241,6 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
                           }}
                         />
                       )}
-                      {allowEdit && e.ended_at && (
-                        <button
-                          onClick={() => setAdjustmentEntry(e)}
-                          title="Demander un ajustement"
-                          className="p-1.5 text-slate-500 hover:text-yellow-400 rounded transition-colors"
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
-                          </svg>
-                        </button>
-                      )}
                       {isAdmin && <DeleteEntryButton entryId={e.id} />}
                     </div>
                   </td>
@@ -291,16 +267,6 @@ export default function EntryList({ entries, showEmployee = false, isAdmin = fal
         </div>
       </div>
 
-      {adjustmentEntry && (
-        <AdjustmentRequestModal
-          entryId={adjustmentEntry.id}
-          currentStartedAt={adjustmentEntry.started_at}
-          currentEndedAt={adjustmentEntry.ended_at}
-          clientName={adjustmentEntry.clients?.name ?? null}
-          projectName={adjustmentEntry.projects?.name ?? null}
-          onClose={() => setAdjustmentEntry(null)}
-        />
-      )}
     </div>
   )
 }

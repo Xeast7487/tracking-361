@@ -79,7 +79,7 @@ export default async function HistoryPage({ searchParams }: Props) {
         <button type="submit" className="btn-primary">{t.filter}</button>
       </form>
 
-      <EntryList entries={(entries ?? []) as any} allowAdjustment />
+      <EntryList entries={(entries ?? []) as any} />
     </div>
   )
 }

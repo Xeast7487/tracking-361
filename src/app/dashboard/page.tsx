@@ -2,6 +2,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import ClockWidget from '@/components/ClockWidget'
 import EntryList from '@/components/EntryList'
+import AdjustmentRequestButton from '@/components/AdjustmentRequestButton'
 import TaskNotificationModal from '@/components/TaskNotificationModal'
 import { fetchPendingTaskNotificationsAction } from '@/app/actions'
 import { todayISO } from '@/lib/utils'
@@ -65,6 +66,10 @@ export default async function DashboardPage() {
           <p className="text-slate-500 text-xs sm:text-sm capitalize">{dateStr}</p>
           <h1 className="text-xl sm:text-2xl font-bold mt-1 text-white">{greeting}, {fullName.split(' ')[0]}</h1>
         </div>
+      </div>
+
+      <div>
+        <AdjustmentRequestButton userId={viewingId} />
       </div>
 
       {/* Main grid */}
