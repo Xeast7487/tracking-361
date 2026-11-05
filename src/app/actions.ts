@@ -7,6 +7,7 @@ import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { createSupabaseAdminClient } from '@/lib/supabase-admin'
 import { getViewingUserId } from '@/lib/getViewingUser'
+import { sendEmail } from '@/lib/sendEmail'
 
 // ── Auth ──────────────────────────────────────────────────
 
@@ -1219,4 +1220,98 @@ export async function stopImpersonationAction() {
   const cookieStore = await cookies()
   cookieStore.delete('x_impersonate_uid')
   redirect('/admin/users')
+}
+
+// ── Demandes d'ajustement ─────────────────────────────────
+
+export async function createAdjustmentRequestAction(
+  entryId: string,
+  requestedStartedAt: string,
+  requestedEndedAt: string,
+  reason: string,
+) {
+  const supabase = await createSupabaseServerClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { error: 'Non authentifié' }
+
+  const { data: profile } = await supabase
+    .from('profiles').select('full_name').eq('id', user.id).single()
+
+  const { error } = await supabase.from('time_adjustment_requests').insert({
+    entry_id: entryId,
+    user_id: user.id,
+    requested_started_at: requestedStartedAt,
+    requested_ended_at: requestedEndedAt,
+    reason,
+  })
+  if (error) return { error: error.message }
+
+  const adminEmail = process.env.ADMIN_EMAIL
+  if (adminEmail) {
+    const name = profile?.full_name ?? 'Un employé'
+    const start = new Date(requestedStartedAt).toLocaleString('fr-CA', { timeZone: 'America/Toronto', dateStyle: 'short', timeStyle: 'short' })
+    const end   = new Date(requestedEndedAt).toLocaleString('fr-CA', { timeZone: 'America/Toronto', dateStyle: 'short', timeStyle: 'short' })
+    await sendEmail(
+      adminEmail,
+      `Demande d'ajustement — ${name}`,
+      `<p><strong>${name}</strong> a soumis une demande d'ajustement de temps.</p>
+       <p><strong>Plage demandée :</strong> ${start} → ${end}</p>
+       <p><strong>Raison :</strong> ${reason}</p>
+       <p><a href="https://app.stagingagence361.com/admin/ajustements">Voir les demandes</a></p>`
+    ).catch(() => {})
+  }
+
+  revalidatePath('/dashboard')
+  return { success: true }
+}
+
+export async function approveAdjustmentRequestAction(requestId: string) {
+  const admin = getAdminClient()
+  const supabase = await createSupabaseServerClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  const { data: req } = await admin
+    .from('time_adjustment_requests')
+    .select('entry_id, requested_started_at, requested_ended_at, user_id')
+    .eq('id', requestId)
+    .single()
+  if (!req) return { error: 'Demande introuvable.' }
+
+  const now = new Date().toISOString()
+  const workMs = Math.max(0,
+    new Date(req.requested_ended_at).getTime() - new Date(req.requested_started_at).getTime()
+  )
+
+  await admin.from('time_entries').update({
+    started_at: req.requested_started_at,
+    ended_at: req.requested_ended_at,
+    total_paused_ms: 0,
+    paused_at: null,
+  }).eq('id', req.entry_id)
+
+  await admin.from('time_adjustment_requests').update({
+    status: 'approved',
+    reviewed_by: caller.id,
+    reviewed_at: now,
+  }).eq('id', requestId)
+
+  revalidatePath('/admin/ajustements')
+  return { success: true }
+}
+
+export async function rejectAdjustmentRequestAction(requestId: string, adminNote?: string) {
+  const admin = getAdminClient()
+  const caller = await requireAdmin()
+  if (!caller) return { error: 'Accès refusé.' }
+
+  await admin.from('time_adjustment_requests').update({
+    status: 'rejected',
+    reviewed_by: caller.id,
+    reviewed_at: new Date().toISOString(),
+    admin_note: adminNote ?? null,
+  }).eq('id', requestId)
+
+  revalidatePath('/admin/ajustements')
+  return { success: true }
 }
