@@ -1,6 +1,7 @@
 import { createSupabaseServerClient } from '@/lib/supabase-server'
 import { redirect } from 'next/navigation'
 import EntryList from '@/components/EntryList'
+import ExportButtonHistory from './ExportButtonHistory'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 import { getViewingUserId } from '@/lib/getViewingUser'
@@ -46,7 +47,10 @@ export default async function HistoryPage({ searchParams }: Props) {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-white">{t.title}</h1>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <h1 className="text-2xl font-bold text-white">{t.title}</h1>
+        <ExportButtonHistory entries={(entries ?? []) as any} />
+      </div>
 
       {/* Filters */}
       <form className="card grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 items-end">
