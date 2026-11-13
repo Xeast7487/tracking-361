@@ -6,6 +6,7 @@ import ExportButtons from './ExportButtons'
 import ClientBillingTable from './ClientBillingTable'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
+import { torontoStartOfDay, torontoEndOfDay } from '@/lib/torontoDate'
 
 interface Props {
   searchParams: { from?: string; to?: string; user_id?: string; client_id?: string; project_id?: string; billable?: string; web_dept?: string; charge_client?: string }
@@ -42,8 +43,8 @@ export default async function ReportsPage({ searchParams }: Props) {
   let query = supabase
     .from('time_entries')
     .select('id, started_at, ended_at, notes, is_billable, charge_web_dept, charge_client, client_hourly_rate, client_paid, total_paused_ms, client_id, project_id, clients(name), projects(name), profiles(full_name, hourly_rate, is_web_dept)')
-    .gte('started_at', `${from}T00:00:00`)
-    .lte('started_at', `${to}T23:59:59`)
+    .gte('started_at', torontoStartOfDay(from))
+    .lte('started_at', torontoEndOfDay(to))
     .order('started_at', { ascending: false })
 
   if (userId)    query = query.eq('user_id', userId)

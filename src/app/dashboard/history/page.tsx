@@ -5,6 +5,7 @@ import ExportButtonHistory from './ExportButtonHistory'
 import { getLang } from '@/lib/getLang'
 import { translations } from '@/lib/translations'
 import { getViewingUserId } from '@/lib/getViewingUser'
+import { torontoStartOfDay, torontoEndOfDay } from '@/lib/torontoDate'
 
 interface Props {
   searchParams: { from?: string; to?: string; client_id?: string; project_id?: string }
@@ -36,8 +37,8 @@ export default async function HistoryPage({ searchParams }: Props) {
     .from('time_entries')
     .select('id, started_at, ended_at, notes, is_billable, total_paused_ms, client_id, project_id, clients(name), projects(name)')
     .eq('user_id', viewingId)
-    .gte('started_at', `${from}T00:00:00`)
-    .lte('started_at', `${to}T23:59:59`)
+    .gte('started_at', torontoStartOfDay(from))
+    .lte('started_at', torontoEndOfDay(to))
     .order('started_at', { ascending: false })
 
   if (clientId)  query = query.eq('client_id', clientId)
